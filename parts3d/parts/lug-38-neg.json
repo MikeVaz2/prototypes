@@ -14,7 +14,9 @@
     "barrel_od": 0.55,
     "barrel_length": 0.75,
     "cable_od": 0.45,
-    "cable_length": 3.0
+    "cable_length": 6.0,
+    "joint_length": 1.5,
+    "joint_od": 0.57
    },
    "4awg": {
     "tongue_width": 0.65,
@@ -23,7 +25,9 @@
     "barrel_od": 0.45,
     "barrel_length": 0.65,
     "cable_od": 0.38,
-    "cable_length": 3.0
+    "cable_length": 6.0,
+    "joint_length": 1.5,
+    "joint_od": 0.5
    }
   }
  },
@@ -38,6 +42,12 @@
    0.06,
    0.06,
    0.07,
+   1.0
+  ],
+  "joint": [
+   0.22,
+   0.23,
+   0.25,
    1.0
   ]
  },
@@ -107,18 +117,34 @@
      "label": "2 AWG",
      "nodes": [
       "lug_2awg",
-      "cable_2awg"
+      "cable_2awg",
+      "joint_2awg"
      ]
     },
     "4awg": {
      "label": "4 AWG",
      "nodes": [
       "lug_4awg",
-      "cable_4awg"
+      "cable_4awg",
+      "joint_4awg"
      ]
     }
    }
+  },
+  "length": {
+   "type": "number",
+   "default": 6,
+   "min": 3,
+   "max": 24,
+   "step": 1,
+   "unit": "in",
+   "label": "Extension",
+   "nodes": [
+    "cable_*",
+    "joint_*"
+   ],
+   "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
   }
  },
- "notes": "ESTIMATE: typical catalog values for a closed-end heavy-duty tin-plated copper lug, not from a specific datasheet. All dimensions are estimates: tongue width/thickness, overall length, barrel OD, cable OD (with jacket), cable stub length 3 in, barrel length, 4 AWG values. Hole 0.39 in for a 3/8 stud. Barrel bottom is flush with the tongue bottom; barrel is solid (closed shape); the cable stub leaves the far end. Measure the real lug before ordering."
+ "notes": "ESTIMATE: typical catalog values for a closed-end heavy-duty tin-plated copper lug, not from a specific datasheet. All dimensions are estimates: tongue width/thickness, overall length, barrel OD, cable OD (with jacket), cable stub length 3 in, barrel length, 4 AWG values. Hole 0.39 in for a 3/8 stud. Barrel bottom is flush with the tongue bottom; barrel is solid (closed shape); the cable stub leaves the far end. Measure the real lug before ordering. The cable stub is the extension cable; its free end carries a heat-shrink joint marker (butt splice to the factory cable, 1.5 in long, dark grey). cable_length = default extension (6 in), barrel to joint."
 }

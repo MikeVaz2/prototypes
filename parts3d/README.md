@@ -111,3 +111,28 @@ washer 9.035-9.095, nut 9.095-9.425. Nut top = 0.825 in over case top, 9.425 in 
 Estimates (all lug and nut numbers, not from datasheets): 2 AWG lug tongue 0.75 wide x 0.10 thick, 2.0 in long, barrel 0.55 OD x 0.75 long,
 cable 0.45 OD (jacket) x 3 in stub, hole 0.39; 4 AWG tongue 0.65 x 0.09, 1.8 in long, barrel 0.45, cable 0.38 OD; barrel bottom flush with
 tongue bottom; nut/washer plain (no chamfer, washer not split, washer OD 0.62, ID 0.39). Measure the real parts before ordering.
+
+
+## Extension cable length (lugs)
+The lug's cable stub is the extension cable. Its free end carries a joint marker (dark grey heat-shrink over a butt splice, 1.5 in
+long, 0.12 in thicker than the cable) where the factory cable attaches. Option `length` (type `number`, 3 to 24 in, step 1,
+default 6) is barrel end to joint. The GLB holds the default 6 in; `viewer.html applyLength` scales the `cable_<gauge>` node along
+the lug's own X (so it follows the yaw) and slides `joint_<gauge>`, no Python rebuild. Shown in the lug panel (slider), the caption
+("+ extension 10 in") and the hash (`length=10`). `build_catalog.py` ignores `number` options (default length only).
+
+## Commands (text box + mic)
+`commands.js` is a rule-based parser (no AI, no network); `viewer.html` applies the result. Tests: `node --test` (commands.test.mjs).
+Mic uses SpeechRecognition / webkitSpeechRecognition (en-US, one utterance, no interim results) and is hidden when unsupported.
+Numbers can be digits or words ("ten", "twenty four"). plus/positive/red and minus/negative/black pick the side; word order is free.
+- Length: `plus cable 12 inches`, `black wire ten in`, `minus extension 24 inches` (cable, wire, extension are synonyms; clamped 3 to 24)
+- Rotate: `rotate plus lug 30 degrees`, `turn minus cable ninety`, `rotate plus lug left` (+15) / `right` (-15); `busbar` instead of lug rotates the busbar
+- Cover: `plus busbar cover off`, `minus busbar cover on`, `covers off`
+- Gauge: `4 gauge plus`, `2 gauge minus`, `4 gauge` (both)
+- Show/hide: `hide nuts`, `show busbars`, `hide plus busbar`, `hide lugs` (battery cannot be hidden)
+- `reset` (defaults), `undo` (last 30 states)
+The status line shows what was heard and what was done, or "Didn't get that" with three example phrases.
+
+AR: model-viewer 3.5 starts the WebXR session with `dom-overlay` rooted at its shadow `div.default`, so everything in the default slot
+stays visible in WebXR. The command bar is slotted there, so the mic and text box are shown inside the AR session (taps on the bar
+are marked `beforexrselect` so they do not place the model). Not tested on a device: speech permission and the model reload during a
+session depend on the phone/browser. In Scene Viewer / Quick Look there is no DOM overlay, so give commands before tapping AR.

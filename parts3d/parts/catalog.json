@@ -122,17 +122,33 @@
        "label": "2 AWG",
        "nodes": [
         "lug_2awg",
-        "cable_2awg"
+        "cable_2awg",
+        "joint_2awg"
        ]
       },
       "4awg": {
        "label": "4 AWG",
        "nodes": [
         "lug_4awg",
-        "cable_4awg"
+        "cable_4awg",
+        "joint_4awg"
        ]
       }
      }
+    },
+    "length": {
+     "type": "number",
+     "default": 6,
+     "min": 3,
+     "max": 24,
+     "step": 1,
+     "unit": "in",
+     "label": "Extension",
+     "nodes": [
+      "cable_*",
+      "joint_*"
+     ],
+     "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
    },
    "short": "+ lug"
@@ -210,17 +226,33 @@
        "label": "2 AWG",
        "nodes": [
         "lug_2awg",
-        "cable_2awg"
+        "cable_2awg",
+        "joint_2awg"
        ]
       },
       "4awg": {
        "label": "4 AWG",
        "nodes": [
         "lug_4awg",
-        "cable_4awg"
+        "cable_4awg",
+        "joint_4awg"
        ]
       }
      }
+    },
+    "length": {
+     "type": "number",
+     "default": 6,
+     "min": 3,
+     "max": 24,
+     "step": 1,
+     "unit": "in",
+     "label": "Extension",
+     "nodes": [
+      "cable_*",
+      "joint_*"
+     ],
+     "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
    },
    "short": "\u2212 lug"
