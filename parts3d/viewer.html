@@ -50,6 +50,30 @@
   #cmdout:empty { display:none; }
   #panel input[type=range] { flex:1 1 160px; min-height:44px; }
   model-viewer { position:relative; }
+  /* in-AR overlay: shown only while model-viewer reports ar-status=session-started (or ?arpreview=1) */
+  #arpanel { display:none; position:absolute; left:8px; right:8px; top:8px; z-index:6; max-height:calc(100% - 96px); flex-direction:column;
+             background:rgba(10,14,22,.93); color:#fff; border-radius:14px; border:2px solid #fff; font-size:17px; overflow:hidden; }
+  model-viewer[ar-status="session-started"] #arpanel, #arpanel.preview { display:flex; }
+  #arpanel button { min-height:56px; min-width:56px; padding:0 8px; border-radius:10px; border:3px solid #fff; background:#0b3d91; color:#fff;
+                    font:inherit; font-size:19px; font-weight:700; cursor:pointer; touch-action:manipulation; }
+  #arpanel button:active { background:#1a6ef0; }
+  #arpanel button[disabled] { opacity:.4; }
+  #arpanel button[aria-pressed="true"] { background:#ffd400; color:#000; border-color:#ffd400; }
+  #arpanel button:focus-visible { outline:3px solid #ffd400; outline-offset:2px; }
+  #arhead { width:100%; border-radius:0 !important; border:0 !important; border-bottom:2px solid #fff !important; background:#000 !important; text-align:left; }
+  #arpanel.collapsed #arhead { border-bottom:0 !important; }
+  #arbody { overflow-y:auto; padding:8px 10px 10px; display:flex; flex-direction:column; gap:10px; }
+  #arpanel.collapsed #arbody { display:none; }
+  #arpanel .sec { display:flex; flex-direction:column; gap:6px; border-top:1px solid #5b6470; padding-top:8px; }
+  #arpanel .sec:first-child { border-top:0; padding-top:0; }
+  #arpanel .sec h3 { margin:0; font-size:15px; color:#ffd400; text-transform:uppercase; letter-spacing:.04em; }
+  #arpanel .line { display:flex; align-items:center; gap:8px; }
+  #arpanel .line > * { flex:1 1 0; min-width:0; }
+  #arpanel .big { font-size:30px; font-weight:800; flex:1.4 1 0; text-align:center; white-space:nowrap; }
+  #arpanel .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  #arpanel .small { font-size:16px; color:#fff; text-align:center; font-weight:600; }
+  body.arpreview model-viewer { position:fixed; inset:0; height:100%; width:100%; z-index:4; border-radius:0; max-width:none; }   /* preview only: stands in for the full-screen AR view */
+  #arpanel .hint { font-size:14px; color:#c7ced8; text-align:center; }
 </style>
 </head>
 <body>
@@ -57,6 +81,7 @@
   <model-viewer id="mv" src="odyssey-full-stack.glb" alt="Odyssey ODP-AGM31 battery with lugs, busbars and nuts"
     camera-controls shadow-intensity="1" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed">
     <!-- default-slot children are part of model-viewer's WebXR DOM overlay, so this bar stays usable inside an AR session -->
+    <div id="arpanel" role="group" aria-label="AR controls"></div>
     <div id="cmd" role="group" aria-label="Commands">
       <div id="cmdout" role="status" aria-live="polite"></div>
       <form id="cmdform" autocomplete="off">
@@ -81,10 +106,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { parse as parseCommand, EXAMPLES } from './commands.js';
+import * as OFS from './offsets.js';
 
 const IN = 0.0254, mv = document.getElementById('mv');
 const loader = new GLTFLoader(), cache = new Map();
-let catalog, host, state = [], selId = null, lastUrl = null, busy = false, again = false, defaultKey = '';
+let catalog, host, state = [], offs = { ...OFS.ZERO }, selId = null, lastUrl = null, busy = false, again = false, defaultKey = '';
 
 const load = p => cache.has(p.id) ? cache.get(p.id)
   : cache.set(p.id, loader.loadAsync(p.glb).then(g => g.scene)).get(p.id);
@@ -102,6 +128,7 @@ const defInst = p => { const m = snapMount(p);
   return { part: p.id, mount: m ? snapList(p).slice(-1)[0] : '-', yaw: m ? (m.default_yaw_deg || 0) : 0, opts: defOpts(p) }; };
 const editable = p => !!(snapMount(p) && ((snapMount(p).yaw_step_deg || 0) > 0 || Object.keys(p.options || {}).length));
 const clampNum = (o, v) => Math.min(o.max, Math.max(o.min, Math.round(v / o.step) * o.step));
+const sign = pol => pol === 'pos' ? '+' : '\u2212';
 const norm = d => ((d % 360) + 360) % 360;
 
 // ---- scene state <-> URL hash:  #s=part:mount:yaw:opt=0,opt=1~part:...   (optional &sel=<part id>) ----
@@ -128,7 +155,10 @@ function parse(str) {
 }
 const defaultState = () => catalog.parts.filter(p => p.default || p.always_on).map(defInst);
 function writeHash() {
-  const h = ser(state) === defaultKey ? '' : '#s=' + ser(state);
+  const parts = [];
+  if (ser(state) !== defaultKey) parts.push('s=' + ser(state));
+  if (OFS.ser(offs)) parts.push('o=' + OFS.ser(offs));   // placement offsets: h,x,z,yaw (in, in, in, deg)
+  const h = parts.length ? '#' + parts.join('&') : '';
   history.replaceState(null, '', location.pathname + location.search + h);
 }
 
@@ -230,9 +260,9 @@ async function refresh(initial) {
   try {
     const { root, used } = await buildGroup();
     caption(root, used);
-    if (initial && ser(state) === defaultKey) { if (selId) mv.addEventListener('load', highlight, { once: true }); return; }   // src already shows the default assembly
+    if (initial && ser(state) === defaultKey && OFS.isZero(offs)) { if (selId) mv.addEventListener('load', highlight, { once: true }); return; }   // src already shows the default assembly
     const orbit = mv.getCameraOrbit(), target = mv.getCameraTarget(), fov = mv.getFieldOfView();
-    const buf = await new GLTFExporter().parseAsync(root, { binary: true });
+    const buf = await new GLTFExporter().parseAsync(liveOffsets() ? root : bakeOffsets(root), { binary: true });
     const url = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' }));
     mv.addEventListener('load', () => {
       if (!initial) {
@@ -240,7 +270,7 @@ async function refresh(initial) {
         if (mv.jumpCameraToGoal) mv.jumpCameraToGoal();
       }
       if (lastUrl) URL.revokeObjectURL(lastUrl);
-      lastUrl = url; highlight();
+      lastUrl = url; highlight(); applyOffsets();
     }, { once: true });
     mv.src = url;
   } finally {
@@ -249,10 +279,102 @@ async function refresh(initial) {
   }
 }
 
+// ---- placement offsets for the whole assembly ----
+// Live path: model-viewer's ModelScene (private symbol, found by description) has `target`, the node that holds the model and is what
+// WebXR places. We wrap its children in one Group (`ofsGroup`) and move/rotate that, so an offset change does not touch src or the AR
+// session. Re-adopted on every 'load' (a src change replaces the model node). Fallback if the scene is not reachable: bake the offset
+// into the exported GLB (needs a src reload; an AR session may then re-place the model).
+const sym = name => Object.getOwnPropertySymbols(mv).find(s => s.description === name);
+const mvScene = () => { const s = sym('scene'); return s ? mv[s] : null; };
+let ofsGroup = null, ofsMode = 'none';   // 'live' | 'bake' | 'none'
+function liveOffsets() { const sc = mvScene(); return !!(sc && sc.target && sc.target.isObject3D); }
+function bakeOffsets(root) {
+  if (OFS.isZero(offs)) return root;
+  const g = new THREE.Group(), t = OFS.toTransform(offs);
+  g.position.set(...t.pos); g.rotation.y = t.yawRad; g.add(root); g.updateMatrixWorld(true);
+  return g;
+}
+function applyOffsets() {
+  if (!liveOffsets()) { ofsMode = 'bake'; return false; }
+  const sc = mvScene(), tgt = sc.target;
+  if (!ofsGroup) { ofsGroup = new THREE.Group(); ofsGroup.name = 'offsets'; }
+  if (ofsGroup.parent !== tgt) tgt.add(ofsGroup);
+  for (const c of [...tgt.children]) if (c !== ofsGroup) ofsGroup.add(c);   // re-adopt a freshly loaded model
+  const t = OFS.toTransform(offs);
+  ofsGroup.position.set(...t.pos); ofsGroup.rotation.set(0, t.yawRad, 0); ofsGroup.updateMatrixWorld(true);
+  ofsMode = 'live';
+  try { if (sc.queueRender) sc.queueRender(); const nr = sym('needsRender'); if (nr && typeof mv[nr] === 'function') mv[nr](); } catch (e) { /* ignore */ }
+  return true;
+}
+function setOffsets(next) {
+  offs = next; writeHash();
+  if (!applyOffsets()) refresh();   // fallback: re-export with the offset baked in
+  renderAR();
+}
+
+// ---- in-AR overlay (big tap buttons; the keyboard does not work in AR) ----
+const arPanel = document.getElementById('arpanel');
+let arSide = 'pos', arOpen = true;
+if (new URLSearchParams(location.search).get('arpreview')) { arPanel.classList.add('preview'); document.body.classList.add('arpreview'); }   // test hook: show the overlay without AR
+function renderAR() {
+  const mk = (tag, cls, text, fn, attrs) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text;
+    if (fn) e.addEventListener('click', fn); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); return e; };
+  const lug = pol => state.find(i => i.part === 'lug-38-' + pol);
+  const lo = (partOf('lug-38-pos').options || {}).length || { min: 3, max: 24, step: 1, default: 6 };
+  const off = on => (on ? {} : { disabled: '' });
+  const mkLen = pol => {
+    const i = lug(pol), line = mk('div', 'line');
+    const set = d => { i.opts.length = clampNum(lo, i.opts.length + d); changed(); };
+    line.append(
+      mk('button', '', '\u2212 1 in', () => set(-1), { 'aria-label': sign(pol) + ' lug shorter by 1 inch', ...off(i) }),
+      mk('div', 'big', sign(pol) + ' ' + (i ? i.opts.length + ' in' : 'hidden')),
+      mk('button', '', '+ 1 in', () => set(1), { 'aria-label': sign(pol) + ' lug longer by 1 inch', ...off(i) }));
+    return line;
+  };
+  const sec = (title, ...kids) => { const s = mk('div', 'sec'); s.append(mk('h3', '', title), ...kids); return s; };
+  const ri = lug(arSide);
+  const side = mk('div', 'line');
+  side.append(mk('button', '', '+ lug', () => { arSide = 'pos'; renderAR(); }, { 'aria-pressed': arSide === 'pos' }),
+              mk('button', '', '\u2212 lug', () => { arSide = 'neg'; renderAR(); }, { 'aria-pressed': arSide === 'neg' }));
+  const turn = d => { ri.yaw = norm(ri.yaw + d * (snapMount(partOf(ri.part)).yaw_step_deg || 15)); changed(); };
+  const spin = mk('div', 'line');
+  spin.append(mk('button', '', '\u27f2 15\u00b0', () => turn(1), { 'aria-label': 'Rotate lug left 15 degrees', ...off(ri) }),
+              mk('button', '', '\u27f3 15\u00b0', () => turn(-1), { 'aria-label': 'Rotate lug right 15 degrees', ...off(ri) }));
+  const rot = sec('Rotate lug' + (ri ? ' (now ' + ri.yaw + '\u00b0)' : ' (hidden)'), side, spin);
+  const covers = ['pos', 'neg'].map(p => state.find(i => i.part === 'blueseas-2340-' + p)).filter(Boolean);
+  const coverOn = covers.length > 0 && covers.every(i => i.opts.cover);
+  const cl = mk('div', 'line');
+  cl.append(mk('button', '', 'Covers: ' + (covers.length ? (coverOn ? 'ON' : 'OFF') : 'no busbars'),
+    () => { covers.forEach(i => { i.opts.cover = !coverOn; }); changed(); }, { 'aria-pressed': coverOn, ...off(covers.length) }));
+  const st = (key, d) => () => setOffsets(OFS.step(offs, key, d));
+  const g = mk('div', 'grid');
+  g.append(mk('button', '', '\u25b2 0.5 in', st('h', 0.5), { 'aria-label': 'Raise assembly 0.5 inch' }),
+           mk('button', '', '\u2191 fwd', st('z', 0.5), { 'aria-label': 'Nudge forward 0.5 inch' }),
+           mk('button', '', '\u25bc 0.5 in', st('h', -0.5), { 'aria-label': 'Lower assembly 0.5 inch' }),
+           mk('button', '', '\u2190 left', st('x', -0.5), { 'aria-label': 'Nudge left 0.5 inch' }),
+           mk('button', '', '\u2193 back', st('z', -0.5), { 'aria-label': 'Nudge back 0.5 inch' }),
+           mk('button', '', 'right \u2192', st('x', 0.5), { 'aria-label': 'Nudge right 0.5 inch' }),
+           mk('button', '', '\u27f2 5\u00b0', st('yaw', 5), { 'aria-label': 'Turn assembly left 5 degrees' }),
+           mk('button', '', 'Reset', () => setOffsets({ ...OFS.ZERO }), { 'aria-label': 'Reset offsets', ...off(!OFS.isZero(offs)) }),
+           mk('button', '', '\u27f3 5\u00b0', st('yaw', -5), { 'aria-label': 'Turn assembly right 5 degrees' }));
+  const place = sec('Placement fix', g, mk('div', 'small', OFS.describe(offs)),
+    mk('div', 'hint', ofsMode === 'bake' ? 'Applies when you place again (tap the floor).' : 'Moves live in 0.5 in / 5\u00b0 steps.'));
+  const body = mk('div', ''); body.id = 'arbody';
+  body.append(sec('Extension length', mkLen('pos'), mkLen('neg')), rot, sec('Busbar covers', cl), place);
+  const head = mk('button', '', (arOpen ? '\u25be AR controls' : '\u25b8 AR controls \u2014 tap to open'), () => { arOpen = !arOpen; renderAR(); },
+    { id: 'arhead', 'aria-expanded': arOpen });
+  arPanel.classList.toggle('collapsed', !arOpen);
+  const old = arPanel.querySelector('#arbody'), scroll = old ? old.scrollTop : 0;
+  arPanel.replaceChildren(head, body);
+  body.scrollTop = scroll;
+}
+arPanel.addEventListener('beforexrselect', e => e.preventDefault());   // taps on the panel must not place the model in AR
+mv.addEventListener('ar-status', () => { applyOffsets(); renderAR(); });
+
 // small history of hash states for "undo"
 const hist = []; let lastKey = '', sliding = false;
 const pushHist = () => { hist.push(lastKey); if (hist.length > 30) hist.shift(); };
-function changed() { if (ser(state) !== lastKey) { pushHist(); lastKey = ser(state); } writeHash(); renderChips(); renderPanel(); refresh(); }
+function changed() { if (ser(state) !== lastKey) { pushHist(); lastKey = ser(state); } writeHash(); renderChips(); renderPanel(); renderAR(); refresh(); }
 
 function select(id) {   // toggles: selecting the selected part deselects it
   const inst = state.find(i => i.part === id);
@@ -352,15 +474,15 @@ host = partOf(catalog.host);
 defaultKey = ser(defaultState());
 const q = new URLSearchParams(location.hash.slice(1));
 state = parse(q.get('s')) || defaultState();
+offs = OFS.parse(q.get('o'));
 new URLSearchParams(location.search).get('off')?.split(',').forEach(id => { state = state.filter(i => i.part !== id || i.part === host.id); });  // test hook: ?off=id,id
 if (q.get('sel') && state.some(i => i.part === q.get('sel')) && editable(partOf(q.get('sel')))) selId = q.get('sel');   // test hook: &sel=<part id>
 lastKey = ser(state);
-renderChips(); renderPanel();
+renderChips(); renderPanel(); renderAR();
 refresh(true);
 
 // ---- commands: text box + mic, rule-based parser in commands.js (no AI, no network) ----
 const out = document.getElementById('cmdout'), say = t => { out.textContent = t; };
-const sign = pol => pol === 'pos' ? '+' : '\u2212';
 const targets = t => t === 'both' ? ['pos', 'neg'] : [t];
 function runCommand(c) {
   const msgs = [], opt = (p, k) => (partOf(p).options || {})[k];
@@ -371,7 +493,7 @@ function runCommand(c) {
     if (!hist.length) return 'Nothing to undo';
     const key = hist.pop(); state = (key === defaultKey ? null : parse(key)) || defaultState(); lastKey = ser(state);
     if (!state.some(i => i.part === selId)) selId = null;
-    writeHash(); renderChips(); renderPanel(); refresh(); return 'Undid the last change';
+    writeHash(); renderChips(); renderPanel(); renderAR(); refresh(); return 'Undid the last change';
   }
   if (c.type === 'toggle') {
     for (const id of c.parts) {
