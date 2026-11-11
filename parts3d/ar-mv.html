@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene builder AR (model-viewer patched)</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family:system-ui,sans-serif; background:#f5f6f8; color:#1c1f24; display:flex; flex-direction:column; overflow-x:hidden; }
+  main { flex:1; min-height:0; width:100%; max-width:900px; margin:0 auto; padding:12px 16px 0; display:flex; flex-direction:column; }
+  model-viewer { position:relative; width:100%; flex:1; min-height:240px; background:#fff; border-radius:12px; --poster-color:#fff; }
+  .info { padding:8px 0 10px; font-size:14px; line-height:1.4; }
+  small, .note { color:#5b6470; font-size:12.5px; }
+  #warn { margin:6px 0 0; padding:6px 10px; background:#fff3cd; border:1px solid #e0c36a; border-radius:8px; font-size:13px; }
+  #help { margin:6px 0 0; font-size:14px; }
+  #help summary { cursor:pointer; font-weight:600; min-height:32px; }
+  #help ol { margin:4px 0 0; padding-left:22px; } #help li { margin:3px 0; }
+  #tray { background:#fff; border-top:1px solid #d9dde3; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  #tray .row { max-width:900px; margin:0 auto; display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 14px; border-radius:22px;
+          border:2px solid #c9ced6; background:#fff; color:#1c1f24; font:inherit; font-size:15px; cursor:pointer; }
+  .chip .dot { width:14px; height:14px; border-radius:50%; border:1px solid rgba(0,0,0,.35); }
+  .chip[aria-pressed="true"] { border-color:#1a6ef0; background:#e8f0fe; font-weight:600; }
+  .chip[disabled] { opacity:1; cursor:default; }
+
+  /* AR control strip: a child of <model-viewer> (default slot = part of the WebXR DOM overlay). Hidden outside AR.
+     Shown for every active AR status (session-started, object-placed, anything but not-presenting / failed). */
+  #arstrip { display:none; position:absolute; left:0; right:0; bottom:0; z-index:6; flex-direction:column; align-items:center;
+             padding:0 0 env(safe-area-inset-bottom); pointer-events:none; }
+  model-viewer[ar-status]:not([ar-status="not-presenting"]):not([ar-status="failed"]) #arstrip, #arstrip.preview { display:flex; }
+  #arstrip > * { pointer-events:auto; }
+  #arhandle { min-height:40px; max-width:100%; padding:0 16px; border-radius:20px 20px 0 0; border:2px solid #fff; border-bottom:0;
+              background:rgba(10,14,22,.92); color:#fff; font:inherit; font-size:14px; font-weight:700; cursor:pointer; touch-action:manipulation;
+              white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #arbody { width:100%; max-width:480px; display:flex; flex-direction:column; gap:2px; padding:3px 2px; background:rgba(10,14,22,.92);
+            border:1px solid #fff; border-radius:12px 12px 0 0; }
+  #arbody[hidden] { display:none; }
+  #arbody .r { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:2px; }
+  #arstrip .b { min-height:48px; min-width:0; padding:0 1px; border-radius:8px; border:2px solid rgba(255,255,255,.85); color:#fff;
+                font:inherit; font-size:15px; font-weight:700; cursor:pointer; touch-action:manipulation; white-space:nowrap; background:#0b3d91; }
+  #arstrip .b.lug { background:#0b6b3a; } #arstrip .b.cov { background:#6a2c91; font-size:13px; }
+  #arstrip .b.hgt { background:#9a4a00; } #arstrip .b.nud { background:#0b3d91; font-size:20px; }
+  #arstrip .b.trn { background:#5b2c6f; font-size:14px; } #arstrip .b.rst { background:#7a1a1a; font-size:13px; }
+  #arstrip .b[aria-pressed="true"] { background:#ffd400; color:#000; border-color:#ffd400; }
+  #arstrip .b:active { filter:brightness(1.6); }
+  #arstrip .b[disabled] { opacity:.4; }
+  #arstrip button:focus-visible { outline:3px solid #ffd400; outline-offset:1px; }
+  body.arpreview model-viewer { position:fixed; inset:0; height:100%; width:100%; z-index:4; border-radius:0; max-width:none; }   /* preview only */
+</style>
+</head>
+<body>
+<main>
+  <model-viewer id="mv" src="odyssey-full-stack.glb" alt="Odyssey ODP-AGM31 battery with lugs, busbars and nuts"
+    camera-controls shadow-intensity="1" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed">
+    <div id="arstrip" role="group" aria-label="AR controls"></div>
+  </model-viewer>
+  <div class="info">
+    <div id="caption"></div>
+    <div id="warn" role="status" hidden></div>
+    <details id="help"><summary>Test checklist (on your phone, in AR)</summary>
+      <ol>
+        <li>Tap the AR button, place the model on the floor. The strip handle &ldquo;Adjust&rdquo; must stay at the bottom before and after placing.</li>
+        <li>Tap the handle: two rows of big buttons, covering at most a quarter of the screen. Tap again to collapse.</li>
+        <li>Tap Up&frac12; three times, then nudge &larr; &rarr; &uarr; &darr; and turn. The model must move and stay put (no drop back to the floor).</li>
+        <li>Change extension +1&quot;, switch the lug (+/&minus;), rotate it, toggle Cover. The model reloads: it must not jump, sink or lose the offsets.</li>
+        <li>Tap buttons repeatedly: the model must not be re-placed under your finger.</li>
+        <li>Drag the model with a finger and twist with two fingers (stock gestures). Then Reset.</li>
+        <li>Exit AR and re-enter: the page must still work. Note anything that snaps back, with which button.</li>
+      </ol>
+    </details>
+    <p class="note">Same parts and composition as viewer.html; model-viewer 3.5.0 patched at runtime so offsets survive reloads. <a href="?help">Test checklist</a></p>
+  </div>
+</main>
+<nav id="tray" aria-label="Parts"><div class="row" id="chips"></div></nav>
+<script type="module" src="./mv/main.js"></script>
+</body>
+</html>

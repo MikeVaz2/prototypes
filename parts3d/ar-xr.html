@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parts AR (own WebXR)</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family:system-ui,sans-serif; background:#f5f6f8; color:#1c1f24; display:flex; flex-direction:column; overflow:hidden; }
+  header { padding:10px 16px 6px; }
+  h1 { margin:0; font-size:18px; }
+  #status, #msg { margin:4px 0 0; font-size:13.5px; color:#5b6470; }
+  #msg { color:#8a2b00; background:#fff3e8; border:1px solid #f0c9a8; border-radius:8px; padding:8px 10px; }
+  #stage { flex:1; min-height:0; margin:0 16px; background:#fff; border-radius:12px; overflow:hidden; }
+  #stage canvas { display:block; }
+  .bar { padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  #enter { min-height:52px; width:100%; border-radius:12px; border:0; background:#1a6ef0; color:#fff; font:inherit; font-size:18px; font-weight:700; cursor:pointer; }
+  #enter[hidden], #msg[hidden], #help[hidden], #hint[hidden] { display:none; }
+  #help { margin:0 16px 8px; padding:8px 12px 8px 28px; background:#fff; border:1px solid #d9dde3; border-radius:8px; font-size:13px; line-height:1.4; max-height:30vh; overflow:auto; }
+  #help h2 { margin:0 0 4px -16px; font-size:14px; }
+
+  /* AR overlay root: the browser makes it fullscreen in a session; it ignores touches except on its children */
+  #overlay { display:none; position:fixed; inset:0; z-index:10; pointer-events:none; font-size:14px; }
+  body.inar #overlay, body.arpreview #overlay { display:block; }
+  body.inar header, body.inar #stage, body.inar .bar, body.inar #help { display:none; }
+  #hint { position:absolute; top:calc(12px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); background:rgba(10,14,22,.8); color:#fff;
+          padding:8px 14px; border-radius:20px; font-size:15px; white-space:nowrap; }
+  body.arpreview #hint { display:none; }
+  #strip { position:absolute; left:0; right:0; bottom:0; pointer-events:auto; background:rgba(10,14,22,.9); color:#fff;
+           padding:4px 6px calc(4px + env(safe-area-inset-bottom)); border-radius:14px 14px 0 0; }
+  #top { display:flex; align-items:center; gap:6px; min-height:40px; }
+  #handle { min-height:40px; padding:0 14px; border-radius:20px; border:2px solid #fff; background:#0b3d91; color:#fff; font:inherit; font-size:15px; font-weight:700; cursor:pointer; }
+  #info { flex:1; min-width:0; font-size:12px; line-height:1.25; opacity:.9; }
+  #info div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #exit { min-height:40px; padding:0 12px; border-radius:20px; border:2px solid #ff8a80; background:#7a1010; color:#fff; font:inherit; font-size:15px; font-weight:700; cursor:pointer; }
+  #rows { display:none; margin-top:4px; gap:4px; flex-direction:column; }
+  #strip.open #rows { display:flex; }
+  .row { display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; }
+  .row button { flex:1 1 0; min-width:48px; min-height:48px; padding:0; border-radius:10px; border:2px solid #fff; background:#0b3d91; color:#fff; font:inherit;
+                font-size:17px; font-weight:700; cursor:pointer; touch-action:manipulation; line-height:1.05; }
+  .row button small { display:block; font-size:10px; font-weight:600; opacity:.9; }
+  .row button:active { background:#1a6ef0; }
+  .row button[disabled] { opacity:.4; }
+  .row button[aria-pressed="true"] { background:#ffd400; color:#000; border-color:#ffd400; }
+  #again { background:#0a6b3a !important; } #reset { background:#444 !important; }
+  #strip button:focus-visible { outline:3px solid #ffd400; outline-offset:2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Parts AR</h1>
+  <p id="status">Loading parts...</p>
+  <p id="msg" hidden></p>
+</header>
+<ol id="help" hidden>
+  <h2>What to try (?help)</h2>
+  <li>Enter AR, sweep the phone over the floor until the green ring shows, tap to place.</li>
+  <li>Open Controls: the strip must stay on screen after placing, and the model must not jump when you use any button.</li>
+  <li>Height up and down: the model moves 0.5 in and stays where you left it.</li>
+  <li>Nudge arrows: up moves away from you, left and right follow your view. Walk around and try again.</li>
+  <li>Turn: 5 degrees per tap. Lug: switch + or -, extension 1 in, rotate 15 degrees. Covers on and off.</li>
+  <li>While the ring shows, tap the scene to place; tapping the strip must not place.</li>
+  <li>Place again: ring returns, tap a new spot. Reset: offsets and parts back to default.</li>
+  <li>Exit AR and check the page returns. Compare the battery with the real one for size.</li>
+</ol>
+<div id="stage"></div>
+<div class="bar"><button id="enter" hidden>Enter AR</button></div>
+
+<div id="overlay">
+  <div id="hint" hidden>Move the phone to find the floor, tap to place</div>
+  <div id="strip">
+    <div id="top">
+      <button id="handle" type="button" aria-expanded="false" aria-controls="rows"><span>Controls</span></button>
+      <div id="info"><div id="sel"></div><div id="ofs"></div></div>
+      <button id="exit" type="button">Exit AR</button>
+    </div>
+    <div id="rows">
+      <div class="row">
+        <button id="extm" type="button" aria-label="Extension minus 1 inch">&minus;1<small>ext in</small></button>
+        <button id="extp" type="button" aria-label="Extension plus 1 inch">+1<small>ext in</small></button>
+        <button id="lugbtn" type="button" aria-label="Switch lug"><b>+</b><small>lug</small></button>
+        <button id="rotm" type="button" aria-label="Rotate lug right 15 degrees">&#8635;<small>lug 15&deg;</small></button>
+        <button id="rotp" type="button" aria-label="Rotate lug left 15 degrees">&#8634;<small>lug 15&deg;</small></button>
+        <button id="cover" type="button" aria-pressed="true" style="font-size:14px">Cover</button>
+        <button id="again" type="button">Place<small>again</small></button>
+        <button id="reset" type="button" style="font-size:14px">Reset</button>
+      </div>
+      <div class="row">
+        <button id="hm" type="button" aria-label="Lower 0.5 inch">&darr;<small>0.5</small></button>
+        <button id="hp" type="button" aria-label="Raise 0.5 inch">&uarr;<small>0.5</small></button>
+        <button id="nl" type="button" aria-label="Nudge left">&larr;<small>nudge</small></button>
+        <button id="nr" type="button" aria-label="Nudge right">&rarr;<small>nudge</small></button>
+        <button id="nu" type="button" aria-label="Nudge away">&#9650;<small>nudge</small></button>
+        <button id="nd" type="button" aria-label="Nudge toward me">&#9660;<small>nudge</small></button>
+        <button id="tm" type="button" aria-label="Turn right 5 degrees">&#8635;<small>5&deg;</small></button>
+        <button id="tp" type="button" aria-label="Turn left 5 degrees">&#8634;<small>5&deg;</small></button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="module" src="xr/app.js"></script>
+</body>
+</html>
