@@ -1,6 +1,8 @@
 // ar-xr.html: own WebXR immersive-ar session (three.js), no model-viewer. See the ?help checklist in ar-xr.html.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { XREstimatedLight } from 'three/addons/webxr/XREstimatedLight.js';
 import { createComposer } from './compose.js';
 import * as OFS from '../offsets.js';
 import * as XM from './xrmath.js';
@@ -13,8 +15,17 @@ const PREVIEW = !!q.get('arpreview');
 // ---- renderer / scene ----
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1;   // Khronos PBR Neutral, model-viewer's default
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.VSMShadowMap;      // soft contact-like shadow
 renderer.xr.enabled = true;
+// light estimation (real-world light on a device); falls back to roomEnv when the session has none
+const xrLight = new XREstimatedLight(renderer, true);
+xrLight.addEventListener('estimationstart', () => {
+  scene.add(xrLight); if (xrLight.environment) scene.environment = xrLight.environment;
+  sun.intensity = 0.5;
+});
+xrLight.addEventListener('estimationend', () => { scene.remove(xrLight); scene.environment = roomEnv; sun.intensity = 0.9; });
 $('stage').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 50);
@@ -22,19 +33,22 @@ camera.position.set(0.35, 0.3, 0.45);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0.1, 0); controls.enableDamping = true;
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x778899, 1.5));
-const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-sun.position.set(0.6, 1.5, 0.8);
+// image-based lighting (model-viewer's neutral look); direct light stays low and only casts the floor shadow
+const pmrem = new THREE.PMREMGenerator(renderer);
+const roomEnv = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environment = roomEnv; scene.environmentIntensity = 0.8;
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.position.set(0.2, 1.5, 0.35);
 sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
 Object.assign(sun.shadow.camera, { left: -0.5, right: 0.5, top: 0.5, bottom: -0.5, near: 0.1, far: 4 });
-sun.shadow.bias = -0.0004;
+sun.shadow.bias = -0.0005; sun.shadow.radius = 16; sun.shadow.blurSamples = 20;
 
 // pivot = placement point (matrix comes from reticle / anchor, never changed by corrections).
 // inner = our authoritative correction: position (x,h,z) in the pivot frame, plus yaw. Parts live in inner.
 // floorShadow stays under the pivot at floor level, so raising the model leaves its shadow on the floor.
 const pivot = new THREE.Group(); pivot.matrixAutoUpdate = false;
 const inner = new THREE.Group();
-const floorShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.ShadowMaterial({ opacity: 0.35 }));
+const floorShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.ShadowMaterial({ opacity: 0.5 }));
 floorShadow.rotation.x = -Math.PI / 2; floorShadow.receiveShadow = true;
 const grid = new THREE.GridHelper(1.2, 24, 0x8a94a3, 0xc9ced6);   // preview only
 const modelHolder = new THREE.Group(); inner.add(modelHolder);
@@ -168,8 +182,12 @@ renderer.setAnimationLoop(onFrame);
 async function enterAR() {
   try {
     const s = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor'], domOverlay: { root: overlay } });
+      requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'light-estimation'], domOverlay: { root: overlay } });
     renderer.xr.setReferenceSpaceType((s.enabledFeatures || []).includes('local-floor') ? 'local-floor' : 'local');
+    try {   // sharpness: render at the device's native resolution, capped for speed
+      const nat = window.XRWebGLLayer && XRWebGLLayer.getNativeFramebufferScaleFactor ? XRWebGLLayer.getNativeFramebufferScaleFactor(s) : 1;
+      renderer.xr.setFramebufferScaleFactor(Math.min(Math.max(nat, 1), 2));
+    } catch (e) { /* keep default */ }
     await renderer.xr.setSession(s);
     session = s;
     document.body.classList.add('inar'); grid.visible = false; pivot.visible = false; controls.enabled = false;
@@ -178,7 +196,7 @@ async function enterAR() {
     s.addEventListener('end', () => {
       session = null; hitSource = null; anchor = null; lastHit = null; mode = 'preview'; reticle.visible = false;
       document.body.classList.remove('inar'); grid.visible = true; pivot.visible = true; controls.enabled = true;
-      pivot.matrix.identity(); hint.hidden = true; fit();
+      pivot.matrix.identity(); hint.hidden = true; scene.environment = roomEnv; scene.remove(xrLight); fit();
     });
     const viewer = await s.requestReferenceSpace('viewer');
     hitSource = await s.requestHitTestSource({ space: viewer });
@@ -197,7 +215,7 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   const b = new THREE.Box3().setFromObject(modelHolder), c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() / 2;
   const fov = Math.min(camera.fov, 2 * Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect) * 180 / Math.PI);
   const d = (r / Math.sin(fov * Math.PI / 360)) * 1.05;
-  controls.target.copy(c); camera.position.copy(c).add(new THREE.Vector3(0.55, 0.45, 0.7).normalize().multiplyScalar(d)); controls.update();
+  controls.target.copy(c); camera.position.copy(c).add(new THREE.Vector3(0.3, 0.3, 1).normalize().multiplyScalar(d)); controls.update();
 }
 
 // ---- start ----
