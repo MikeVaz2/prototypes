@@ -1,0 +1,277 @@
+{
+ "kind": "copperbar",
+ "id": "copper-bar",
+ "name": "Custom copper bar, 1 in wide, studs along its length",
+ "units": "in",
+ "catalog": {
+  "category": "distribution",
+  "mountKind": "stud",
+  "icon": "bar",
+  "short": "Copper bar",
+  "swatch": "#b86b47"
+ },
+ "params": {
+  "thickness": 0.25,
+  "width": 1.0,
+  "length": 6.0,
+  "hole_diameter": 0.4,
+  "studs": [
+   {
+    "x": 2.5,
+    "thread": "3/8-16"
+   },
+   {
+    "x": 5.0,
+    "thread": "3/8-16"
+   }
+  ]
+ },
+ "param_ranges": {
+  "thickness": [
+   "1/8",
+   "1/4"
+  ],
+  "length_in": [
+   2,
+   10
+  ],
+  "studs": [
+   1,
+   3
+  ],
+  "stud_threads": [
+   "3/8-16",
+   "5/16-18"
+  ],
+  "stud_x_rule": "x >= 1.0 from the hole, >= 1.0 apart, <= length - 0.5"
+ },
+ "rating_rule": {
+  "a_per_sq_in": 1000,
+  "formula": "rating_a = thickness x width x 1000",
+  "estimate": true,
+  "note": "ESTIMATE: 1000 A per square inch of copper is a common conservative busbar rule; studs capped at 300 A (3/8-16) and 200 A (5/16-18), also estimates. 1 in x 1/8 = 125 A, 1 in x 1/4 = 250 A."
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "consumes_in": 0.25,
+    "consumes_by_option": {
+     "thickness": {
+      "1/8": 0.125,
+      "1/4": 0.25
+     }
+    }
+   },
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 90,
+   "yaw_step_deg": 15,
+   "note": "origin = hole centre on the bar bottom; bar runs toward local +X; yaw 90 = toward +Z front"
+  },
+  {
+   "id": "top",
+   "type": "stack",
+   "pos": [
+    0,
+    0.25,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "by_option": {
+    "thickness": {
+     "1/8": [
+      0,
+      0.125,
+      0
+     ],
+     "1/4": [
+      0,
+      0.25,
+      0
+     ]
+    }
+   },
+   "note": "top of the bar at the battery stud; the nut sits here"
+  }
+ ],
+ "connections": [
+  {
+   "id": "tab",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "3/8-16",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "polarity": "any",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "note": "bar hole on the battery stud; rating = cross-section rule",
+   "by_option": {
+    "thickness": {
+     "1/8": {
+      "rating_a": 125,
+      "pos": [
+       0,
+       0,
+       0
+      ]
+     },
+     "1/4": {
+      "rating_a": 250,
+      "pos": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "s1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "polarity": "any",
+   "pos": [
+    2.5,
+    0.4,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 3,
+    "max_stack_in": 0.75
+   },
+   "by_option": {
+    "thickness": {
+     "1/8": {
+      "rating_a": 125,
+      "pos": [
+       2.5,
+       0.275,
+       0
+      ]
+     },
+     "1/4": {
+      "rating_a": 250,
+      "pos": [
+       2.5,
+       0.4,
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "s2",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "polarity": "any",
+   "pos": [
+    5.0,
+    0.4,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 3,
+    "max_stack_in": 0.75
+   },
+   "by_option": {
+    "thickness": {
+     "1/8": {
+      "rating_a": 125,
+      "pos": [
+       5.0,
+       0.275,
+       0
+      ]
+     },
+     "1/4": {
+      "rating_a": 250,
+      "pos": [
+       5.0,
+       0.4,
+       0
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "options": {
+  "thickness": {
+   "type": "choice",
+   "default": "1/4",
+   "label": "Thickness",
+   "values": {
+    "1/8": {
+     "label": "1/8 in",
+     "nodes": [
+      "bar_1_8",
+      "studs_1_8"
+     ]
+    },
+    "1/4": {
+     "label": "1/4 in",
+     "nodes": [
+      "bar_1_4",
+      "studs_1_4"
+     ]
+    }
+   }
+  },
+  "length": {
+   "type": "number",
+   "default": 6,
+   "min": 2,
+   "max": 10,
+   "step": 1,
+   "unit": "in",
+   "label": "Length",
+   "rebuild": true,
+   "note": "geometry rebuild: python make_part.py parts\\copper-bar.json out.glb length=8 studs=2.5:3/8-16,5.0:5/16-18 (writes out.glb.connections.json)"
+  }
+ },
+ "notes": "Parametric, no datasheet: all dimensions are design values. The GLB holds length 6, 2 studs at 2.5 and 5.0 in, both thicknesses as separate nodes. Stud 0.9 in above the bar with a 0.15 in flange (estimate). Hole 0.40 for the 3/8 battery stud."
+}

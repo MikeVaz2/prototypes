@@ -122,5 +122,64 @@
    "thread": "3/8-16"
   }
  ],
- "mounts_note": "pos = top of polarity ring on the boss (boss top 8.75 + ring 0.06); case-origin coords, inches (X from centre, Y up, Z from centre; +Z front)."
+ "mounts_note": "pos = top of polarity ring on the boss (boss top 8.75 + ring 0.06); case-origin coords, inches (X from centre, Y up, Z from centre; +Z front).",
+ "catalog": {
+  "category": "battery",
+  "mountKind": "surface",
+  "icon": "battery"
+ },
+ "connections": [
+  {
+   "id": "stud_pos",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "rating_a": 300,
+   "rating_estimate": true,
+   "rating_note": "Odyssey does not publish a terminal current rating (checked datasheet info available); 300 A is an estimate for a 3/8-16 stud",
+   "polarity": "+",
+   "pos": [
+    4.94,
+    8.81,
+    0.0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 4,
+    "max_stack_in": 0.79,
+    "note": "stud top 9.6 in, polarity ring top 8.81 in"
+   }
+  },
+  {
+   "id": "stud_neg",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "rating_a": 300,
+   "rating_estimate": true,
+   "rating_note": "Odyssey does not publish a terminal current rating (checked datasheet info available); 300 A is an estimate for a 3/8-16 stud",
+   "polarity": "-",
+   "pos": [
+    -4.94,
+    8.81,
+    0.0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 4,
+    "max_stack_in": 0.79,
+    "note": "stud top 9.6 in, polarity ring top 8.81 in"
+   }
+  }
+ ]
 }

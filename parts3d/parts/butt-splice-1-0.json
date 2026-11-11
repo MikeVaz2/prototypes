@@ -1,0 +1,104 @@
+{
+ "kind": "splice",
+ "id": "butt-splice-1-0",
+ "name": "Butt splice 1/0 AWG with adhesive heat shrink",
+ "units": "in",
+ "catalog": {
+  "category": "cable",
+  "mountKind": "surface",
+  "icon": "splice",
+  "short": "1/0 splice",
+  "swatch": "#1f1f22"
+ },
+ "dims": {
+  "barrel_length": 1.4,
+  "barrel_od": 0.7,
+  "shrink_length": 3.0,
+  "shrink_od": 0.82,
+  "cable_od": 0.55,
+  "cable_stub": 0.6
+ },
+ "colors": {
+  "shrink": [
+   0.12,
+   0.12,
+   0.13,
+   1.0
+  ],
+  "cable": [
+   0.35,
+   0.35,
+   0.38,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "free",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "free"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = centre of the splice on y=0; axis along local X"
+  }
+ ],
+ "connections": [
+  {
+   "id": "a",
+   "kind": "splice",
+   "gauge": "1/0",
+   "polarity": "+",
+   "polarity_option": "polarity",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    -1.5,
+    0.41,
+    0
+   ]
+  },
+  {
+   "id": "b",
+   "kind": "splice",
+   "gauge": "1/0",
+   "polarity": "+",
+   "polarity_option": "polarity",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    1.5,
+    0.41,
+    0
+   ]
+  }
+ ],
+ "options": {
+  "polarity": {
+   "type": "choice",
+   "default": "+",
+   "label": "Polarity",
+   "values": {
+    "+": {
+     "label": "+",
+     "nodes": []
+    },
+    "-": {
+     "label": "\u2212",
+     "nodes": []
+    }
+   }
+  }
+ },
+ "notes": "ESTIMATE: generic crimp butt splice for 1/0 AWG, 1.4 in barrel, 3.0 in adhesive-lined heat shrink (0.82 in OD shown shrunk), 0.55 in cable OD. 250 A is an estimate for 1/0 copper in a short run."
+}

@@ -1,0 +1,144 @@
+{
+ "kind": "joint",
+ "id": "lug-joint-38",
+ "name": "Lug-to-lug joint, 3/8 bolt and nut, boot (extension to factory cable)",
+ "units": "in",
+ "catalog": {
+  "category": "cable",
+  "mountKind": "surface",
+  "icon": "joint",
+  "short": "Lug joint",
+  "swatch": "#222226"
+ },
+ "dims": {
+  "tongue_width": 0.75,
+  "tongue_thickness": 0.1,
+  "hole_diameter": 0.39,
+  "lug_length": 2.0,
+  "barrel_od": 0.55,
+  "barrel_length": 0.75,
+  "bolt_head_height": 0.25,
+  "nut_height": 0.33,
+  "washer_thickness": 0.06,
+  "boot_half_length": 1.0,
+  "boot_width": 1.1,
+  "boot_y0": -0.3,
+  "boot_y1": 0.65
+ },
+ "mounts": [
+  {
+   "id": "free",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "free"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = bolt axis at the bottom of the lower tongue; extension lug barrel toward -X, factory lug barrel toward +X"
+  }
+ ],
+ "connections": [
+  {
+   "id": "crimp_a",
+   "kind": "crimp",
+   "gauge": "2",
+   "polarity": "+",
+   "polarity_option": "polarity",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    -1.625,
+    0.275,
+    0
+   ],
+   "note": "extension cable side, accepts 2 or 4 AWG"
+  },
+  {
+   "id": "crimp_b",
+   "kind": "crimp",
+   "gauge": "2",
+   "polarity": "+",
+   "polarity_option": "polarity",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    1.625,
+    0.375,
+    0
+   ],
+   "note": "factory cable side"
+  },
+  {
+   "id": "bolt",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "polarity": "+",
+   "polarity_option": "polarity",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0.2,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "enabled_when": {
+    "factory_lug": false
+   },
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 1,
+    "max_stack_in": 0.4,
+    "note": "only with the factory_lug option off: a separate factory-cable lug marker takes the place of the built-in factory lug"
+   }
+  }
+ ],
+ "options": {
+  "polarity": {
+   "type": "choice",
+   "default": "+",
+   "label": "Polarity",
+   "values": {
+    "+": {
+     "label": "+",
+     "nodes": []
+    },
+    "-": {
+     "label": "\u2212",
+     "nodes": []
+    }
+   }
+  },
+  "factory_lug": {
+   "type": "bool",
+   "default": true,
+   "label": "Factory lug",
+   "nodes": [
+    "lug_factory"
+   ]
+  },
+  "boot": {
+   "type": "bool",
+   "default": true,
+   "label": "Boot",
+   "nodes": [
+    "boot"
+   ]
+  }
+ },
+ "notes": "ESTIMATE: plain model of a bolted lug joint: 0.75 x 0.1 in tongues, 2 AWG-size lugs, 3/8 bolt (head below), washer + hex nut, boot 2.0 x 1.1 in rubber cover. Turn the boot off to see the bolt. Lug and boot sizes are estimates, not from a datasheet; ratings are estimates by wire gauge."
+}

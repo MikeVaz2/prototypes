@@ -46,6 +46,64 @@
     }
    ],
    "options": {},
+   "category": "battery",
+   "mountKind": "surface",
+   "icon": "battery",
+   "connections": [
+    {
+     "id": "stud_pos",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "rating_note": "Odyssey does not publish a terminal current rating (checked datasheet info available); 300 A is an estimate for a 3/8-16 stud",
+     "polarity": "+",
+     "pos": [
+      4.94,
+      8.81,
+      0.0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 4,
+      "max_stack_in": 0.79,
+      "note": "stud top 9.6 in, polarity ring top 8.81 in"
+     }
+    },
+    {
+     "id": "stud_neg",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "rating_note": "Odyssey does not publish a terminal current rating (checked datasheet info available); 300 A is an estimate for a 3/8-16 stud",
+     "polarity": "-",
+     "pos": [
+      -4.94,
+      8.81,
+      0.0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 4,
+      "max_stack_in": 0.79,
+      "note": "stud top 9.6 in, polarity ring top 8.81 in"
+     }
+    }
+   ],
+   "compatible": {},
    "short": "Battery",
    "always_on": true
   },
@@ -80,7 +138,19 @@
      ],
      "default_yaw_deg": 0,
      "yaw_step_deg": 15,
-     "note": "origin = hole centre on the tongue bottom face (sits directly on the stud boss ring); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed"
+     "note": "origin = hole centre on the tongue bottom face (sits directly on the stud boss ring); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.1,
+      "consumes_by_option": {
+       "gauge": {
+        "2awg": 0.1,
+        "4awg": 0.09
+       }
+      }
+     }
     },
     {
      "id": "top",
@@ -151,6 +221,83 @@
      "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
    },
+   "category": "cable",
+   "mountKind": "stud",
+   "icon": "lug",
+   "connections": [
+    {
+     "id": "ring",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "rating_a": 150
+       },
+       "4awg": {
+        "rating_a": 100
+       }
+      }
+     },
+     "note": "rating by wire gauge, estimate"
+    },
+    {
+     "id": "barrel",
+     "kind": "crimp",
+     "gauge": "2",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      1.625,
+      0.275,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "gauge": "2",
+        "pos": [
+         1.625,
+         0.275,
+         0
+        ],
+        "rating_a": 150
+       },
+       "4awg": {
+        "gauge": "4",
+        "pos": [
+         1.475,
+         0.225,
+         0
+        ],
+        "rating_a": 100
+       }
+      }
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
+   },
    "short": "+ lug"
   },
   {
@@ -184,7 +331,19 @@
      ],
      "default_yaw_deg": 180,
      "yaw_step_deg": 15,
-     "note": "origin = hole centre on the tongue bottom face (sits directly on the stud boss ring); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed"
+     "note": "origin = hole centre on the tongue bottom face (sits directly on the stud boss ring); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.1,
+      "consumes_by_option": {
+       "gauge": {
+        "2awg": 0.1,
+        "4awg": 0.09
+       }
+      }
+     }
     },
     {
      "id": "top",
@@ -254,6 +413,83 @@
      ],
      "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
+   },
+   "category": "cable",
+   "mountKind": "stud",
+   "icon": "lug",
+   "connections": [
+    {
+     "id": "ring",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "rating_a": 150
+       },
+       "4awg": {
+        "rating_a": 100
+       }
+      }
+     },
+     "note": "rating by wire gauge, estimate"
+    },
+    {
+     "id": "barrel",
+     "kind": "crimp",
+     "gauge": "2",
+     "polarity": "-",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      1.625,
+      0.275,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "gauge": "2",
+        "pos": [
+         1.625,
+         0.275,
+         0
+        ],
+        "rating_a": 150
+       },
+       "4awg": {
+        "gauge": "4",
+        "pos": [
+         1.475,
+         0.225,
+         0
+        ],
+        "rating_a": 100
+       }
+      }
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
    },
    "short": "\u2212 lug"
   },
@@ -289,7 +525,13 @@
      ],
      "default_yaw_deg": 90,
      "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
-     "yaw_step_deg": 90
+     "yaw_step_deg": 90,
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.125
+     }
     },
     {
      "id": "top",
@@ -315,6 +557,115 @@
      "nodes": [
       "cover"
      ]
+    }
+   },
+   "category": "distribution",
+   "mountKind": "stud",
+   "icon": "busbar",
+   "connections": [
+    {
+     "id": "tab",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 100,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "group": "bus",
+     "note": "tab on the battery stud; 100 A is the Blue Sea rating for the whole busbar"
+    },
+    {
+     "id": "t1",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.82,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t2",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.19,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t3",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -2.15,
+      0.485,
+      0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t4",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.52,
+      0.485,
+      0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
+   },
+   "rating_groups": {
+    "bus": {
+     "rating_a": 100,
+     "members": [
+      "tab",
+      "t1",
+      "t2",
+      "t3",
+      "t4"
+     ],
+     "note": "Blue Sea 2340: 100 A continuous total"
     }
    },
    "short": "+ busbar"
@@ -351,7 +702,13 @@
      ],
      "default_yaw_deg": 90,
      "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
-     "yaw_step_deg": 90
+     "yaw_step_deg": 90,
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.125
+     }
     },
     {
      "id": "top",
@@ -377,6 +734,115 @@
      "nodes": [
       "cover"
      ]
+    }
+   },
+   "category": "distribution",
+   "mountKind": "stud",
+   "icon": "busbar",
+   "connections": [
+    {
+     "id": "tab",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 100,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "group": "bus",
+     "note": "tab on the battery stud; 100 A is the Blue Sea rating for the whole busbar"
+    },
+    {
+     "id": "t1",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "-",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.82,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t2",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "-",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.19,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t3",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "-",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -2.15,
+      0.485,
+      0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t4",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "-",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.52,
+      0.485,
+      0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
+   },
+   "rating_groups": {
+    "bus": {
+     "rating_a": 100,
+     "members": [
+      "tab",
+      "t1",
+      "t2",
+      "t3",
+      "t4"
+     ],
+     "note": "Blue Sea 2340: 100 A continuous total"
     }
    },
    "short": "\u2212 busbar"
@@ -413,7 +879,13 @@
       "stud_pos"
      ],
      "default_yaw_deg": 0,
-     "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring"
+     "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.39
+     }
     },
     {
      "id": "top",
@@ -432,6 +904,22 @@
     }
    ],
    "options": {},
+   "category": "hardware",
+   "mountKind": "stud",
+   "icon": "nut",
+   "connections": [],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
+   },
    "short": "Nuts",
    "chip": "nuts"
   },
@@ -467,7 +955,13 @@
       "stud_neg"
      ],
      "default_yaw_deg": 0,
-     "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring"
+     "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.39
+     }
     },
     {
      "id": "top",
@@ -486,8 +980,1161 @@
     }
    ],
    "options": {},
+   "category": "hardware",
+   "mountKind": "stud",
+   "icon": "nut",
+   "connections": [],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
+   },
    "short": "Nuts",
    "chip": "nuts"
+  },
+  {
+   "id": "powerbar-2104",
+   "name": "Blue Sea 2104 PowerBar 600 A, 4 x 3/8-16 studs",
+   "glb": "powerbar-2104.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "powerbar",
+   "mounts": [
+    {
+     "id": "surface",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "fixed"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "fasteners": {
+      "count": 4,
+      "screw": "#10",
+      "pos": [
+       [
+        -3.125,
+        0,
+        -0.66
+       ],
+       [
+        -3.125,
+        0,
+        0.66
+       ],
+       [
+        3.125,
+        0,
+        -0.66
+       ],
+       [
+        3.125,
+        0,
+        0.66
+       ]
+      ]
+     },
+     "note": "origin = base centre on the mounting surface; 4 x #10 screws on 6.25 x 1.32 in centres (drawing: clearance and counterbore for #10)"
+    }
+   ],
+   "options": {
+    "polarity": {
+     "type": "choice",
+     "default": "+",
+     "label": "Polarity",
+     "values": {
+      "+": {
+       "label": "+",
+       "nodes": []
+      },
+      "-": {
+       "label": "\u2212",
+       "nodes": []
+      }
+     }
+    }
+   },
+   "category": "distribution",
+   "mountKind": "surface",
+   "icon": "powerbar",
+   "connections": [
+    {
+     "id": "s1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "group": "studs",
+     "pos": [
+      -1.875,
+      1.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.55,
+      "note": "thread above the stud nut flange (top 1.45 to stud top 2.0)"
+     }
+    },
+    {
+     "id": "s2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "group": "studs",
+     "pos": [
+      -0.625,
+      1.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.55,
+      "note": "thread above the stud nut flange (top 1.45 to stud top 2.0)"
+     }
+    },
+    {
+     "id": "s3",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "group": "studs",
+     "pos": [
+      0.625,
+      1.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.55,
+      "note": "thread above the stud nut flange (top 1.45 to stud top 2.0)"
+     }
+    },
+    {
+     "id": "s4",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "group": "studs",
+     "pos": [
+      1.875,
+      1.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.55,
+      "note": "thread above the stud nut flange (top 1.45 to stud top 2.0)"
+     }
+    },
+    {
+     "id": "c1",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 30,
+     "rating_estimate": true,
+     "pos": [
+      -2.83,
+      0.9,
+      -0.25
+     ]
+    },
+    {
+     "id": "c2",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 30,
+     "rating_estimate": true,
+     "pos": [
+      -2.83,
+      0.9,
+      0.25
+     ]
+    },
+    {
+     "id": "c3",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 30,
+     "rating_estimate": true,
+     "pos": [
+      2.83,
+      0.9,
+      -0.25
+     ]
+    },
+    {
+     "id": "c4",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 30,
+     "rating_estimate": true,
+     "pos": [
+      2.83,
+      0.9,
+      0.25
+     ]
+    }
+   ],
+   "compatible": {
+    "surface": []
+   },
+   "rating_groups": {
+    "studs": {
+     "rating_a": 600,
+     "members": [
+      "s1",
+      "s2",
+      "s3",
+      "s4"
+     ],
+     "note": "Blue Sea 2104: 600 A bar; per-stud 300 A is an estimate"
+    }
+   },
+   "short": "PowerBar"
+  },
+  {
+   "id": "mrbf-5191",
+   "name": "Blue Sea 5191 MRBF terminal fuse block, 30-300 A, 58 V",
+   "glb": "mrbf-5191.glb",
+   "default": false,
+   "thumb_color": "#303034",
+   "kind": "mrbf",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.1
+     },
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 90,
+     "yaw_step_deg": 15,
+     "note": "origin = 3/8 stud hole centre on the bottom of the input tab; body runs toward local +X (yaw 90 = toward +Z front)"
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.1,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "note": "top of the input tab; the nut sits here, beside the body"
+    }
+   ],
+   "options": {
+    "fuse_a": {
+     "type": "choice",
+     "default": "150",
+     "label": "Fuse",
+     "note": "label only, not modelled",
+     "values": {
+      "30": {
+       "label": "30 A",
+       "nodes": []
+      },
+      "40": {
+       "label": "40 A",
+       "nodes": []
+      },
+      "50": {
+       "label": "50 A",
+       "nodes": []
+      },
+      "60": {
+       "label": "60 A",
+       "nodes": []
+      },
+      "70": {
+       "label": "70 A",
+       "nodes": []
+      },
+      "80": {
+       "label": "80 A",
+       "nodes": []
+      },
+      "100": {
+       "label": "100 A",
+       "nodes": []
+      },
+      "110": {
+       "label": "110 A",
+       "nodes": []
+      },
+      "125": {
+       "label": "125 A",
+       "nodes": []
+      },
+      "150": {
+       "label": "150 A",
+       "nodes": []
+      },
+      "175": {
+       "label": "175 A",
+       "nodes": []
+      },
+      "200": {
+       "label": "200 A",
+       "nodes": []
+      },
+      "225": {
+       "label": "225 A",
+       "nodes": []
+      },
+      "250": {
+       "label": "250 A",
+       "nodes": []
+      },
+      "300": {
+       "label": "300 A",
+       "nodes": []
+      }
+     }
+    }
+   },
+   "category": "fusing",
+   "mountKind": "stud",
+   "icon": "fuse",
+   "connections": [
+    {
+     "id": "fuse_in",
+     "kind": "fuse_in",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 300,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "note": "input tab on the battery (or bus) stud; rating is the fuse size, option fuse_a",
+     "rating_from_option": "fuse_a"
+    },
+    {
+     "id": "fuse_out",
+     "kind": "fuse_out",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_from_option": "fuse_a",
+     "pos": [
+      2.25,
+      1.1,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.6,
+      "note": "thread above the output flange (1.1 to 1.8 in)"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
+   },
+   "short": "MRBF fuse"
+  },
+  {
+   "id": "copper-bar",
+   "name": "Custom copper bar, 1 in wide, studs along its length",
+   "glb": "copper-bar.glb",
+   "default": false,
+   "thumb_color": "#b86b47",
+   "kind": "copperbar",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "consumes_in": 0.25,
+      "consumes_by_option": {
+       "thickness": {
+        "1/8": 0.125,
+        "1/4": 0.25
+       }
+      }
+     },
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 90,
+     "yaw_step_deg": 15,
+     "note": "origin = hole centre on the bar bottom; bar runs toward local +X; yaw 90 = toward +Z front"
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.25,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "by_option": {
+      "thickness": {
+       "1/8": [
+        0,
+        0.125,
+        0
+       ],
+       "1/4": [
+        0,
+        0.25,
+        0
+       ]
+      }
+     },
+     "note": "top of the bar at the battery stud; the nut sits here"
+    }
+   ],
+   "options": {
+    "thickness": {
+     "type": "choice",
+     "default": "1/4",
+     "label": "Thickness",
+     "values": {
+      "1/8": {
+       "label": "1/8 in",
+       "nodes": [
+        "bar_1_8",
+        "studs_1_8"
+       ]
+      },
+      "1/4": {
+       "label": "1/4 in",
+       "nodes": [
+        "bar_1_4",
+        "studs_1_4"
+       ]
+      }
+     }
+    },
+    "length": {
+     "type": "number",
+     "default": 6,
+     "min": 2,
+     "max": 10,
+     "step": 1,
+     "unit": "in",
+     "label": "Length",
+     "rebuild": true,
+     "note": "geometry rebuild: python make_part.py parts\\copper-bar.json out.glb length=8 studs=2.5:3/8-16,5.0:5/16-18 (writes out.glb.connections.json)"
+    }
+   },
+   "category": "distribution",
+   "mountKind": "stud",
+   "icon": "bar",
+   "connections": [
+    {
+     "id": "tab",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "polarity": "any",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "note": "bar hole on the battery stud; rating = cross-section rule",
+     "by_option": {
+      "thickness": {
+       "1/8": {
+        "rating_a": 125,
+        "pos": [
+         0,
+         0,
+         0
+        ]
+       },
+       "1/4": {
+        "rating_a": 250,
+        "pos": [
+         0,
+         0,
+         0
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "s1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "polarity": "any",
+     "pos": [
+      2.5,
+      0.4,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 3,
+      "max_stack_in": 0.75
+     },
+     "by_option": {
+      "thickness": {
+       "1/8": {
+        "rating_a": 125,
+        "pos": [
+         2.5,
+         0.275,
+         0
+        ]
+       },
+       "1/4": {
+        "rating_a": 250,
+        "pos": [
+         2.5,
+         0.4,
+         0
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "s2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "polarity": "any",
+     "pos": [
+      5.0,
+      0.4,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 3,
+      "max_stack_in": 0.75
+     },
+     "by_option": {
+      "thickness": {
+       "1/8": {
+        "rating_a": 125,
+        "pos": [
+         5.0,
+         0.275,
+         0
+        ]
+       },
+       "1/4": {
+        "rating_a": 250,
+        "pos": [
+         5.0,
+         0.4,
+         0
+        ]
+       }
+      }
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "lug-joint-38.bolt"
+    ]
+   },
+   "rating_rule": {
+    "a_per_sq_in": 1000,
+    "formula": "rating_a = thickness x width x 1000",
+    "estimate": true,
+    "note": "ESTIMATE: 1000 A per square inch of copper is a common conservative busbar rule; studs capped at 300 A (3/8-16) and 200 A (5/16-18), also estimates. 1 in x 1/8 = 125 A, 1 in x 1/4 = 250 A."
+   },
+   "params": {
+    "thickness": 0.25,
+    "width": 1.0,
+    "length": 6.0,
+    "hole_diameter": 0.4,
+    "studs": [
+     {
+      "x": 2.5,
+      "thread": "3/8-16"
+     },
+     {
+      "x": 5.0,
+      "thread": "3/8-16"
+     }
+    ]
+   },
+   "param_ranges": {
+    "thickness": [
+     "1/8",
+     "1/4"
+    ],
+    "length_in": [
+     2,
+     10
+    ],
+    "studs": [
+     1,
+     3
+    ],
+    "stud_threads": [
+     "3/8-16",
+     "5/16-18"
+    ],
+    "stud_x_rule": "x >= 1.0 from the hole, >= 1.0 apart, <= length - 0.5"
+   },
+   "short": "Copper bar"
+  },
+  {
+   "id": "lug-joint-38",
+   "name": "Lug-to-lug joint, 3/8 bolt and nut, boot (extension to factory cable)",
+   "glb": "lug-joint-38.glb",
+   "default": false,
+   "thumb_color": "#222226",
+   "kind": "joint",
+   "mounts": [
+    {
+     "id": "free",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "free"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "origin = bolt axis at the bottom of the lower tongue; extension lug barrel toward -X, factory lug barrel toward +X"
+    }
+   ],
+   "options": {
+    "polarity": {
+     "type": "choice",
+     "default": "+",
+     "label": "Polarity",
+     "values": {
+      "+": {
+       "label": "+",
+       "nodes": []
+      },
+      "-": {
+       "label": "\u2212",
+       "nodes": []
+      }
+     }
+    },
+    "factory_lug": {
+     "type": "bool",
+     "default": true,
+     "label": "Factory lug",
+     "nodes": [
+      "lug_factory"
+     ]
+    },
+    "boot": {
+     "type": "bool",
+     "default": true,
+     "label": "Boot",
+     "nodes": [
+      "boot"
+     ]
+    }
+   },
+   "category": "cable",
+   "mountKind": "surface",
+   "icon": "joint",
+   "connections": [
+    {
+     "id": "crimp_a",
+     "kind": "crimp",
+     "gauge": "2",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      -1.625,
+      0.275,
+      0
+     ],
+     "note": "extension cable side, accepts 2 or 4 AWG"
+    },
+    {
+     "id": "crimp_b",
+     "kind": "crimp",
+     "gauge": "2",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      1.625,
+      0.375,
+      0
+     ],
+     "note": "factory cable side"
+    },
+    {
+     "id": "bolt",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.2,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "enabled_when": {
+      "factory_lug": false
+     },
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 1,
+      "max_stack_in": 0.4,
+      "note": "only with the factory_lug option off: a separate factory-cable lug marker takes the place of the built-in factory lug"
+     }
+    }
+   ],
+   "compatible": {
+    "free": []
+   },
+   "short": "Lug joint"
+  },
+  {
+   "id": "butt-splice-1-0",
+   "name": "Butt splice 1/0 AWG with adhesive heat shrink",
+   "glb": "butt-splice-1-0.glb",
+   "default": false,
+   "thumb_color": "#1f1f22",
+   "kind": "splice",
+   "mounts": [
+    {
+     "id": "free",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "free"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "origin = centre of the splice on y=0; axis along local X"
+    }
+   ],
+   "options": {
+    "polarity": {
+     "type": "choice",
+     "default": "+",
+     "label": "Polarity",
+     "values": {
+      "+": {
+       "label": "+",
+       "nodes": []
+      },
+      "-": {
+       "label": "\u2212",
+       "nodes": []
+      }
+     }
+    }
+   },
+   "category": "cable",
+   "mountKind": "surface",
+   "icon": "splice",
+   "connections": [
+    {
+     "id": "a",
+     "kind": "splice",
+     "gauge": "1/0",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      -1.5,
+      0.41,
+      0
+     ]
+    },
+    {
+     "id": "b",
+     "kind": "splice",
+     "gauge": "1/0",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      1.5,
+      0.41,
+      0
+     ]
+    }
+   ],
+   "compatible": {
+    "free": []
+   },
+   "short": "1/0 splice"
+  },
+  {
+   "id": "factory-cable-end",
+   "name": "Factory cable end marker (stub with lug), labelled factory + / factory -",
+   "glb": "factory-cable-end.glb",
+   "default": false,
+   "thumb_color": "#8a1c1c",
+   "kind": "factory",
+   "mounts": [
+    {
+     "id": "free",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "free"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "origin = hole centre on the tongue bottom; cable toward +X; marker only"
+    },
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "consumes_in": 0.1,
+      "consumes_by_option": {
+       "gauge": {
+        "2awg": 0.1,
+        "4awg": 0.09
+       }
+      }
+     },
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 15,
+     "note": "optional: put the lug on a 3/8 stud or joint bolt"
+    }
+   ],
+   "options": {
+    "polarity": {
+     "type": "choice",
+     "default": "+",
+     "label": "Polarity",
+     "values": {
+      "+": {
+       "label": "factory +",
+       "nodes": [
+        "flag_pos",
+        "cable_2awg_pos",
+        "cable_4awg_pos"
+       ]
+      },
+      "-": {
+       "label": "factory \u2212",
+       "nodes": [
+        "flag_neg",
+        "cable_2awg_neg",
+        "cable_4awg_neg"
+       ]
+      }
+     }
+    },
+    "gauge": {
+     "type": "choice",
+     "default": "2awg",
+     "label": "Gauge",
+     "values": {
+      "2awg": {
+       "label": "2 AWG",
+       "nodes": [
+        "lug_2awg",
+        "cable_2awg_pos",
+        "cable_2awg_neg"
+       ]
+      },
+      "4awg": {
+       "label": "4 AWG",
+       "nodes": [
+        "lug_4awg",
+        "cable_4awg_pos",
+        "cable_4awg_neg"
+       ]
+      }
+     }
+    }
+   },
+   "category": "marker",
+   "mountKind": "surface",
+   "icon": "marker",
+   "connections": [
+    {
+     "id": "ring",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "rating_a": 150
+       },
+       "4awg": {
+        "rating_a": 100
+       }
+      }
+     }
+    },
+    {
+     "id": "cable_end",
+     "kind": "splice",
+     "gauge": "2",
+     "polarity": "+",
+     "polarity_option": "polarity",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      5.665,
+      0.275,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "gauge": "2",
+        "pos": [
+         5.665,
+         0.275,
+         0
+        ],
+        "rating_a": 150
+       },
+       "4awg": {
+        "gauge": "4",
+        "pos": [
+         5.515,
+         0.225,
+         0
+        ],
+        "rating_a": 100
+       }
+      }
+     },
+     "note": "free end of the factory cable stub (goes to the vehicle)"
+    }
+   ],
+   "compatible": {
+    "free": [],
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt"
+    ]
+   },
+   "label_by_option": {
+    "polarity": {
+     "+": "factory +",
+     "-": "factory -"
+    }
+   },
+   "short": "Factory cable"
   }
  ]
 }

@@ -45,7 +45,13 @@
     "stud_pos"
    ],
    "default_yaw_deg": 0,
-   "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring"
+   "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring",
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "+",
+    "consumes_in": 0.39
+   }
   },
   {
    "id": "top",
@@ -63,5 +69,11 @@
    "note": "top of nut (washer 0.06 + nut 0.33)"
   }
  ],
- "notes": "Dimensions are typical 3/8-16 hex nut (about 0.56 in across flats, 0.33 in tall) and a split lock washer 0.06 in thick (estimates). Plain hex, no chamfer, washer not split."
+ "notes": "Dimensions are typical 3/8-16 hex nut (about 0.56 in across flats, 0.33 in tall) and a split lock washer 0.06 in thick (estimates). Plain hex, no chamfer, washer not split.",
+ "catalog": {
+  "category": "hardware",
+  "mountKind": "stud",
+  "icon": "nut"
+ },
+ "connections": []
 }

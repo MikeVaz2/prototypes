@@ -136,3 +136,34 @@ AR: model-viewer 3.5 starts the WebXR session with `dom-overlay` rooted at its s
 stays visible in WebXR. The command bar is slotted there, so the mic and text box are shown inside the AR session (taps on the bar
 are marked `beforexrselect` so they do not place the model). Not tested on a device: speech permission and the model reload during a
 session depend on the phone/browser. In Scene Viewer / Quick Look there is no DOM overlay, so give commands before tapping AR.
+
+## Library parts, connections, outlets (added)
+Catalog entries with `default: false` (not in the default scene; GLB per part, default-option preview GLB in `out\lib-<id>.glb`).
+Each has `category` (battery, distribution, fusing, cable, marker, hardware), `mountKind` (stud | surface), `icon` hint.
+```
+%PY% make_part.py parts\powerbar-2104.json     :: also mrbf-5191, copper-bar, lug-joint-38, butt-splice-1-0, factory-cable-end
+%PY% build_catalog.py                          :: catalog.json (+ connections, compatible), out\lib-<id>.glb
+%PY% validate_and_preview.py out\lib-powerbar-2104.glb out tmp   :: then keep tmp_34.png as out\lib-powerbar-2104.png
+%PY% make_part.py parts\copper-bar.json bar.glb thickness=1/8 length=8 studs=2.5:3/8-16,6.0:5/16-18   :: parametric rebuild, writes bar.glb.connections.json
+```
+| Part | Category / mount | Source | Estimates |
+|---|---|---|---|
+| `powerbar-2104` Blue Sea 2104, 600 A, 4 x 3/8-16 | distribution / surface (4 x #10, 6.25 x 1.32 in) | `the dimensioned drawing on bluesea.com (product 2104)` (base 7, studs 1.25 pitch, bar top 1.3, stud top 2.0, base 0.5) | base width 2.0, bar block 5.5 x 1.0, nut flange, end screws, per-stud 300 A, per-screw 30 A. Polarity option is a label only (no red/black accents: real bar is tinned copper on black) |
+| `mrbf-5191` Blue Sea 5191, 30-300 A, 58 V | fusing / stud 3/8-16 | product page (300 A, 58 V, 5/16 stud, 75 in-lb). Drawing PDF not downloadable (access denied) | all dimensions and body shape. Output stud 5/16-18 (listing says M8). Option `fuse_a` is a label |
+| `copper-bar` 1 in wide, 1/8 or 1/4 thick, 2-10 in, 1-3 studs | distribution / stud 3/8-16 | design values | everything. Rating rule: 1000 A per sq in x thickness x width (1/8 = 125 A, 1/4 = 250 A), studs capped 300 A (3/8-16) / 200 A (5/16-18) |
+| `lug-joint-38` 3/8 bolt, nut, 2 lug tongues, boot | cable / surface (free) | none | all sizes; ratings by gauge |
+| `butt-splice-1-0` with adhesive heat shrink | cable / surface (free) | none | all sizes; 250 A |
+| `factory-cable-end` stub + lug, factory +/- , 2 or 4 AWG | marker / surface (free) or stud | none | all sizes; flag stands for the label (see `label_by_option`) |
+Existing parts: Odyssey stud rating 300 A is an estimate (not published); Blue Sea 2340 100 A is published (group rating), per-screw 25 A is an estimate; lug ratings by gauge (150 / 100 A) are estimates; nuts have no connections.
+
+### Connections (see projects/buildXR/DESIGN-connections.md)
+`connections[]` per part: `id`, `kind` (stud, screw, crimp, fuse_in, fuse_out, plug, splice, and `ring` for a lug/tab that sits on a stud), `form` (what physically carries a part: stud | ring | screw),
+`thread` or `gauge`, `rating_a` (+ `rating_estimate: true` when estimated), `polarity` (`+`, `-`, `any`; `polarity_option` = follows that part option), `pos` (inches, part space),
+optional `group` (see `rating_groups`: total for a set, e.g. 600 A PowerBar), `by_option` (`{option: {value: {field overrides}}}`, e.g. thickness or gauge), `rating_from_option`, `enabled_when`.
+
+### Outlets and mounts: one vocabulary
+- Outlet = a connection with `form: stud` and `accepts`: `{thread, max_items, max_stack_in}` (max_stack_in = thread length above the base available for the items; nut included). Outlets exist on battery studs, PowerBar studs, MRBF output stud, copper bar studs, the lug-joint bolt (only when `factory_lug` is off).
+- Mount (what a part attaches to) = `needs`: `{kind: stud|surface, thread, polarity, consumes_in}` (`consumes_by_option` for variants; `placement: free|fixed` for surface). Same words on both sides: a stud mount fits an outlet when `needs.kind == "stud"`, `needs.thread == accepts.thread`, polarity compatible (`any` or `polarity_option` is a wildcard) and the sum of `consumes_in` of the items stays within `max_stack_in` and `max_items`.
+- `build_catalog.match()` implements this; every catalog entry has `compatible: {mount id: ["part.connection", ...]}` computed from all parts, so the UI can list valid outlets without extra rules. Surface mounts need no outlet.
+- Gap: there is no 5/16-18 lug yet, so nothing is compatible with the MRBF output stud (and the 3/8 lug does not fit it, correctly).
+- Library parts do not use `snap_to`; the existing stud-stack snapping (`snap_to`, `top`) still applies to the default parts only.

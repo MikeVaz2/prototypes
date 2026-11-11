@@ -108,7 +108,13 @@
    ],
    "default_yaw_deg": 90,
    "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
-   "yaw_step_deg": 90
+   "yaw_step_deg": 90,
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "-",
+    "consumes_in": 0.125
+   }
   },
   {
    "id": "top",
@@ -135,6 +141,105 @@
    "nodes": [
     "cover"
    ]
+  }
+ },
+ "catalog": {
+  "category": "distribution",
+  "mountKind": "stud",
+  "icon": "busbar"
+ },
+ "connections": [
+  {
+   "id": "tab",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "3/8-16",
+   "polarity": "-",
+   "rating_a": 100,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "group": "bus",
+   "note": "tab on the battery stud; 100 A is the Blue Sea rating for the whole busbar"
+  },
+  {
+   "id": "t1",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "#8-32",
+   "polarity": "-",
+   "rating_a": 25,
+   "rating_estimate": true,
+   "pos": [
+    -1.82,
+    0.485,
+    -0.25
+   ],
+   "group": "bus",
+   "note": "per-screw rating is an estimate (100 A / 4)"
+  },
+  {
+   "id": "t2",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "#8-32",
+   "polarity": "-",
+   "rating_a": 25,
+   "rating_estimate": true,
+   "pos": [
+    -1.19,
+    0.485,
+    -0.25
+   ],
+   "group": "bus",
+   "note": "per-screw rating is an estimate (100 A / 4)"
+  },
+  {
+   "id": "t3",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "#8-32",
+   "polarity": "-",
+   "rating_a": 25,
+   "rating_estimate": true,
+   "pos": [
+    -2.15,
+    0.485,
+    0.25
+   ],
+   "group": "bus",
+   "note": "per-screw rating is an estimate (100 A / 4)"
+  },
+  {
+   "id": "t4",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "#8-32",
+   "polarity": "-",
+   "rating_a": 25,
+   "rating_estimate": true,
+   "pos": [
+    -1.52,
+    0.485,
+    0.25
+   ],
+   "group": "bus",
+   "note": "per-screw rating is an estimate (100 A / 4)"
+  }
+ ],
+ "rating_groups": {
+  "bus": {
+   "rating_a": 100,
+   "members": [
+    "tab",
+    "t1",
+    "t2",
+    "t3",
+    "t4"
+   ],
+   "note": "Blue Sea 2340: 100 A continuous total"
   }
  }
 }

@@ -1,0 +1,221 @@
+{
+ "kind": "factory",
+ "id": "factory-cable-end",
+ "name": "Factory cable end marker (stub with lug), labelled factory + / factory -",
+ "units": "in",
+ "catalog": {
+  "category": "marker",
+  "mountKind": "surface",
+  "icon": "marker",
+  "short": "Factory cable",
+  "swatch": "#8a1c1c"
+ },
+ "label_by_option": {
+  "polarity": {
+   "+": "factory +",
+   "-": "factory -"
+  }
+ },
+ "dims": {
+  "hole_diameter": 0.39,
+  "stub_length": 4.0,
+  "gauges": {
+   "2awg": {
+    "tongue_width": 0.75,
+    "tongue_thickness": 0.1,
+    "overall_length": 2.0,
+    "barrel_od": 0.55,
+    "barrel_length": 0.75,
+    "cable_od": 0.45
+   },
+   "4awg": {
+    "tongue_width": 0.65,
+    "tongue_thickness": 0.09,
+    "overall_length": 1.8,
+    "barrel_od": 0.45,
+    "barrel_length": 0.65,
+    "cable_od": 0.38
+   }
+  }
+ },
+ "colors": {
+  "pos": [
+   0.75,
+   0.05,
+   0.05,
+   1.0
+  ],
+  "neg": [
+   0.08,
+   0.08,
+   0.09,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "free",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "free"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = hole centre on the tongue bottom; cable toward +X; marker only"
+  },
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "consumes_in": 0.1,
+    "consumes_by_option": {
+     "gauge": {
+      "2awg": 0.1,
+      "4awg": 0.09
+     }
+    }
+   },
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 15,
+   "note": "optional: put the lug on a 3/8 stud or joint bolt"
+  }
+ ],
+ "connections": [
+  {
+   "id": "ring",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "3/8-16",
+   "polarity": "+",
+   "polarity_option": "polarity",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "by_option": {
+    "gauge": {
+     "2awg": {
+      "rating_a": 150
+     },
+     "4awg": {
+      "rating_a": 100
+     }
+    }
+   }
+  },
+  {
+   "id": "cable_end",
+   "kind": "splice",
+   "gauge": "2",
+   "polarity": "+",
+   "polarity_option": "polarity",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    5.665,
+    0.275,
+    0
+   ],
+   "by_option": {
+    "gauge": {
+     "2awg": {
+      "gauge": "2",
+      "pos": [
+       5.665,
+       0.275,
+       0
+      ],
+      "rating_a": 150
+     },
+     "4awg": {
+      "gauge": "4",
+      "pos": [
+       5.515,
+       0.225,
+       0
+      ],
+      "rating_a": 100
+     }
+    }
+   },
+   "note": "free end of the factory cable stub (goes to the vehicle)"
+  }
+ ],
+ "options": {
+  "polarity": {
+   "type": "choice",
+   "default": "+",
+   "label": "Polarity",
+   "values": {
+    "+": {
+     "label": "factory +",
+     "nodes": [
+      "flag_pos",
+      "cable_2awg_pos",
+      "cable_4awg_pos"
+     ]
+    },
+    "-": {
+     "label": "factory \u2212",
+     "nodes": [
+      "flag_neg",
+      "cable_2awg_neg",
+      "cable_4awg_neg"
+     ]
+    }
+   }
+  },
+  "gauge": {
+   "type": "choice",
+   "default": "2awg",
+   "label": "Gauge",
+   "values": {
+    "2awg": {
+     "label": "2 AWG",
+     "nodes": [
+      "lug_2awg",
+      "cable_2awg_pos",
+      "cable_2awg_neg"
+     ]
+    },
+    "4awg": {
+     "label": "4 AWG",
+     "nodes": [
+      "lug_4awg",
+      "cable_4awg_pos",
+      "cable_4awg_neg"
+     ]
+    }
+   }
+  }
+ },
+ "notes": "ESTIMATE: marker for the existing factory cable end, not a product. Lug and cable sizes as the 2/4 AWG lugs (estimates). The coloured flag stands for the label factory + / factory - (see label_by_option); no text is modelled."
+}

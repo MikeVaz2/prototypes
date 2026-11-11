@@ -1,0 +1,187 @@
+{
+ "kind": "mrbf",
+ "id": "mrbf-5191",
+ "name": "Blue Sea 5191 MRBF terminal fuse block, 30-300 A, 58 V",
+ "units": "in",
+ "catalog": {
+  "category": "fusing",
+  "mountKind": "stud",
+  "icon": "fuse",
+  "short": "MRBF fuse",
+  "swatch": "#303034"
+ },
+ "ratings": {
+  "current_a_max": 300,
+  "voltage_dc_max": 58,
+  "output_stud": "5/16-18 (listing says M8)",
+  "max_torque_in_lb": 75
+ },
+ "dims": {
+  "width": 0.95,
+  "tab_thickness": 0.1,
+  "tab_length": 0.7,
+  "hole_diameter": 0.4,
+  "body_x0": 0.55,
+  "body_x1": 2.75,
+  "body_height": 1.0,
+  "output_x": 2.25,
+  "stud_above": 0.8
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "+",
+    "consumes_in": 0.1
+   },
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 90,
+   "yaw_step_deg": 15,
+   "note": "origin = 3/8 stud hole centre on the bottom of the input tab; body runs toward local +X (yaw 90 = toward +Z front)"
+  },
+  {
+   "id": "top",
+   "type": "stack",
+   "pos": [
+    0,
+    0.1,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "note": "top of the input tab; the nut sits here, beside the body"
+  }
+ ],
+ "connections": [
+  {
+   "id": "fuse_in",
+   "kind": "fuse_in",
+   "form": "ring",
+   "thread": "3/8-16",
+   "polarity": "+",
+   "rating_a": 300,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "note": "input tab on the battery (or bus) stud; rating is the fuse size, option fuse_a",
+   "rating_from_option": "fuse_a"
+  },
+  {
+   "id": "fuse_out",
+   "kind": "fuse_out",
+   "form": "stud",
+   "thread": "5/16-18",
+   "polarity": "+",
+   "rating_a": 150,
+   "rating_from_option": "fuse_a",
+   "pos": [
+    2.25,
+    1.1,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "5/16-18",
+    "max_items": 2,
+    "max_stack_in": 0.6,
+    "note": "thread above the output flange (1.1 to 1.8 in)"
+   }
+  }
+ ],
+ "options": {
+  "fuse_a": {
+   "type": "choice",
+   "default": "150",
+   "label": "Fuse",
+   "note": "label only, not modelled",
+   "values": {
+    "30": {
+     "label": "30 A",
+     "nodes": []
+    },
+    "40": {
+     "label": "40 A",
+     "nodes": []
+    },
+    "50": {
+     "label": "50 A",
+     "nodes": []
+    },
+    "60": {
+     "label": "60 A",
+     "nodes": []
+    },
+    "70": {
+     "label": "70 A",
+     "nodes": []
+    },
+    "80": {
+     "label": "80 A",
+     "nodes": []
+    },
+    "100": {
+     "label": "100 A",
+     "nodes": []
+    },
+    "110": {
+     "label": "110 A",
+     "nodes": []
+    },
+    "125": {
+     "label": "125 A",
+     "nodes": []
+    },
+    "150": {
+     "label": "150 A",
+     "nodes": []
+    },
+    "175": {
+     "label": "175 A",
+     "nodes": []
+    },
+    "200": {
+     "label": "200 A",
+     "nodes": []
+    },
+    "225": {
+     "label": "225 A",
+     "nodes": []
+    },
+    "250": {
+     "label": "250 A",
+     "nodes": []
+    },
+    "300": {
+     "label": "300 A",
+     "nodes": []
+    }
+   }
+  }
+ },
+ "notes": "Source: Blue Sea product page for 5191 (300 A max, 58 V DC, 5/16 in stud, fits 3/8 stud; 75 in-lb max torque). The dimensioned drawing 5191.pdf could not be downloaded (access denied), so the body shape and ALL dimensions are estimates: body 2.2 x 0.95 x 1.0 in, tab 0.1 thick, output stud 1.1 to 1.8 in. Output stud thread 5/16-18 per founder (listing says M8). Replace with the drawing numbers when available."
+}
