@@ -1,0 +1,265 @@
+{
+ "kind": "lug",
+ "id": "lug-516-pos",
+ "name": "SC-style ring lug, 2/4/6 AWG, 5/16\" hole (positive, red jacket)",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "hole_diameter": 0.33,
+  "gauges": {
+   "2awg": {
+    "tongue_width": 0.75,
+    "tongue_thickness": 0.1,
+    "overall_length": 2.0,
+    "barrel_od": 0.55,
+    "barrel_length": 0.75,
+    "cable_od": 0.45,
+    "cable_length": 6.0,
+    "joint_length": 1.5,
+    "joint_od": 0.57
+   },
+   "4awg": {
+    "tongue_width": 0.65,
+    "tongue_thickness": 0.09,
+    "overall_length": 1.8,
+    "barrel_od": 0.45,
+    "barrel_length": 0.65,
+    "cable_od": 0.38,
+    "cable_length": 6.0,
+    "joint_length": 1.5,
+    "joint_od": 0.5
+   },
+   "6awg": {
+    "tongue_width": 0.56,
+    "tongue_thickness": 0.08,
+    "overall_length": 1.65,
+    "barrel_od": 0.38,
+    "barrel_length": 0.55,
+    "cable_od": 0.32,
+    "cable_length": 6.0,
+    "joint_length": 1.5,
+    "joint_od": 0.44
+   }
+  }
+ },
+ "colors": {
+  "lug": [
+   0.8,
+   0.82,
+   0.84,
+   1.0
+  ],
+  "cable": [
+   0.75,
+   0.05,
+   0.05,
+   1.0
+  ],
+  "joint": [
+   0.22,
+   0.23,
+   0.25,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "accepts": [
+    "5/16-18",
+    "5/16"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 15,
+   "note": "origin = hole centre on the tongue bottom face (sits on the 5/16 stud flange or the item below); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed",
+   "needs": {
+    "kind": "stud",
+    "thread": "5/16-18",
+    "polarity": "+",
+    "consumes_in": 0.1,
+    "consumes_by_option": {
+     "gauge": {
+      "2awg": 0.1,
+      "4awg": 0.09,
+      "6awg": 0.08
+     }
+    }
+   }
+  },
+  {
+   "id": "top",
+   "type": "stack",
+   "pos": [
+    0,
+    0.1,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "by_option": {
+    "gauge": {
+     "2awg": [
+      0,
+      0.1,
+      0
+     ],
+     "4awg": [
+      0,
+      0.09,
+      0
+     ],
+     "6awg": [
+      0,
+      0.08,
+      0
+     ]
+    }
+   },
+   "note": "tongue top on the stud axis; the next part in the stack (busbar tab, else nut) sits here"
+  }
+ ],
+ "options": {
+  "gauge": {
+   "type": "choice",
+   "default": "2awg",
+   "label": "Gauge",
+   "values": {
+    "2awg": {
+     "label": "2 AWG",
+     "nodes": [
+      "lug_2awg",
+      "cable_2awg",
+      "joint_2awg"
+     ]
+    },
+    "4awg": {
+     "label": "4 AWG",
+     "nodes": [
+      "lug_4awg",
+      "cable_4awg",
+      "joint_4awg"
+     ]
+    },
+    "6awg": {
+     "label": "6 AWG",
+     "nodes": [
+      "lug_6awg",
+      "cable_6awg",
+      "joint_6awg"
+     ]
+    }
+   }
+  },
+  "length": {
+   "type": "number",
+   "default": 6,
+   "min": 3,
+   "max": 24,
+   "step": 1,
+   "unit": "in",
+   "label": "Extension",
+   "nodes": [
+    "cable_*",
+    "joint_*"
+   ],
+   "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
+  }
+ },
+ "notes": "ESTIMATE: SC-style closed-barrel tin copper ring lug with a 5/16 hole (0.33 in). All dimensions are estimates by analogy with the 3/8 lug (6 AWG: tongue 0.56 x 0.08, 1.65 long, barrel 0.38 OD). Measure the real lug before ordering. Fits the 5/16-18 output stud of the MRBF 5191.",
+ "catalog": {
+  "category": "cable",
+  "mountKind": "stud",
+  "icon": "lug",
+  "short": "5/16 lug +",
+  "swatch": "#b87333"
+ },
+ "connections": [
+  {
+   "id": "ring",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "5/16-18",
+   "polarity": "+",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "by_option": {
+    "gauge": {
+     "2awg": {
+      "rating_a": 150
+     },
+     "4awg": {
+      "rating_a": 100
+     },
+     "6awg": {
+      "rating_a": 75
+     }
+    }
+   },
+   "note": "rating by wire gauge, estimate"
+  },
+  {
+   "id": "barrel",
+   "kind": "crimp",
+   "gauge": "2",
+   "polarity": "+",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    1.625,
+    0.275,
+    0
+   ],
+   "by_option": {
+    "gauge": {
+     "2awg": {
+      "gauge": "2",
+      "pos": [
+       1.25,
+       0.275,
+       0
+      ],
+      "rating_a": 150
+     },
+     "4awg": {
+      "gauge": "4",
+      "pos": [
+       1.15,
+       0.225,
+       0
+      ],
+      "rating_a": 100
+     },
+     "6awg": {
+      "gauge": "6",
+      "pos": [
+       1.095,
+       0.19,
+       0
+      ],
+      "rating_a": 75
+     }
+    }
+   }
+  }
+ ]
+}

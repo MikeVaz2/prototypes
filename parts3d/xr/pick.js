@@ -3,12 +3,16 @@
 // kind of a composed part: battery (the host) | lug | busbar | nut
 export function kindOf(partId, hostId, hasCoverOption = false) {
   if (partId === hostId) return 'battery';
+  if (/^lug-joint/.test(partId)) return 'cable';
   if (/^lug/.test(partId)) return 'lug';
   if (/^nut/.test(partId)) return 'nut';
+  if (/^mrbf/.test(partId)) return 'fuse';
+  if (/^(powerbar|copper)/.test(partId)) return 'bar';
+  if (/^(butt|factory)/.test(partId)) return 'cable';
   if (/^(blueseas|busbar|bus)/.test(partId) || hasCoverOption) return 'busbar';
   return 'busbar';
 }
-const KIND_NAME = { battery: 'Battery', lug: 'Lug', busbar: 'Busbar', nut: 'Nut' };
+const KIND_NAME = { battery: 'Battery', lug: 'Lug', busbar: 'Busbar', nut: 'Nut', fuse: 'Fuse', bar: 'Bar', cable: 'Cable' };
 export function labelOf(partId, kind) {
   const s = /-pos$/.test(partId) ? ' +' : /-neg$/.test(partId) ? ' −' : '';
   return (KIND_NAME[kind] || partId) + (kind === 'battery' ? '' : s);
@@ -67,13 +71,14 @@ export function rayFromPose(pos, q) {
 export const beamStart = (ray, drop = 0.06) => ray.origin.map((v, i) => v - ray.up[i] * drop);
 
 // short name for the single round button: "+ lug", "Battery", "Scene" when nothing is selected
-export function shortName(partId, kind) {
+export function shortName(partId, kind, fallback) {
   if (!partId) return 'Scene';
+  if (kind === 'fuse' || kind === 'bar' || kind === 'cable') return fallback || KIND_NAME[kind];
   if (kind === 'lug') return /-pos$/.test(partId) ? '+ lug' : /-neg$/.test(partId) ? '− lug' : 'Lug';
   return { battery: 'Battery', busbar: 'Busbar', nut: 'Nut' }[kind] || 'Scene';
 }
 // every button of the single-button stack
-export const ALL_BUTTONS = ['extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
+export const ALL_BUTTONS = ['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
   'again', 'reset', 'mark', 'clearmarks', 'select', 'deselect', 'exit', 'more', 'back'];
 // which buttons show in the open stack (primary: contextual actions + More) and in the More panel
 export function stackFor(kind, rotStep = 0, selected = false) {

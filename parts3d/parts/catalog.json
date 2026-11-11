@@ -2135,6 +2135,422 @@
     }
    },
    "short": "Factory cable"
+  },
+  {
+   "id": "lug-516-pos",
+   "name": "SC-style ring lug, 2/4/6 AWG, 5/16\" hole (positive, red jacket)",
+   "glb": "lug-516-pos.glb",
+   "default": false,
+   "thumb_color": "#b87333",
+   "kind": "lug",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "5/16-18",
+      "5/16"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 15,
+     "note": "origin = hole centre on the tongue bottom face (sits on the 5/16 stud flange or the item below); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed",
+     "needs": {
+      "kind": "stud",
+      "thread": "5/16-18",
+      "polarity": "+",
+      "consumes_in": 0.1,
+      "consumes_by_option": {
+       "gauge": {
+        "2awg": 0.1,
+        "4awg": 0.09,
+        "6awg": 0.08
+       }
+      }
+     }
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.1,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": [
+        0,
+        0.1,
+        0
+       ],
+       "4awg": [
+        0,
+        0.09,
+        0
+       ],
+       "6awg": [
+        0,
+        0.08,
+        0
+       ]
+      }
+     },
+     "note": "tongue top on the stud axis; the next part in the stack (busbar tab, else nut) sits here"
+    }
+   ],
+   "options": {
+    "gauge": {
+     "type": "choice",
+     "default": "2awg",
+     "label": "Gauge",
+     "values": {
+      "2awg": {
+       "label": "2 AWG",
+       "nodes": [
+        "lug_2awg",
+        "cable_2awg",
+        "joint_2awg"
+       ]
+      },
+      "4awg": {
+       "label": "4 AWG",
+       "nodes": [
+        "lug_4awg",
+        "cable_4awg",
+        "joint_4awg"
+       ]
+      },
+      "6awg": {
+       "label": "6 AWG",
+       "nodes": [
+        "lug_6awg",
+        "cable_6awg",
+        "joint_6awg"
+       ]
+      }
+     }
+    },
+    "length": {
+     "type": "number",
+     "default": 6,
+     "min": 3,
+     "max": 24,
+     "step": 1,
+     "unit": "in",
+     "label": "Extension",
+     "nodes": [
+      "cable_*",
+      "joint_*"
+     ],
+     "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
+    }
+   },
+   "category": "cable",
+   "mountKind": "stud",
+   "icon": "lug",
+   "connections": [
+    {
+     "id": "ring",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "5/16-18",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "rating_a": 150
+       },
+       "4awg": {
+        "rating_a": 100
+       },
+       "6awg": {
+        "rating_a": 75
+       }
+      }
+     },
+     "note": "rating by wire gauge, estimate"
+    },
+    {
+     "id": "barrel",
+     "kind": "crimp",
+     "gauge": "2",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      1.625,
+      0.275,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "gauge": "2",
+        "pos": [
+         1.25,
+         0.275,
+         0
+        ],
+        "rating_a": 150
+       },
+       "4awg": {
+        "gauge": "4",
+        "pos": [
+         1.15,
+         0.225,
+         0
+        ],
+        "rating_a": 100
+       },
+       "6awg": {
+        "gauge": "6",
+        "pos": [
+         1.095,
+         0.19,
+         0
+        ],
+        "rating_a": 75
+       }
+      }
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "mrbf-5191.fuse_out"
+    ]
+   },
+   "short": "5/16 lug +"
+  },
+  {
+   "id": "lug-516-neg",
+   "name": "SC-style ring lug, 2/4/6 AWG, 5/16\" hole (negative, black jacket)",
+   "glb": "lug-516-neg.glb",
+   "default": false,
+   "thumb_color": "#b87333",
+   "kind": "lug",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "5/16-18",
+      "5/16"
+     ],
+     "default_yaw_deg": 180,
+     "yaw_step_deg": 15,
+     "note": "origin = hole centre on the tongue bottom face (sits on the 5/16 stud flange or the item below); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed",
+     "needs": {
+      "kind": "stud",
+      "thread": "5/16-18",
+      "polarity": "-",
+      "consumes_in": 0.1,
+      "consumes_by_option": {
+       "gauge": {
+        "2awg": 0.1,
+        "4awg": 0.09,
+        "6awg": 0.08
+       }
+      }
+     }
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.1,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": [
+        0,
+        0.1,
+        0
+       ],
+       "4awg": [
+        0,
+        0.09,
+        0
+       ],
+       "6awg": [
+        0,
+        0.08,
+        0
+       ]
+      }
+     },
+     "note": "tongue top on the stud axis; the next part in the stack (busbar tab, else nut) sits here"
+    }
+   ],
+   "options": {
+    "gauge": {
+     "type": "choice",
+     "default": "2awg",
+     "label": "Gauge",
+     "values": {
+      "2awg": {
+       "label": "2 AWG",
+       "nodes": [
+        "lug_2awg",
+        "cable_2awg",
+        "joint_2awg"
+       ]
+      },
+      "4awg": {
+       "label": "4 AWG",
+       "nodes": [
+        "lug_4awg",
+        "cable_4awg",
+        "joint_4awg"
+       ]
+      },
+      "6awg": {
+       "label": "6 AWG",
+       "nodes": [
+        "lug_6awg",
+        "cable_6awg",
+        "joint_6awg"
+       ]
+      }
+     }
+    },
+    "length": {
+     "type": "number",
+     "default": 6,
+     "min": 3,
+     "max": 24,
+     "step": 1,
+     "unit": "in",
+     "label": "Extension",
+     "nodes": [
+      "cable_*",
+      "joint_*"
+     ],
+     "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
+    }
+   },
+   "category": "cable",
+   "mountKind": "stud",
+   "icon": "lug",
+   "connections": [
+    {
+     "id": "ring",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "5/16-18",
+     "polarity": "-",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "rating_a": 150
+       },
+       "4awg": {
+        "rating_a": 100
+       },
+       "6awg": {
+        "rating_a": 75
+       }
+      }
+     },
+     "note": "rating by wire gauge, estimate"
+    },
+    {
+     "id": "barrel",
+     "kind": "crimp",
+     "gauge": "2",
+     "polarity": "-",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      1.625,
+      0.275,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": {
+        "gauge": "2",
+        "pos": [
+         1.25,
+         0.275,
+         0
+        ],
+        "rating_a": 150
+       },
+       "4awg": {
+        "gauge": "4",
+        "pos": [
+         1.15,
+         0.225,
+         0
+        ],
+        "rating_a": 100
+       },
+       "6awg": {
+        "gauge": "6",
+        "pos": [
+         1.095,
+         0.19,
+         0
+        ],
+        "rating_a": 75
+       }
+      }
+     }
+    }
+   ],
+   "compatible": {
+    "ring": []
+   },
+   "short": "5/16 lug -"
   }
  ]
 }

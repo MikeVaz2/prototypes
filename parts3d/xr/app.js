@@ -9,6 +9,8 @@ import * as XM from './xrmath.js';
 import * as PK from './pick.js';
 import * as BM from './beam.js';
 import * as MD from './modes.js';
+import * as MT from './match.js';
+import * as SCN from './scene.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -150,13 +152,16 @@ function refreshMarks() {
   $('marks').textContent = markMsg || [toolPrompt(), ...lines].filter(Boolean).join('  |  ');
 }
 function selectMark(i) { selMark = i >= 0 && i < marks.length ? i : -1; refreshMarks(); }
-function dropMarkAt(point, src) {
-  if (marks.length >= MAX_MARKS) { flashMsg('Max ' + MAX_MARKS + ' marks: Undo or Clear marks first'); return false; }
+function addMarkObj(point, src) {
   const pos = new THREE.Vector3(...point), group = new THREE.Group(), ball = new THREE.Mesh(new THREE.SphereGeometry(0.005, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd400, depthTest: false }));
   ball.renderOrder = 10; const sprite = makeSprite(0.12); sprite.position.y = 0.03; sprite.visible = false;
   group.position.copy(pos); group.add(ball, sprite); scene.add(group);
-  marks.push({ group, ball, sprite, pos, src, text: '' }); selMark = marks.length - 1; log('mark ' + marks.length + ' dropped on ' + src);
-  refreshMarks(); return true;
+  marks.push({ group, ball, sprite, pos, src, text: '' });
+}
+function dropMarkAt(point, src) {
+  if (marks.length >= MAX_MARKS) { flashMsg('Max ' + MAX_MARKS + ' marks: Undo or Clear marks first'); return false; }
+  addMarkObj(point, src); selMark = marks.length - 1; log('mark ' + marks.length + ' dropped on ' + src);
+  refreshMarks(); persistSoon(); return true;
 }
 function dropMark() {
   if (!beamHit) { flashMsg('Aim at a surface first'); log('mark: no surface under the beam yet'); return false; }
@@ -164,32 +169,67 @@ function dropMark() {
 }
 function undoMark() {
   const m = marks.pop(); if (!m) return;
-  disposeObj(m.group); if (selMark >= marks.length) selMark = -1; hovMark = -1; refreshMarks();
+  disposeObj(m.group); if (selMark >= marks.length) selMark = -1; hovMark = -1; refreshMarks(); persistSoon();
 }
-function clearMarks() { while (marks.length) disposeObj(marks.pop().group); selMark = hovMark = -1; refreshMarks(); }
+function removeMarkObjs() { while (marks.length) disposeObj(marks.pop().group); selMark = hovMark = -1; }
+function clearMarks() { removeMarkObjs(); refreshMarks(); persistSoon(); }
+function addMeasureObj(a, b, ballA) {
+  const group = new THREE.Group();
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]),
+    new THREE.LineBasicMaterial({ color: 0x00e5ff, depthTest: false, transparent: true }));
+  line.renderOrder = 9; line.frustumCulled = false;
+  const sprite = makeSprite(0.09); sprite.position.fromArray(MD.midpoint(a, b)); sprite.position.y += 0.03;
+  group.add(line, sprite, makeBall(b, 0x00e5ff));
+  if (ballA) { scene.remove(ballA); group.add(ballA); } else group.add(makeBall(a, 0x00e5ff));   // pending A ball is already at a
+  scene.add(group);
+  measures.push({ group, sprite, a, b, text: '' });
+}
 function measureAt(point) {
   const r = MD.measureTap(pendingA && pendingA.pos, point);
   if (r.pending) { pendingA = { pos: point, ball: makeBall(point, 0x00e5ff) }; log('measure A'); }
   else {
     if (measures.length >= MAX_MEASURES) { flashMsg('Max ' + MAX_MEASURES + ' measurements: Undo or Clear first'); cancelPending(); return; }
-    const [a, b] = r.done, group = new THREE.Group();
-    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]),
-      new THREE.LineBasicMaterial({ color: 0x00e5ff, depthTest: false, transparent: true }));
-    line.renderOrder = 9; line.frustumCulled = false;
-    const sprite = makeSprite(0.09); sprite.position.fromArray(MD.midpoint(a, b)); sprite.position.y += 0.03;
-    group.add(line, sprite, makeBall(b, 0x00e5ff)); scene.remove(pendingA.ball); group.add(pendingA.ball);   // pendingA.ball is already at a
-    scene.add(group); pendingA = null;
-    measures.push({ group, sprite, a, b, text: '' }); log('measure ' + measures.length + ' done');
+    addMeasureObj(r.done[0], r.done[1], pendingA.ball); pendingA = null; log('measure ' + measures.length + ' done'); persistSoon();
   }
   refreshMarks();
 }
 function measureHit() { if (!beamHit) { flashMsg('Aim at a surface first'); return; } measureAt(beamHit.point); }
 function cancelPending() { if (pendingA) { disposeObj(pendingA.ball); pendingA = null; } refreshMarks(); }
-function undoMeasure() { if (pendingA) { cancelPending(); return; } const m = measures.pop(); if (m) disposeObj(m.group); refreshMarks(); }
-function clearMeasures() { cancelPending(); while (measures.length) disposeObj(measures.pop().group); refreshMarks(); }
+function undoMeasure() { if (pendingA) { cancelPending(); return; } const m = measures.pop(); if (m) disposeObj(m.group); refreshMarks(); persistSoon(); }
+function removeMeasureObjs() { cancelPending(); while (measures.length) disposeObj(measures.pop().group); }
+function clearMeasures() { removeMeasureObjs(); refreshMarks(); persistSoon(); }
+
+// ---- one scene store, serialized to the URL hash. Marks and measurements are kept in the model frame so they follow the model between preview and AR ----
+let marksLive = true, storedMarks = [], storedMeasures = [], persistT = 0, initialHash = '';
+const toModel = p => { modelHolder.updateWorldMatrix(true, false); return modelHolder.worldToLocal(new THREE.Vector3(...p)).toArray(); };
+const toWorld = p => { scene.updateMatrixWorld(true); return modelHolder.localToWorld(new THREE.Vector3(...p)).toArray(); };
+function sceneNow() {
+  if (marksLive) {
+    storedMarks = marks.map(m => ({ p: toModel(m.pos.toArray()), src: m.src }));
+    storedMeasures = measures.map(m => ({ a: toModel(m.a), b: toModel(m.b) }));
+  }
+  return { insts: state, offs, marks: storedMarks, measures: storedMeasures };
+}
+function persist() {
+  clearTimeout(persistT);
+  if (!C) return '';
+  const h = C.SC.toHash(sceneNow());
+  try { history.replaceState(null, '', location.pathname + location.search + '#' + h); } catch (e) { /* sandboxed */ }
+  return h;
+}
+function suspendMarks() { sceneNow(); marksLive = false; removeMarkObjs(); removeMeasureObjs(); refreshMarks(); }
+function persistSoon() { clearTimeout(persistT); persistT = setTimeout(persist, 200); }
+// rebuild the mark / measure objects from the stored model-frame lists at the model's current world pose
+function restoreMarks() {
+  removeMarkObjs(); removeMeasureObjs();
+  for (const m of storedMarks) addMarkObj(toWorld(m.p), m.src);
+  for (const m of storedMeasures) addMeasureObj(toWorld(m.a), toWorld(m.b));
+  marksLive = true; refreshMarks();
+}
 function setHint(t) { hint.hidden = !t; if (t) hint.textContent = t; }
 function setTool(t) {
   t = MD.normTool(t); if (t === tool) return;
+  if (adding) cancelAdd(); closeLib();
   if (tool === 'measure') cancelPending();
   tool = t; moreOpen = false; log('tool ' + t);
   if (t !== 'select') selectPart(null);
@@ -198,6 +238,7 @@ function setTool(t) {
 }
 // a scene tap in a session (placed): what it does depends on the tool
 function onSceneTap(ev) {
+  if (adding) { confirmAdd(); return; }
   if (tool === 'mark') { if (hovMark >= 0) selectMark(hovMark); else dropMark(); }
   else if (tool === 'measure') measureHit();
   else if (hovMark >= 0) { selectPart(null); selectMark(hovMark); }
@@ -218,6 +259,7 @@ syncUnitButtons();
 
 // ---- app state ----
 let moreOpen = false;
+let adding = null;   // Add part in progress: { partId, kind: 'stud'|'surface', outlets: [{ key, seat: [x,y,z] model frame m }], target: key|null, lock: ray|null }
 let C, state = [], offs = { ...OFS.ZERO }, selectedId = null, hoveredId = null, busy = false, again = false;
 let session = null, hitSource = null, anchor = null, anchorFix = null, lastFrame = null, lastHit = null;
 const baseMat = new THREE.Matrix4();
@@ -227,9 +269,10 @@ const tmpV = new THREE.Vector3();
 const raycaster = new THREE.Raycaster();
 let hitCount = -1;
 
-const selInst = () => state.find(i => i.part === selectedId) || null;
-const kindOfId = id => { const p = id && C.partOf(id); return p ? PK.kindOf(p.id, C.host.id, 'cover' in (p.options || {})) : null; };
-const nameOfId = id => PK.labelOf(id, kindOfId(id));
+const instOf = id => state.find(i => i.id === id) || null;
+const selInst = () => instOf(selectedId);
+const kindOfId = id => { const i = instOf(id), p = i && C.partOf(i.part); return p ? PK.kindOf(p.id, C.host.id, 'cover' in (p.options || {})) : null; };
+const nameOfId = id => { const i = instOf(id), p = i && C.partOf(i.part), k = kindOfId(id); return !p ? '' : (k === 'fuse' || k === 'bar' || k === 'cable') ? (p.short || p.name) : PK.labelOf(p.id, k); };
 const numKey = p => Object.keys(p.options || {}).find(k => p.options[k].type === 'number');
 const choiceKey = p => Object.keys(p.options || {}).find(k => p.options[k].type === 'choice');
 
@@ -239,7 +282,7 @@ async function rebuild() {
   try {
     const root = await C.build(state);
     modelHolder.clear(); modelHolder.add(root);
-    hoveredId = null; applyTints(); refreshOutline(); readout();
+    hoveredId = null; applyTints(); refreshOutline(); readout(); persistSoon();
   } finally { busy = false; if (again) { again = false; rebuild(); } }
 }
 const roots = () => (modelHolder.children[0]?.children || []).filter(o => o.userData.instanceId);
@@ -276,7 +319,7 @@ function refreshOutline() {
   if (r) outline.box.copy(localBox(r)).expandByScalar(0.002);
 }
 function selectPart(id) {
-  id = id && C.partOf(id) ? id : null;
+  id = id && instOf(id) ? id : null;
   if (id !== selectedId) log('selected ' + (id || 'none'));
   selectedId = id;
   applyTints(); refreshOutline(); readout();
@@ -285,29 +328,34 @@ function selectPart(id) {
 function applyOffsets() {
   const t = OFS.toTransform(offs);
   inner.position.set(...t.pos); inner.rotation.y = t.yawRad;
-  readout();
+  readout(); persistSoon();
 }
 function readout() {
   if (!C) return;
-  const inst = selInst(), p = inst && C.partOf(inst.part), kind = inst ? kindOfId(inst.part) : null;
+  const inst = selInst(), p = inst && C.partOf(inst.part), kind = inst ? kindOfId(inst.id) : null;
   $('ofs').textContent = MD.describeU(offs, units);
   refreshMarks();
   let t = 'Nothing selected';
   if (inst) {
     const nk = numKey(p), ck = choiceKey(p);
-    t = nameOfId(inst.part) + (nk ? ' ' + MD.fmtLen(inst.opts[nk], units) : '') + (ck ? ' ' + inst.opts[ck] : '') + (kind === 'lug' || kind === 'busbar' ? ' ' + inst.yaw + '°' : '');
+    t = nameOfId(inst.id) + (nk ? ' ' + MD.fmtLen(inst.opts[nk], units) : '') + (ck ? ' ' + p.options[ck].values[inst.opts[ck]].label : '') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
   } else if (hoveredId) t = 'Aim: ' + nameOfId(hoveredId);
+  if (adding) t = 'Add ' + (C.partOf(adding.partId).short || adding.partId) + (adding.kind === 'stud' ? ': ' + (adding.target ? outletName(adding.target) : 'no target') : ': aim at a surface');
   $('sel').textContent = t;
   // single button: name of the selection; stack: contextual actions or the More panel
-  fab.textContent = tool === 'select' ? PK.shortName(inst ? inst.part : null, kind) : tool === 'mark' ? 'Marks' : 'Measure';
+  fab.textContent = adding ? 'Add' : tool === 'select' ? PK.shortName(inst ? inst.part : null, kind, p && (p.short || p.name)) : tool === 'mark' ? 'Marks' : 'Measure';
   const chip = $('mode'); chip.dataset.tool = tool; chip.querySelector('b').textContent = MD.TOOL_LABEL[tool]; chip.setAttribute('aria-label', 'Mode: ' + MD.TOOL_LABEL[tool] + '. Tap to change');
-  const step = inst ? C.yawStep(inst.part) : 0, lay = MD.stackForTool(tool, kind, step, !!selectedId), show = moreOpen ? lay.more : lay.primary;
+  const step = inst ? C.yawStep(inst.part) : 0;
+  const ex = inst ? { free: !!inst.at, num: !!numKey(p), choice: !!choiceKey(p) } : {};
+  const lay = adding ? { primary: ['confirm', ...(adding.kind === 'stud' && adding.outlets.length > 1 ? ['next'] : []), 'cancel'], more: [] } : MD.stackForTool(tool, kind, step, !!selectedId, ex);
+  const show = moreOpen && !adding ? lay.more : lay.primary;
   for (const id of MD.ALL_IDS) $(id).hidden = !show.includes(id);
   stack.classList.toggle('more', moreOpen);
   for (const id of show) stack.appendChild($(id));   // keep the layout order of the list
   $('rotm').querySelector('small').textContent = $('rotp').querySelector('small').textContent = step + '°';
   $('rotm').setAttribute('aria-label', 'Rotate right ' + step + ' degrees'); $('rotp').setAttribute('aria-label', 'Rotate left ' + step + ' degrees');
-  if (inst && choiceKey(p)) $('gauge').querySelector('span').textContent = inst.opts[choiceKey(p)];
+  if (inst && choiceKey(p)) { const ck = choiceKey(p), o = p.options[ck]; $('gauge').querySelector('span').textContent = o.values[inst.opts[ck]].label; $('gauge').querySelector('small').textContent = (o.label || ck).toLowerCase(); }
+  $('confirm').innerHTML = adding && adding.kind === 'stud' ? 'Place<small>on ring</small>' : 'Place<small>here</small>';
   $('cover').setAttribute('aria-pressed', !!(inst && inst.opts.cover));
   const st = MD.stepsFor(units), lab = (id, big, small, aria) => { $(id).innerHTML = big + '<small>' + small + '</small>'; $(id).setAttribute('aria-label', aria); };
   lab('extp', '+' + st.extLabel, st.extUnit, 'Extension plus ' + (units === 'mm' ? '25 mm' : '1 inch')); lab('extm', '&minus;' + st.extLabel, st.extUnit, 'Extension minus ' + (units === 'mm' ? '25 mm' : '1 inch'));
@@ -341,11 +389,23 @@ const rotSel = dir => { const li = selInst(); if (li) { li.yaw = PK.rotateYaw(li
 wire('rotm', () => rotSel(-1)); wire('rotp', () => rotSel(1));
 wire('gauge', () => { const li = selInst(), p = li && C.partOf(li.part), k = p && choiceKey(p); if (k) { li.opts[k] = PK.nextChoice(p.options[k].values, li.opts[k]); rebuild(); } });
 wire('cover', () => { const li = selInst(); if (li && 'cover' in li.opts) { li.opts.cover = !li.opts.cover; rebuild(); } });
-wire('hm', () => setOffs(XM.raise(offs, -MD.stepsFor(units).height))); wire('hp', () => setOffs(XM.raise(offs, MD.stepsFor(units).height)));
+// a selected part placed on a surface (inst.at) moves by itself; otherwise these move the whole model
+const freeSel = () => { const i = selInst(); return i && i.at ? i : null; };
+const r2 = v => Math.round(v * 100) / 100;
+function moveFree(f, dx, dy, dz) { f.at = [r2(f.at[0] + dx), r2(f.at[1] + dy), r2(f.at[2] + dz)]; rebuild(); }
+function modelPsi() { modelHolder.updateWorldMatrix(true, false); const d = new THREE.Vector3(0, 0, 1).transformDirection(modelHolder.matrixWorld); return XM.psiFromDir(d.x, d.z); }
+wire('hm', () => { const f = freeSel(), h = MD.stepsFor(units).height; if (f) moveFree(f, 0, -h, 0); else setOffs(XM.raise(offs, -h)); });
+wire('hp', () => { const f = freeSel(), h = MD.stepsFor(units).height; if (f) moveFree(f, 0, h, 0); else setOffs(XM.raise(offs, h)); });
 for (const [id, dir] of [['nl', 'left'], ['nr', 'right'], ['nu', 'up'], ['nd', 'down']])
-  wire(id, () => setOffs(XM.nudge(offs, viewForward(), dir, pivotPsi(), MD.stepsFor(units).nudge)));
-wire('tm', () => setOffs(XM.turn(offs, -XM.TURN_DEG))); wire('tp', () => setOffs(XM.turn(offs, XM.TURN_DEG)));
-wire('again', () => { if (session) { setMode('reticle'); anchor = null; setHint('Move the phone to find the floor, tap to place'); } });
+  wire(id, () => {
+    const f = freeSel(), st = MD.stepsFor(units).nudge;
+    if (!f) { setOffs(XM.nudge(offs, viewForward(), dir, pivotPsi(), st)); return; }
+    const [dx, dz] = XM.viewDelta(viewForward(), dir, st), [lx, lz] = XM.worldToFrame(dx, dz, modelPsi());
+    moveFree(f, lx, 0, lz);
+  });
+const turnSel = d => { const f = freeSel(); if (f) { f.yaw = PK.rotateYaw(f.yaw, d); rebuild(); } else setOffs(XM.turn(offs, d)); };
+wire('tm', () => turnSel(-XM.TURN_DEG)); wire('tp', () => turnSel(XM.TURN_DEG));
+wire('again', () => { if (session) { cancelAdd(); suspendMarks(); setMode('reticle'); anchor = null; setHint('Move the phone to find the floor, tap to place'); } });
 wire('drop', dropMark); wire('undomark', undoMark);
 wire('mnew', () => { cancelPending(); flashMsg('Tap point A'); }); wire('mundo', undoMeasure); wire('mclear', clearMeasures);
 $('mode').addEventListener('click', () => { setTool(MD.nextTool(tool)); setOpen(true); });
@@ -353,16 +413,18 @@ wire('select', () => { if (hoveredId) selectPart(hoveredId); });
 wire('deselect', () => selectPart(null));
 wire('clearmarks', clearMarks);
 wire('reset', () => {
-  state = C.parseState(new URLSearchParams(location.hash.slice(1)).get('s')) || C.defaultState();
+  cancelAdd(); closeLib();
+  state = C.parseState(new URLSearchParams(initialHash).get('s')) || C.defaultState();
   selectedId = null; rebuild(); setOffs({ ...OFS.ZERO });
 });
 wire('exit', () => { if (session) session.end(); });
 // single round button: tap opens/closes the stack; it collapses ~4 s after the last tap
 let collapseT = 0;
-function bumpCollapse() { clearTimeout(collapseT); if (ctl.classList.contains('open')) collapseT = setTimeout(() => setOpen(false), 4000); }
+function bumpCollapse() { clearTimeout(collapseT); if (ctl.classList.contains('open') && !adding) collapseT = setTimeout(() => setOpen(false), 4000); }
 function setOpen(open) {
   ctl.classList.toggle('open', open); fab.setAttribute('aria-expanded', open);
   if (!open) moreOpen = false;
+  if (open) closeLib();
   readout(); bumpCollapse();
 }
 fab.addEventListener('click', () => setOpen(!ctl.classList.contains('open')));
@@ -372,6 +434,147 @@ ctl.addEventListener('click', bumpCollapse, true);
 // touches on our controls must not place the model
 overlay.addEventListener('beforexrselect', e => { if (e.target !== overlay) e.preventDefault(); });
 ctl.addEventListener('beforexrselect', e => e.preventDefault());
+
+// ---- Add part: library list, compatible outlets (xr/match.js), place on an outlet or on a surface; Remove ----
+const libEl = $('lib'), listEl = $('liblist'), toastEl = $('toast');
+const outletGroup = new THREE.Group(); inner.add(outletGroup);   // rings live in the model frame (inner == modelHolder frame)
+let toastT = 0, lastAim = null;
+function toast(t, warn = false, ms = 3500) {
+  clearTimeout(toastT); toastEl.textContent = t; toastEl.hidden = !t; toastEl.classList.toggle('warn', !!warn); if (t) log('toast: ' + t);
+  if (t && ms) toastT = setTimeout(() => { toastEl.hidden = true; }, ms);
+}
+const CAT_ORDER = ['distribution', 'fusing', 'cable', 'hardware', 'marker'];
+const ICON = { lug: 'LUG', busbar: 'BUS', nut: 'NUT', powerbar: 'PWR', fuse: 'FUSE', bar: 'BAR', joint: 'JNT', splice: 'SPL', marker: 'FLAG' };
+function buildLib() {
+  const parts = C.catalog.parts.filter(p => p !== C.host), cats = [...new Set(parts.map(p => p.category || 'other'))].sort((a, b) => (CAT_ORDER.indexOf(a) + 1 || 99) - (CAT_ORDER.indexOf(b) + 1 || 99));
+  listEl.textContent = '';
+  for (const c of cats) {
+    const h = document.createElement('li'); h.className = 'cat'; h.textContent = c; listEl.appendChild(h);
+    for (const p of parts.filter(x => (x.category || 'other') === c)) {
+      const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.dataset.part = p.id;
+      const ic = document.createElement('span'); ic.className = 'ic'; ic.style.background = p.thumb_color || '#445'; ic.textContent = ICON[p.icon] || String(p.icon || p.kind).slice(0, 4).toUpperCase();
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.name; const sm = document.createElement('small'); sm.textContent = (p.category || '') + ' / ' + MT.mountKind(p); nm.appendChild(sm);
+      const mk = document.createElement('span'); mk.className = 'mk'; mk.textContent = MT.mountKind(p) === 'stud' ? 'on stud' : 'drop';
+      b.append(ic, nm, mk); li.appendChild(b); listEl.appendChild(li);
+    }
+  }
+}
+function openLib() {
+  if (!C) return;
+  cancelAdd(); setOpen(false); moreOpen = false;
+  if (!listEl.firstChild) buildLib();
+  libEl.hidden = false; listEl.scrollTop = 0; log('library open');
+}
+function closeLib() { libEl.hidden = true; }
+listEl.addEventListener('click', e => { const b = e.target.closest('button[data-part]'); if (b) startAdd(b.dataset.part); });
+$('libclose').addEventListener('click', closeLib);
+libEl.addEventListener('beforexrselect', e => e.preventDefault());
+
+function outletName(key) {
+  const c = C.SC.connOf(state, key);
+  return c && c.conn ? nameOfId(c.h.id) + ': ' + c.conn.id.replace('_', ' ') : key;
+}
+function clearOutletMarkers() { while (outletGroup.children.length) { const m = outletGroup.children[0]; outletGroup.remove(m); m.geometry.dispose(); m.material.dispose(); } }
+function buildOutletMarkers() {
+  clearOutletMarkers();
+  for (const o of adding.outlets) {
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.014, 0.02, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x00e5ff, depthTest: false, transparent: true, side: THREE.DoubleSide }));
+    m.position.fromArray(o.seat); m.renderOrder = 13; m.userData.key = o.key; outletGroup.add(m);
+  }
+}
+// pulse every ring, the target one is larger and yellow
+function refreshTargetMarkers() {
+  if (!adding || adding.kind !== 'stud') return;
+  const t = performance.now() / 1000;
+  for (const m of outletGroup.children) {
+    const on = m.userData.key === adding.target, k = 1 + 0.2 * Math.sin(t * 5 + (on ? 0 : 1.5));
+    m.scale.setScalar((on ? 1.5 : 1) * k); m.material.color.set(on ? 0xffd400 : 0x00e5ff); m.material.opacity = on ? 1 : 0.55 + 0.35 * Math.sin(t * 5);
+  }
+}
+function setTarget(key, lock) {
+  if (!adding || !adding.outlets.some(o => o.key === key)) return;
+  const changed = adding.target !== key;
+  adding.target = key; adding.lock = lock && lastAim ? { origin: lastAim.origin.slice(), dir: lastAim.dir.slice() } : null;
+  if (changed) { log('target ' + key); readout(); }
+}
+function aimTarget(ray) {   // AR / crosshair / mouse: the nearest compatible outlet to the aim ray (model frame, rigid so distances carry over)
+  lastAim = ray;
+  if (adding.lock) {
+    const l = adding.lock, d = Math.hypot(...ray.dir), cos = (ray.dir[0] * l.dir[0] + ray.dir[1] * l.dir[1] + ray.dir[2] * l.dir[2]) / (d * Math.hypot(...l.dir));
+    if (cos > 0.9995 && Math.hypot(ray.origin[0] - l.origin[0], ray.origin[1] - l.origin[1], ray.origin[2] - l.origin[2]) < 0.03) return;
+    adding.lock = null;
+  }
+  modelHolder.updateWorldMatrix(true, false); _inv.copy(modelHolder.matrixWorld).invert();
+  _lo.fromArray(ray.origin).applyMatrix4(_inv); _ld.fromArray(ray.dir).transformDirection(_inv);
+  const sn = BM.snapHover(adding.outlets.map(o => ({ id: o.key, min: o.seat, max: o.seat })), _lo.toArray(), _ld.toArray(), 0.6);
+  if (sn && sn.id !== adding.target) setTarget(sn.id, false);
+}
+function nearestOutletOnScreen(e, maxPx = 70) {
+  const r = renderer.domElement.getBoundingClientRect(), v = new THREE.Vector3();
+  let best = null, bd = maxPx;
+  scene.updateMatrixWorld(true);
+  for (const m of outletGroup.children) {
+    m.getWorldPosition(v).project(camera);
+    const d = Math.hypot(r.left + (v.x + 1) / 2 * r.width - e.clientX, r.top + (1 - v.y) / 2 * r.height - e.clientY);
+    if (d < bd) { bd = d; best = m.userData.key; }
+  }
+  return best;
+}
+function startAdd(partId) {
+  const p = C.partOf(partId); if (!p) return;
+  cancelAdd(); selectPart(null);
+  if (MT.mountKind(p) === 'stud') {
+    const all = C.SC.outlets(partId, C.SC.defOpts(p), state), ok = all.filter(o => o.ok);
+    if (!ok.length) { toast(MT.noOutletMessage(p, all), true); return; }
+    adding = { partId, kind: 'stud', outlets: ok.map(o => ({ key: o.key, seat: C.SC.seatOf(state, partId, o.key) })).filter(o => o.seat), target: null, lock: null };
+    adding.target = adding.outlets[0].key; buildOutletMarkers();
+    toast(adding.outlets.length + ' compatible ' + MT.threadShort(MT.needsOf(p).needs.thread) + ' stud' + (adding.outlets.length > 1 ? 's' : '') + ': aim or click a ring, then Place', false, 0);
+  } else {
+    adding = { partId, kind: 'surface', outlets: [], target: null, lock: null };
+    toast(!session && !PREVIEW ? 'Click the model or the floor to drop it' : 'Aim at a surface, then Place (or tap)', false, 0);
+  }
+  closeLib(); moreOpen = false; setOpen(true); readout();
+}
+function cancelAdd() {
+  if (!adding) return;
+  adding = null; clearOutletMarkers(); toast(''); readout();
+}
+function finishAdd(r, where) {
+  const nm = C.partOf(r.inst.part).short || r.inst.part;
+  state = r.insts; adding = null; clearOutletMarkers();
+  selectPart(r.inst.id); rebuild(); toast('Added ' + nm + ' ' + where);
+}
+function confirmAdd() {
+  if (!adding) return;
+  if (adding.kind === 'stud') {
+    if (!adding.target) { toast('Aim at a ring first', true); return; }
+    const key = adding.target, r = C.SC.addOnOutlet(state, adding.partId, key);
+    if (!r.ok) { toast(r.why, true); return; }
+    finishAdd(r, 'on ' + outletName(key));
+  } else {
+    if (!beamHit) { toast('Aim at a surface first', true); return; }
+    dropSurfaceAt(beamHit.point);
+  }
+}
+function dropSurfaceAt(worldPoint) {
+  const at = toModel(worldPoint).map(v => v / SCN.IN), r = C.SC.addAt(state, adding.partId, at);
+  if (!r.ok) { toast(r.why, true); return; }
+  finishAdd(r, 'on the surface');
+}
+function removeSelected() {
+  const inst = selInst(); if (!inst) return;
+  const r = C.SC.removeInst(state, inst.id);
+  if (!r.ok) { toast(r.why, true); return; }
+  const names = r.removed.map(nameOfId), extra = names.slice(1);
+  state = r.insts; selectPart(null); rebuild();
+  toast('Removed ' + names[0] + (extra.length ? ' and ' + extra.length + ' stacked: ' + extra.join(', ') : ''));
+}
+wire('addpart', openLib); wire('remove', removeSelected); wire('confirm', confirmAdd); wire('cancel', cancelAdd);
+wire('next', () => {
+  if (!adding || !adding.outlets.length) return;
+  const i = adding.outlets.findIndex(o => o.key === adding.target);
+  setTarget(adding.outlets[(i + 1) % adding.outlets.length].key, true);
+});
 
 // ---- placement ----
 function place() {
@@ -383,6 +586,7 @@ function place() {
   pivot.matrix.copy(baseMat); pivot.matrixWorldNeedsUpdate = true; pivot.visible = true;
   offs = { ...offs, x: 0, z: 0 }; applyOffsets();   // keep height/turn corrections, the surface is new
   setMode('placed'); setHint(null); reticle.visible = false;
+  scene.updateMatrixWorld(true); restoreMarks();   // marks and measurements come back at the model's new pose
   anchor = null; anchorFix = null;
   const rs = renderer.xr.getReferenceSpace();
   const ok = a => { anchor = a; anchorFix = null; };
@@ -406,7 +610,7 @@ function pickRay(ray) {
 }
 // ---- one beam: nearest of model raycast (M), hit-test point/plane (P/L) and CPU depth (D) ----
 let depthOK = false, depthLogged = false, lastSrc = '';
-const BEAM_COLOR = { M: '#1affb0', P: '#ffd400', L: '#4aa8ff', D: '#ff6bd6' };
+const BEAM_COLOR = { M: '#1affb0', P: '#ffd400', L: '#4aa8ff', D: '#ff6bd6', G: '#c8ccd2' };
 const dotTex = {};
 function dotTexture(src) {
   if (dotTex[src]) return dotTex[src];
@@ -443,13 +647,22 @@ function depthCand(frame, vp, ray) {
     return pt ? { src: 'D', dist: d, point: pt } : null;
   } catch (e) { depthOK = false; log('depth read failed, off: ' + (e && e.message || e)); return null; }
 }
+// mouse pointer over the canvas (plain preview editor): the aim ray comes from the cursor instead of the screen centre
+const ptr = { in: false, ndc: new THREE.Vector2() };
+const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function pointerRayAt(ndc) { raycaster.setFromCamera(ndc, camera); return { origin: raycaster.ray.origin.toArray(), dir: raycaster.ray.direction.toArray(), up: [0, 1, 0] }; }
+function groundCand(ray) {   // preview only, while adding a surface part: the floor under the model
+  const hit = new THREE.Ray(new THREE.Vector3(...ray.origin), new THREE.Vector3(...ray.dir).normalize()).intersectPlane(groundPlane, new THREE.Vector3());
+  return hit ? { src: 'G', dist: hit.distanceTo(new THREE.Vector3(...ray.origin)), point: hit.toArray() } : null;
+}
 function updateHover(frame) {
   let modelHit = null, ray = null, rs = null, vp = null;
-  const live = mode === 'placed' || (PREVIEW && !session);
+  const live = mode === 'placed' || !session, mouse = !session && !PREVIEW;
+  if (mouse && !ptr.in) { refreshTargetMarkers(); return; }   // cursor left the canvas: keep the last hover and target
   if (live && roots().length) {
     scene.updateMatrixWorld(true);
     rs = renderer.xr.getReferenceSpace(); vp = frame && rs ? frame.getViewerPose(rs) : null;
-    ray = vp ? PK.rayFromPose(vp.transform.position, vp.transform.orientation) : viewerRay(null);
+    ray = mouse ? pointerRayAt(ptr.ndc) : vp ? PK.rayFromPose(vp.transform.position, vp.transform.orientation) : viewerRay(null);
     modelHit = pickRay(ray);
   }
   let id = modelHit ? modelHit.instanceId : null;
@@ -458,12 +671,14 @@ function updateHover(frame) {
   const cands = [];
   if (modelHit) cands.push({ src: 'M', dist: modelHit.distance, point: modelHit.point.toArray() });
   if (ray && session && frame) { cands.push(hitTestCand(frame, rs, ray)); cands.push(depthCand(frame, vp, ray)); }
+  if (ray && !session && adding && adding.kind === 'surface') cands.push(groundCand(ray));
   beamHit = ray && live ? BM.nearestHit(cands) : null;
   const srcNow = beamHit ? beamHit.src : '';
   if (srcNow !== lastSrc) { lastSrc = srcNow; log('beam source ' + (srcNow || 'none')); }
   const hv = ray && live && marks.length ? MD.hoverMark(marks.map(m => m.pos.toArray()), ray.origin, ray.dir, MD.MARK_HOVER_M, beamHit ? beamHit.dist + 0.03 : 10) : -1;
   if (hv !== hovMark) { hovMark = hv; refreshMarks(); }
-  beam.visible = dot.visible = !!beamHit;
+  if (ray && adding && adding.kind === 'stud') aimTarget(ray);
+  beam.visible = !!beamHit && !mouse; dot.visible = !!beamHit;
   if (beamHit) {
     const a = PK.beamStart(ray), p = beamGeo.attributes.position, h = beamHit.point;
     p.setXYZ(0, ...a); p.setXYZ(1, h[0], h[1], h[2]); p.needsUpdate = true;
@@ -471,6 +686,7 @@ function updateHover(frame) {
     dot.material.map = dotTexture(beamHit.src); dot.material.needsUpdate = true;
     dot.position.set(h[0], h[1], h[2]); const sc = Math.min(Math.max(beamHit.dist * 0.04, 0.012), 0.1); dot.scale.set(sc, sc, 1);
   }
+  refreshTargetMarkers();
 }
 function updateCross() {
   const on = mode === 'placed' || PREVIEW;
@@ -542,7 +758,7 @@ async function enterAR() {
     await renderer.xr.setSession(s);
     session = s;
     document.body.classList.add('inar'); grid.visible = false; pivot.visible = false; controls.enabled = false;
-    setMode('reticle'); setHint('Move the phone to find the floor, tap to place'); selectPart(null);
+    cancelAdd(); closeLib(); suspendMarks(); setMode('reticle'); setHint('Move the phone to find the floor, tap to place'); selectPart(null);
     log('session started, features: ' + (s.enabledFeatures || []).join(','));
     depthOK = (s.enabledFeatures || []).includes('depth-sensing') && s.depthUsage === 'cpu-optimized'; depthLogged = false;
     log(depthOK ? 'depth sensing: cpu, format ' + s.depthDataFormat : 'depth sensing not available (' + ((s.enabledFeatures || []).includes('depth-sensing') ? 'usage ' + s.depthUsage : 'feature not granted') + '), skipped');
@@ -551,9 +767,9 @@ async function enterAR() {
       else if (mode === 'placed') onSceneTap(ev);
     });
     s.addEventListener('end', () => {
-      session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; setOpen(false); clearMarks(); clearMeasures(); reticle.visible = false;
+      session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; setOpen(false); cancelAdd(); closeLib(); removeMarkObjs(); removeMeasureObjs(); reticle.visible = false;
       document.body.classList.remove('inar'); grid.visible = true; pivot.visible = true; controls.enabled = true;
-      pivot.matrix.identity(); pivot.matrixWorldNeedsUpdate = true; setHint(null); log('session ended'); scene.environment = roomEnv; scene.remove(xrLight); fit();
+      pivot.matrix.identity(); pivot.matrixWorldNeedsUpdate = true; scene.updateMatrixWorld(true); restoreMarks(); setHint(null); log('session ended'); scene.environment = roomEnv; scene.remove(xrLight); fit();
     });
     const viewer = await s.requestReferenceSpace('viewer');
     try { hitSource = await s.requestHitTestSource({ space: viewer, entityTypes: ['point', 'plane'] }); log('hit-test source: point+plane'); }
@@ -567,6 +783,8 @@ function fit() {
   const w = $('stage').clientWidth, h = $('stage').clientHeight;
   if (!w || !h) return;
   renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const bar = document.querySelector('.bar');   // the page's own bar (units, Enter AR): keep the round button above it
+  document.documentElement.style.setProperty('--lift', (document.body.classList.contains('inar') || !bar ? 0 : bar.offsetHeight) + 'px');
 }
 addEventListener('resize', fit);
 function frameModel() {   // preview camera: whole model in view, 3/4 angle
@@ -576,18 +794,29 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   controls.target.copy(c); camera.position.copy(c).add(new THREE.Vector3(0.3, 0.3, 1).normalize().multiplyScalar(d)); controls.update();
 }
 
-// ---- non-AR click / tap select (normal raycast from the preview camera) ----
+// ---- non-AR editor: click / tap select (normal raycast from the preview camera), mouse hover ----
 {
   let down = null;
   const cv = renderer.domElement;
+  const ndcOf = e => { const r = cv.getBoundingClientRect(); return new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); };
+  cv.addEventListener('pointermove', e => { if (e.pointerType === 'touch') return; ptr.in = true; ptr.ndc.copy(ndcOf(e)); });
+  cv.addEventListener('pointerleave', () => { ptr.in = false; if (hoveredId) { hoveredId = null; applyTints(); readout(); } });
   cv.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
   cv.addEventListener('pointerup', e => {
     if (session || !down || !C) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = performance.now() - down.t; down = null;
     if (moved > 6 || dt > 600) return;   // a drag is orbiting
-    const r = cv.getBoundingClientRect(), ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const ndc = ndcOf(e);
     scene.updateMatrixWorld(true); raycaster.setFromCamera(ndc, camera); raycaster.far = 10;
     const hit = PK.pickFromHits(raycaster.intersectObjects(roots(), true));
+    if (adding) {
+      if (adding.kind === 'stud') { const k = nearestOutletOnScreen(e); if (k) setTarget(k, true); else toast('Click one of the pulsing rings'); }
+      else {
+        const g = hit ? hit.point.toArray() : groundCand(pointerRayAt(ndc));
+        const pt = hit ? g : g && g.point; if (pt) dropSurfaceAt(pt); else toast('Click on the model or the floor', true);
+      }
+      return;
+    }
     if (tool === 'mark') { if (hit) dropMarkAt(hit.point.toArray(), 'M'); return; }
     if (tool === 'measure') { if (hit) measureAt(hit.point.toArray()); return; }
     if (hovMark >= 0) { selectPart(null); selectMark(hovMark); return; }
@@ -596,7 +825,7 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   });
 }
 // test / debug hooks
-window.__ar = { setTool, tool: () => tool, units: () => units, marks: () => marks.length, measures: () => measures.length, dropAt: dropMarkAt, measureAt, selectMark, select: selectPart, selected: () => selectedId, hovered: () => hoveredId, state: () => JSON.parse(JSON.stringify(state)),
+window.__ar = { look(dx, dy, dz) { const t = controls.target; camera.position.set(t.x + dx, t.y + dy, t.z + dz); controls.update(); }, target(x, y, z) { controls.target.set(x, y, z); controls.update(); }, hash: persist, startAdd, confirmAdd, cancelAdd, removeSelected, openLib, setTarget, adding: () => adding && { partId: adding.partId, kind: adding.kind, target: adding.target, outlets: adding.outlets.map(o => o.key) }, toast: () => toastEl.textContent, persist, setTool, tool: () => tool, units: () => units, marks: () => marks.length, measures: () => measures.length, dropAt: dropMarkAt, measureAt, selectMark, select: selectPart, selected: () => selectedId, hovered: () => hoveredId, state: () => JSON.parse(JSON.stringify(state)),
   screenOf(id) { const r = roots().find(o => o.userData.instanceId === id); if (!r) return null; const b = new THREE.Box3().setFromObject(r), c = b.getCenter(new THREE.Vector3()).project(camera), rc = renderer.domElement.getBoundingClientRect();
     return { x: rc.left + (c.x + 1) / 2 * rc.width, y: rc.top + (1 - c.y) / 2 * rc.height }; },
   aimAt(id) { const r = roots().find(o => o.userData.instanceId === id); const c = new THREE.Box3().setFromObject(r).getCenter(new THREE.Vector3()); controls.target.copy(c); controls.update(); } };
@@ -610,11 +839,11 @@ window.__ar = { setTool, tool: () => tool, units: () => units, marks: () => mark
   fit();
   try { C = await createComposer('parts/catalog.json'); }
   catch (e) { status.textContent = 'Could not load parts: ' + e.message; return; }
-  const h = new URLSearchParams(location.hash.slice(1));
-  state = C.parseState(h.get('s')) || C.defaultState();
-  offs = OFS.parse(h.get('o'));
+  initialHash = location.hash.slice(1);
+  const sc0 = C.SC.fromHash(initialHash);
+  state = sc0.insts; offs = sc0.offs; storedMarks = sc0.marks; storedMeasures = sc0.measures;
   applyOffsets(); await rebuild();
-  fit(); frameModel(); updateCross();
+  fit(); frameModel(); updateCross(); restoreMarks();
   if (q.get('sel')) selectPart(q.get('sel'));
   status.textContent = 'Drag to orbit. Real size (inches to metres).';
   const sup = navigator.xr && navigator.xr.isSessionSupported ? await navigator.xr.isSessionSupported('immersive-ar').catch(() => false) : false;
@@ -625,6 +854,8 @@ window.__ar = { setTool, tool: () => tool, units: () => units, marks: () => mark
       : 'AR is not available here: immersive-ar WebXR is not supported. Use Android Chrome with ARCore.';
   }
   readout();
-  if (PREVIEW && q.get('open')) { if (q.get('open') === 'more') moreOpen = true; setOpen(true); }   // screenshots
+  if (q.get('addpart')) { startAdd(q.get('addpart')); if (q.get('target')) setTarget(q.get('target'), true); }   // screenshots
+  else if (q.get('open') === 'lib') openLib();
+  else if (q.get('open')) { if (q.get('open') === 'more') moreOpen = true; setOpen(true); }
   window.__ready = true;
 })();

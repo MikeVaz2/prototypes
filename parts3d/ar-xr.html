@@ -6,13 +6,13 @@
 <title>Parts AR (own WebXR)</title>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-11 19:05 modes-units';
+const BUILD = '2026-11-11 21:40 editor-add-part';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
   var map = { imports: { 'three': cdn + 'build/three.module.js', 'three/addons/': cdn + 'examples/jsm/',
     './xr/app.js': './xr/app.js' + v, './xr/compose.js': './xr/compose.js' + v, './xr/xrmath.js': './xr/xrmath.js' + v,
-    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './offsets.js': './offsets.js' + v } };
+    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './offsets.js': './offsets.js' + v } };
   var im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify(map); document.head.appendChild(im);
   var m = document.createElement('script'); m.type = 'module'; m.src = 'xr/app.js' + v; document.head.appendChild(m);
 })();
@@ -46,16 +46,17 @@ window.__BUILD = BUILD;
 
   /* AR overlay root: the browser makes it fullscreen in a session; it ignores touches except on its children */
   #overlay { display:none; position:fixed; inset:0; z-index:10; pointer-events:none; font-size:14px; }
-  body.inar #overlay, body.arpreview #overlay { display:block; }
+  body #overlay { display:block; }
+  body:not(.inar):not(.arpreview) #overlay .build { display:none; }
   body.inar header, body.inar #stage, body.inar .bar, body.inar #help { display:none; }
   #hint { position:absolute; top:calc(12px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); background:rgba(10,14,22,.8); color:#fff;
           padding:8px 14px; border-radius:20px; font-size:15px; white-space:nowrap; }
   body.arpreview #hint { display:none; }
-  #info { position:absolute; left:8px; bottom:calc(10px + env(safe-area-inset-bottom)); max-width:calc(100% - 96px); font-size:12px; line-height:1.3; color:#fff;
+  #info { position:absolute; left:8px; bottom:calc(10px + var(--lift, 0px) + env(safe-area-inset-bottom)); max-width:calc(100% - 96px); font-size:12px; line-height:1.3; color:#fff;
           background:rgba(10,14,22,.72); padding:4px 8px; border-radius:8px; pointer-events:none; }
   #info div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #info div:empty { display:none; }
-  #ctl { position:absolute; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:flex-end; gap:8px; pointer-events:none; }
+  #ctl { position:absolute; right:10px; bottom:calc(10px + var(--lift, 0px) + env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:flex-end; gap:8px; pointer-events:none; }
   #ctl > * { pointer-events:auto; }
   #fab { width:64px; height:64px; border-radius:50%; border:3px solid #fff; background:#0b3d91; color:#fff; font:inherit; font-size:13px; font-weight:800;
          line-height:1.1; padding:0; cursor:pointer; touch-action:manipulation; box-shadow:0 2px 8px rgba(0,0,0,.5); }
@@ -71,6 +72,7 @@ window.__BUILD = BUILD;
   #stack button[aria-pressed="true"] { background:#ffd400; color:#000; border-color:#ffd400; }
   #stack button[hidden], #cross[hidden], #dbg[hidden] { display:none; }
   #stack button.flash { outline:3px solid #ffd400; }
+  #again, #confirm { background:#0a6b3a !important; } #remove { background:#7a1010 !important; } #addpart, #next { background:#0b3d91; } #cancel { background:#555 !important; }
   #again { background:#0a6b3a !important; } #reset { background:#444 !important; } #exit { background:#7a1010 !important; border-color:#ff8a80 !important; }
   #select { background:#0a6b3a !important; } #deselect, #back, #more { background:#555 !important; }
   #stack button:focus-visible, #fab:focus-visible { outline:3px solid #ffd400; outline-offset:2px; }
@@ -80,6 +82,24 @@ window.__BUILD = BUILD;
     #stack { max-height:calc(100vh - 100px); overflow:hidden; }
     #ctl.open #stack.more { grid-template-columns:repeat(3, 100px); }
   }
+  /* Add part: library list, one-line toast, outlet prompt */
+  #lib { position:absolute; left:8px; right:8px; bottom:calc(86px + var(--lift, 0px) + env(safe-area-inset-bottom)); max-height:52vh; max-width:420px; margin-left:auto; display:flex; flex-direction:column;
+         background:rgba(10,14,22,.94); color:#fff; border:2px solid #fff; border-radius:14px; pointer-events:auto; overflow:hidden; }
+  #lib[hidden] { display:none; }
+  #lib .lh { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; font-size:15px; }
+  #lib .lh button { min-height:40px; padding:0 12px; border-radius:10px; border:2px solid #fff; background:#555; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
+  #liblist { list-style:none; margin:0; padding:0 6px 6px; overflow:auto; }
+  #liblist li.cat { padding:6px 6px 2px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.7; }
+  #liblist button { width:100%; min-height:48px; display:flex; align-items:center; gap:10px; text-align:left; padding:4px 8px; margin:2px 0; border-radius:10px; border:1px solid #3a4352;
+                    background:#182030; color:#fff; font:inherit; font-size:15px; cursor:pointer; touch-action:manipulation; }
+  #liblist button:active, #liblist button:hover { background:#1a6ef0; }
+  #liblist .ic { flex:none; width:34px; height:34px; border-radius:8px; border:1px solid rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#fff; text-shadow:0 0 3px #000; }
+  #liblist .nm { flex:1; min-width:0; } #liblist .nm small { display:block; font-size:11px; opacity:.7; }
+  #liblist .mk { flex:none; font-size:11px; opacity:.8; }
+  #toast { position:absolute; top:6px; left:50%; transform:translateX(-50%); max-width:calc(100% - 24px); background:rgba(10,14,22,.88); color:#fff;
+           padding:7px 14px; border-radius:18px; font-size:14px; text-align:center; pointer-events:none; }
+  body.inar #toast { top:calc(44px + env(safe-area-inset-top)); }
+  #toast[hidden] { display:none; } #toast.warn { background:rgba(138,43,0,.92); }
   #cross { position:absolute; left:50%; top:50%; width:26px; height:26px; margin:-13px 0 0 -13px; pointer-events:none; }
   #cross:before, #cross:after { content:""; position:absolute; background:#fff; box-shadow:0 0 2px #000; }
   #cross:before { left:12px; top:0; width:2px; height:26px; } #cross:after { top:12px; left:0; height:2px; width:26px; }
@@ -105,6 +125,7 @@ window.__BUILD = BUILD;
   <li>Turn: 5 degrees per tap. Aim the crosshair at a part (beam + tint), press Select or tap the part: the round button shows its name and the stack its controls (lug: length, rotate, gauge; busbar: cover, rotate; nut: none). Tap empty space or Deselect to go back.</li>
   <li>While the ring shows, tap the scene to place; tapping the round button or stack must not place.</li>
   <li>Mode chip (next to the round button) cycles Select, Mark, Measure. Mark: Drop (or tap the scene) drops a dot; its label shows when you select it or aim within 2 cm. Measure: tap A then B for a line with the distance. Units (Inches or Millimeters) are chosen on this page before AR.</li>
+  <li>Preview editor (this page, no AR): click a part to select, drag to orbit, Mark and Measure by clicking the model. Add part (stack or More) lists the library; stud parts show pulsing rings on compatible studs (click one or use Next, then Place); surface parts drop where you click.</li>
   <li>Place again: ring returns, tap a new spot. Reset: offsets and parts back to default.</li>
   <li>Exit AR and check the page returns. Compare the battery with the real one for size.</li>
 </ol>
@@ -118,10 +139,12 @@ window.__BUILD = BUILD;
 <div class="build" id="build0"></div>
 <div id="overlay">
   <div class="build" id="build1"></div>
+  <div id="toast" hidden></div>
   <div id="hint" hidden>Move the phone to find the floor, tap to place</div>
   <div id="cross" hidden></div>
   <pre id="dbg" hidden></pre>
   <div id="info"><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
+  <div id="lib" hidden role="dialog" aria-label="Add part"><div class="lh"><b>Add part</b><button id="libclose" type="button">Close</button></div><ul id="liblist"></ul></div>
   <div id="ctl">
     <div id="stack">
       <button id="extp" type="button" aria-label="Extension plus 1 inch">+1<small>ext in</small></button>
@@ -147,6 +170,11 @@ window.__BUILD = BUILD;
       <button id="mnew" type="button">Start new<small>measure</small></button>
       <button id="mundo" type="button">Undo<small>measure</small></button>
       <button id="mclear" type="button">Clear<small>measures</small></button>
+      <button id="addpart" type="button" aria-label="Add part">Add<small>part</small></button>
+      <button id="remove" type="button" aria-label="Remove selected part">Remove<small>part</small></button>
+      <button id="confirm" type="button">Place<small>here</small></button>
+      <button id="next" type="button">Next<small>outlet</small></button>
+      <button id="cancel" type="button">Cancel</button>
       <button id="reset" type="button">Reset</button>
       <button id="exit" type="button">Exit AR</button>
       <button id="more" type="button">More</button>

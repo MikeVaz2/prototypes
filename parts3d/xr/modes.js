@@ -43,14 +43,27 @@ export const TOOL_LABEL = { select: 'Select', mark: 'Mark', measure: 'Measure' }
 export const normTool = (s, fallback = 'select') => TOOLS.includes(s) ? s : fallback;
 export const nextTool = t => TOOLS[(TOOLS.indexOf(t) + 1) % TOOLS.length];
 export const TOOL_BUTTONS = ['drop', 'undomark', 'clearmarks', 'mnew', 'mundo', 'mclear'];
-export const ALL_IDS = [...new Set(['extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
+export const ALL_IDS = [...new Set(['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
   'again', 'reset', 'select', 'deselect', 'exit', 'more', 'back', ...TOOL_BUTTONS])];
 // buttons of the open stack for a tool. Select keeps the part controls (minus the old mark buttons); Mark and Measure show only their own actions.
-export function stackForTool(tool, kind, rotStep = 0, selected = false) {
+// x = extras about the selected instance: { free (placed on a surface), num (has a length option), choice (has a choice option) }
+export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) {
   if (tool === 'mark') return { primary: ['drop', 'undomark', 'clearmarks'], more: [] };
   if (tool === 'measure') return { primary: ['mnew', 'mundo', 'mclear'], more: [] };
-  const s = stackFor(kind, rotStep, selected), keep = id => id !== 'mark' && id !== 'clearmarks';
-  return { primary: s.primary.filter(keep), more: s.more.filter(keep) };
+  const keep = id => id !== 'mark' && id !== 'clearmarks';
+  const rot = rotStep > 0 ? ['rotm', 'rotp'] : [], common = ['again', 'reset', 'exit'];
+  if (kind === 'fuse' || kind === 'bar' || kind === 'cable') {   // library parts: on a stud, or free on a surface
+    let primary, more;
+    if (x.free) { primary = ['hp', 'hm', 'tp', 'tm', 'remove', 'deselect']; more = ['nl', 'nr', 'nu', 'nd', ...(x.num ? ['extp', 'extm'] : []), ...(x.choice ? ['gauge'] : []), 'addpart', ...common]; }
+    else { primary = [...(x.num ? ['extp', 'extm'] : []), ...rot, 'remove', 'deselect']; more = [...(x.choice ? ['gauge'] : []), 'addpart', ...common]; }
+    return { primary: [...primary, 'more'], more: ['back', ...more] };
+  }
+  const s = stackFor(kind, rotStep, selected);
+  const prim = s.primary.filter(keep), mor = s.more.filter(keep), at = prim.indexOf('more');
+  if (kind === 'lug' || kind === 'busbar' || kind === 'nut') prim.splice(at, 0, 'remove');
+  else prim.splice(at, 0, 'addpart');
+  mor.splice(1, 0, 'addpart');
+  return { primary: prim, more: mor };
 }
 
 // ---- marks: label only when selected or hovered ----
