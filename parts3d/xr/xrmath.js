@@ -50,4 +50,4 @@ export function modelPose(basePos, psi, o) {
 export const M_PER_IN = 0.0254;
 export const distIn = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / M_PER_IN;
 export const fmtIn = d => d.toFixed(1);
-export const markText = (n, dPos, dNeg) => `M${n}: +${fmtIn(dPos)} in, −${fmtIn(dNeg)} in`;
+export const markText = (n, dPos, dNeg, src) => `M${n}${src ? ' (' + src + ')' : ''}: +${fmtIn(dPos)} in, −${fmtIn(dNeg)} in`;

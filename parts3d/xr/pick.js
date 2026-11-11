@@ -65,3 +65,23 @@ export function rayFromPose(pos, q) {
 }
 // beam start: slightly below the viewer along the pose's up axis
 export const beamStart = (ray, drop = 0.06) => ray.origin.map((v, i) => v - ray.up[i] * drop);
+
+// short name for the single round button: "+ lug", "Battery", "Scene" when nothing is selected
+export function shortName(partId, kind) {
+  if (!partId) return 'Scene';
+  if (kind === 'lug') return /-pos$/.test(partId) ? '+ lug' : /-neg$/.test(partId) ? '− lug' : 'Lug';
+  return { battery: 'Battery', busbar: 'Busbar', nut: 'Nut' }[kind] || 'Scene';
+}
+// every button of the single-button stack
+export const ALL_BUTTONS = ['extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
+  'again', 'reset', 'mark', 'clearmarks', 'select', 'deselect', 'exit', 'more', 'back'];
+// which buttons show in the open stack (primary: contextual actions + More) and in the More panel
+export function stackFor(kind, rotStep = 0, selected = false) {
+  const rot = rotStep > 0 ? ['rotm', 'rotp'] : [], common = ['again', 'mark', 'clearmarks', 'reset', 'exit'];
+  let primary, more;
+  if (kind === 'lug') { primary = ['extp', 'extm', ...rot, 'deselect']; more = ['gauge', ...common]; }
+  else if (kind === 'busbar') { primary = ['cover', ...rot, 'deselect']; more = common; }
+  else if (kind === 'nut') { primary = ['deselect']; more = common; }
+  else { primary = ['mark', 'hp', 'hm', 'tp', 'tm']; more = ['nl', 'nr', 'nu', 'nd', selected ? 'deselect' : 'select', 'again', 'clearmarks', 'reset', 'exit']; }
+  return { primary: [...primary, 'more'], more: ['back', ...more] };
+}

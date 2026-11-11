@@ -6,13 +6,13 @@
 <title>Parts AR (own WebXR)</title>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-11 15:10';
+const BUILD = '2026-11-11 16:20 beam';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
   var map = { imports: { 'three': cdn + 'build/three.module.js', 'three/addons/': cdn + 'examples/jsm/',
     './xr/app.js': './xr/app.js' + v, './xr/compose.js': './xr/compose.js' + v, './xr/xrmath.js': './xr/xrmath.js' + v,
-    './xr/pick.js': './xr/pick.js' + v, './offsets.js': './offsets.js' + v } };
+    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './offsets.js': './offsets.js' + v } };
   var im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify(map); document.head.appendChild(im);
   var m = document.createElement('script'); m.type = 'module'; m.src = 'xr/app.js' + v; document.head.appendChild(m);
 })();
@@ -40,27 +40,35 @@ window.__BUILD = BUILD;
   #hint { position:absolute; top:calc(12px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); background:rgba(10,14,22,.8); color:#fff;
           padding:8px 14px; border-radius:20px; font-size:15px; white-space:nowrap; }
   body.arpreview #hint { display:none; }
-  #strip { position:absolute; left:0; right:0; bottom:0; pointer-events:auto; background:rgba(10,14,22,.9); color:#fff;
-           padding:4px 6px calc(4px + env(safe-area-inset-bottom)); border-radius:14px 14px 0 0; }
-  #top { display:flex; align-items:center; gap:6px; min-height:40px; }
-  #handle { min-height:40px; padding:0 14px; border-radius:20px; border:2px solid #fff; background:#0b3d91; color:#fff; font:inherit; font-size:15px; font-weight:700; cursor:pointer; }
-  #info { flex:1; min-width:0; font-size:12px; line-height:1.25; opacity:.9; }
+  #info { position:absolute; left:8px; bottom:calc(10px + env(safe-area-inset-bottom)); max-width:calc(100% - 96px); font-size:12px; line-height:1.3; color:#fff;
+          background:rgba(10,14,22,.72); padding:4px 8px; border-radius:8px; pointer-events:none; }
   #info div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #exit { min-height:40px; padding:0 12px; border-radius:20px; border:2px solid #ff8a80; background:#7a1010; color:#fff; font:inherit; font-size:15px; font-weight:700; cursor:pointer; }
-  #rows { display:none; margin-top:4px; gap:4px; flex-direction:column; }
-  #strip.open #rows { display:flex; }
-  .row { display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; }
-  .row button { flex:1 1 0; min-width:48px; min-height:48px; padding:0; border-radius:10px; border:2px solid #fff; background:#0b3d91; color:#fff; font:inherit;
-                font-size:17px; font-weight:700; cursor:pointer; touch-action:manipulation; line-height:1.05; }
-  .row button small { display:block; font-size:10px; font-weight:600; opacity:.9; }
-  .row button:active { background:#1a6ef0; }
-  .row button[disabled] { opacity:.4; }
-  .row button[aria-pressed="true"] { background:#ffd400; color:#000; border-color:#ffd400; }
-  #again { background:#0a6b3a !important; } #reset { background:#444 !important; }
-  .row button[hidden], .row[hidden], #select[hidden], #deselect[hidden], #cross[hidden], #dbg[hidden] { display:none; }
-  .row button.flash { outline:3px solid #ffd400; }
-  #select, #deselect { min-height:48px; padding:0 14px; border-radius:24px; border:2px solid #fff; color:#fff; font:inherit; font-size:17px; font-weight:800; cursor:pointer; touch-action:manipulation; }
-  #select { background:#0a6b3a; } #select[disabled] { opacity:.45; } #deselect { background:#555; }
+  #info div:empty { display:none; }
+  #ctl { position:absolute; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:flex-end; gap:8px; pointer-events:none; }
+  #ctl > * { pointer-events:auto; }
+  #fab { width:64px; height:64px; border-radius:50%; border:3px solid #fff; background:#0b3d91; color:#fff; font:inherit; font-size:13px; font-weight:800;
+         line-height:1.1; padding:0; cursor:pointer; touch-action:manipulation; box-shadow:0 2px 8px rgba(0,0,0,.5); }
+  #fab[aria-expanded="true"] { background:#1a6ef0; }
+  #stack { display:none; flex-direction:column; gap:4px; width:150px; }
+  #ctl.open #stack { display:flex; }
+  #ctl.open #stack.more { display:grid; grid-template-columns:repeat(2, 100px); width:auto; }
+  #stack button { min-height:48px; padding:0 6px; border-radius:12px; border:2px solid #fff; background:#0b3d91; color:#fff; font:inherit; font-size:16px; font-weight:700;
+                  cursor:pointer; touch-action:manipulation; line-height:1.05; }
+  #stack button small { display:block; font-size:10px; font-weight:600; opacity:.9; }
+  #stack button:active { background:#1a6ef0; }
+  #stack button[disabled] { opacity:.4; }
+  #stack button[aria-pressed="true"] { background:#ffd400; color:#000; border-color:#ffd400; }
+  #stack button[hidden], #cross[hidden], #dbg[hidden] { display:none; }
+  #stack button.flash { outline:3px solid #ffd400; }
+  #again { background:#0a6b3a !important; } #reset { background:#444 !important; } #exit { background:#7a1010 !important; border-color:#ff8a80 !important; }
+  #select { background:#0a6b3a !important; } #deselect, #back, #more { background:#555 !important; }
+  #stack button:focus-visible, #fab:focus-visible { outline:3px solid #ffd400; outline-offset:2px; }
+  @media (orientation: landscape) {
+    #ctl { top:8px; }
+    #ctl { justify-content:flex-end; }
+    #stack { max-height:calc(100vh - 100px); overflow:hidden; }
+    #ctl.open #stack.more { grid-template-columns:repeat(3, 100px); }
+  }
   #cross { position:absolute; left:50%; top:50%; width:26px; height:26px; margin:-13px 0 0 -13px; pointer-events:none; }
   #cross:before, #cross:after { content:""; position:absolute; background:#fff; box-shadow:0 0 2px #000; }
   #cross:before { left:12px; top:0; width:2px; height:26px; } #cross:after { top:12px; left:0; height:2px; width:26px; }
@@ -69,7 +77,6 @@ window.__BUILD = BUILD;
   #overlay .build { position:absolute; top:2px; bottom:auto; color:#fff; }
   #dbg { position:absolute; left:4px; top:46px; right:4px; max-height:30vh; overflow:hidden; margin:0; padding:3px 5px; background:rgba(0,0,0,.65); color:#9fffc4;
          font:10px/1.25 monospace; white-space:pre-wrap; word-break:break-all; pointer-events:none; border-radius:6px; }
-  #strip button:focus-visible { outline:3px solid #ffd400; outline-offset:2px; }
 </style>
 </head>
 <body>
@@ -81,11 +88,11 @@ window.__BUILD = BUILD;
 <ol id="help" hidden>
   <h2>What to try (?help)</h2>
   <li>Enter AR, sweep the phone over the floor until the green ring shows, tap to place.</li>
-  <li>Open Controls: the strip must stay on screen after placing, and the model must not jump when you use any button.</li>
+  <li>Tap the round button (bottom right): the stack of actions must stay on screen after placing and collapses after 4 s, and the model must not jump when you use any button.</li>
   <li>Height up and down: the model moves 0.5 in and stays where you left it.</li>
   <li>Nudge arrows: up moves away from you, left and right follow your view. Walk around and try again.</li>
-  <li>Turn: 5 degrees per tap. Aim the crosshair at a part (beam + tint), press Select or tap the part: the strip shows only that part's controls (lug: length, rotate, gauge; busbar: cover, rotate; nut: none). Tap empty space or Deselect to go back.</li>
-  <li>While the ring shows, tap the scene to place; tapping the strip must not place.</li>
+  <li>Turn: 5 degrees per tap. Aim the crosshair at a part (beam + tint), press Select or tap the part: the round button shows its name and the stack its controls (lug: length, rotate, gauge; busbar: cover, rotate; nut: none). Tap empty space or Deselect to go back.</li>
+  <li>While the ring shows, tap the scene to place; tapping the round button or stack must not place.</li>
   <li>Place again: ring returns, tap a new spot. Reset: offsets and parts back to default.</li>
   <li>Exit AR and check the page returns. Compare the battery with the real one for size.</li>
 </ol>
@@ -98,38 +105,34 @@ window.__BUILD = BUILD;
   <div id="hint" hidden>Move the phone to find the floor, tap to place</div>
   <div id="cross" hidden></div>
   <pre id="dbg" hidden></pre>
-  <div id="strip">
-    <div id="top">
-      <button id="handle" type="button" aria-expanded="false" aria-controls="rows"><span>Controls</span></button>
-      <div id="info"><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
+  <div id="info"><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
+  <div id="ctl">
+    <div id="stack">
+      <button id="extp" type="button" aria-label="Extension plus 1 inch">+1<small>ext in</small></button>
+      <button id="extm" type="button" aria-label="Extension minus 1 inch">&minus;1<small>ext in</small></button>
+      <button id="rotm" type="button" aria-label="Rotate right"><span>&#8635;</span><small>15&deg;</small></button>
+      <button id="rotp" type="button" aria-label="Rotate left"><span>&#8634;</span><small>15&deg;</small></button>
+      <button id="cover" type="button" aria-pressed="true">Cover</button>
+      <button id="mark" type="button" aria-pressed="false">Mark</button>
+      <button id="hp" type="button" aria-label="Raise 0.5 inch">&uarr;<small>0.5 in</small></button>
+      <button id="hm" type="button" aria-label="Lower 0.5 inch">&darr;<small>0.5 in</small></button>
+      <button id="tp" type="button" aria-label="Turn left 5 degrees">&#8634;<small>5&deg;</small></button>
+      <button id="tm" type="button" aria-label="Turn right 5 degrees">&#8635;<small>5&deg;</small></button>
+      <button id="deselect" type="button">Deselect</button>
       <button id="select" type="button" disabled>Select</button>
-      <button id="deselect" type="button" hidden>Deselect</button>
+      <button id="gauge" type="button" aria-label="Toggle gauge"><span>2 AWG</span><small>gauge</small></button>
+      <button id="nl" type="button" aria-label="Nudge left">&larr;<small>nudge</small></button>
+      <button id="nr" type="button" aria-label="Nudge right">&rarr;<small>nudge</small></button>
+      <button id="nu" type="button" aria-label="Nudge away">&#9650;<small>nudge</small></button>
+      <button id="nd" type="button" aria-label="Nudge toward me">&#9660;<small>nudge</small></button>
+      <button id="again" type="button">Place<small>again</small></button>
+      <button id="clearmarks" type="button">Clear marks</button>
+      <button id="reset" type="button">Reset</button>
       <button id="exit" type="button">Exit AR</button>
+      <button id="more" type="button">More</button>
+      <button id="back" type="button">Back</button>
     </div>
-    <div id="rows">
-      <div class="row" id="rowA">
-        <button id="extm" type="button" aria-label="Extension minus 1 inch">&minus;1<small>ext in</small></button>
-        <button id="extp" type="button" aria-label="Extension plus 1 inch">+1<small>ext in</small></button>
-        <button id="rotm" type="button" aria-label="Rotate right"><span>&#8635;</span><small>15&deg;</small></button>
-        <button id="rotp" type="button" aria-label="Rotate left"><span>&#8634;</span><small>15&deg;</small></button>
-        <button id="gauge" type="button" aria-label="Toggle gauge" style="font-size:14px"><span>2 AWG</span><small>gauge</small></button>
-        <button id="cover" type="button" aria-pressed="true" style="font-size:14px">Cover</button>
-        <button id="mark" type="button" style="font-size:14px" aria-pressed="false">Mark</button>
-        <button id="clearmarks" type="button" style="font-size:14px">Clear marks</button>
-        <button id="again" type="button">Place<small>again</small></button>
-        <button id="reset" type="button" style="font-size:14px">Reset</button>
-      </div>
-      <div class="row" id="rowB">
-        <button id="hm" type="button" aria-label="Lower 0.5 inch">&darr;<small>0.5</small></button>
-        <button id="hp" type="button" aria-label="Raise 0.5 inch">&uarr;<small>0.5</small></button>
-        <button id="nl" type="button" aria-label="Nudge left">&larr;<small>nudge</small></button>
-        <button id="nr" type="button" aria-label="Nudge right">&rarr;<small>nudge</small></button>
-        <button id="nu" type="button" aria-label="Nudge away">&#9650;<small>nudge</small></button>
-        <button id="nd" type="button" aria-label="Nudge toward me">&#9660;<small>nudge</small></button>
-        <button id="tm" type="button" aria-label="Turn right 5 degrees">&#8635;<small>5&deg;</small></button>
-        <button id="tp" type="button" aria-label="Turn left 5 degrees">&#8634;<small>5&deg;</small></button>
-      </div>
-    </div>
+    <button id="fab" type="button" aria-expanded="false" aria-controls="stack">Scene</button>
   </div>
 </div>
 </body>

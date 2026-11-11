@@ -7,10 +7,11 @@ import { createComposer } from './compose.js';
 import * as OFS from '../offsets.js';
 import * as XM from './xrmath.js';
 import * as PK from './pick.js';
+import * as BM from './beam.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
-const overlay = $('overlay'), strip = $('strip'), status = $('status'), enterBtn = $('enter'), msg = $('msg'), hint = $('hint');
+const overlay = $('overlay'), ctl = $('ctl'), stack = $('stack'), fab = $('fab'), status = $('status'), enterBtn = $('enter'), msg = $('msg'), hint = $('hint');
 const PREVIEW = !!q.get('arpreview');
 const DEBUG = q.get('debug') === '1';
 const BUILD = window.__BUILD || 'dev';
@@ -92,7 +93,7 @@ outline.material.depthTest = false; outline.renderOrder = 8; outline.visible = f
 
 // ---- marks: world-fixed points (not children of pivot), distances to the stud tops ----
 const marks = [];   // { group, sprite, pos: Vector3 }
-let marking = false;
+let marking = false, beamHit = null;   // beamHit = { src, dist, point:[x,y,z] } nearest surface under the crosshair
 const MAX_MARKS = 4;
 function studWorld(id) {
   const m = C.host.mounts.find(h => h.id === id); if (!m) return null;
@@ -111,7 +112,7 @@ function refreshMarks() {
   const sp = studWorld('stud_pos'), sn = studWorld('stud_neg'), lines = [];
   marks.forEach((m, i) => {
     if (!sp || !sn) return;
-    const txt = XM.markText(i + 1, XM.distIn(m.pos.toArray(), sp.toArray()), XM.distIn(m.pos.toArray(), sn.toArray()));
+    const txt = XM.markText(i + 1, XM.distIn(m.pos.toArray(), sp.toArray()), XM.distIn(m.pos.toArray(), sn.toArray()), m.src);
     if (m.sprite.material.map) m.sprite.material.map.dispose();
     m.sprite.material.map = labelTexture(txt); m.sprite.material.needsUpdate = true;
     lines.push(txt);
@@ -119,8 +120,8 @@ function refreshMarks() {
   $('marks').textContent = marking ? 'Marking ' + marks.length + '/' + MAX_MARKS + ': aim at a surface, tap to drop' : (markMsg || lines.join('  |  '));
 }
 function dropMark() {
-  if (!reticle.visible || marks.length >= MAX_MARKS) { log('mark: no surface under the reticle yet'); return false; }
-  const pos = new THREE.Vector3(); reticle.matrix.decompose(pos, new THREE.Quaternion(), new THREE.Vector3());
+  if (!beamHit || marks.length >= MAX_MARKS) { log('mark: no surface under the beam yet'); return false; }
+  const pos = new THREE.Vector3(...beamHit.point), src = beamHit.src;
   const group = new THREE.Group(); group.position.copy(pos);
   const mat = new THREE.MeshBasicMaterial({ color: 0xffd400, depthTest: false });
   const ball = new THREE.Mesh(new THREE.SphereGeometry(0.005, 16, 12), mat); ball.renderOrder = 10;
@@ -129,7 +130,7 @@ function dropMark() {
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ depthTest: false, transparent: true }));
   sprite.scale.set(0.12, 0.0225, 1); sprite.position.y = 0.03; sprite.renderOrder = 11;
   group.add(ball, line, sprite); scene.add(group);
-  marks.push({ group, sprite, pos }); log('mark ' + marks.length + ' dropped');
+  marks.push({ group, sprite, pos, src }); log('mark ' + marks.length + ' dropped on ' + src);
   return true;
 }
 function setMarking(on) {
@@ -137,7 +138,7 @@ function setMarking(on) {
   marking = on && mode === 'placed' && marks.length < MAX_MARKS;
   $('mark').setAttribute('aria-pressed', marking);
   $('mark').textContent = marking ? 'Marking...' : 'Mark';
-  if (!marking && mode === 'placed') reticle.visible = false;
+  reticle.visible = mode === 'reticle' && reticle.visible;
   if (marking) setHint('Aim at a surface and tap to drop a mark');
   else if (mode === 'placed') setHint(null);
   if (marking !== was) log('marking ' + marking);
@@ -158,6 +159,7 @@ function clearMarks() {
 }
 
 // ---- app state ----
+let moreOpen = false;
 let C, state = [], offs = { ...OFS.ZERO }, selectedId = null, hoveredId = null, busy = false, again = false;
 let session = null, hitSource = null, anchor = null, anchorFix = null, lastFrame = null, lastHit = null;
 const baseMat = new THREE.Matrix4();
@@ -219,7 +221,6 @@ function selectPart(id) {
   id = id && C.partOf(id) ? id : null;
   if (id !== selectedId) log('selected ' + (id || 'none'));
   selectedId = id;
-  if (id) { strip.classList.add('open'); $('handle').setAttribute('aria-expanded', true); $('handle').querySelector('span').textContent = 'Hide controls'; }
   applyTints(); refreshOutline(); readout();
 }
 
@@ -239,16 +240,17 @@ function readout() {
     t = nameOfId(inst.part) + (nk ? ' ' + inst.opts[nk] + ' in' : '') + (ck ? ' ' + inst.opts[ck] : '') + (kind === 'lug' || kind === 'busbar' ? ' ' + inst.yaw + '°' : '');
   } else if (hoveredId) t = 'Aim: ' + nameOfId(hoveredId);
   $('sel').textContent = t;
-  // contextual control set
-  const step = inst ? C.yawStep(inst.part) : 0, show = PK.controlsFor(kind, step);
-  for (const id of PK.ALL_CONTROLS) $(id).hidden = !show.includes(id);
-  for (const r of ['rowA', 'rowB']) $(r).hidden = [...$(r).children].every(b => b.hidden);
+  // single button: name of the selection; stack: contextual actions or the More panel
+  fab.textContent = PK.shortName(inst ? inst.part : null, kind);
+  const step = inst ? C.yawStep(inst.part) : 0, lay = PK.stackFor(kind, step, !!selectedId), show = moreOpen ? lay.more : lay.primary;
+  for (const id of PK.ALL_BUTTONS) $(id).hidden = !show.includes(id);
+  stack.classList.toggle('more', moreOpen);
+  for (const id of show) stack.appendChild($(id));   // keep the layout order of the list
   $('rotm').querySelector('small').textContent = $('rotp').querySelector('small').textContent = step + '°';
   $('rotm').setAttribute('aria-label', 'Rotate right ' + step + ' degrees'); $('rotp').setAttribute('aria-label', 'Rotate left ' + step + ' degrees');
   if (inst && choiceKey(p)) $('gauge').querySelector('span').textContent = inst.opts[choiceKey(p)];
   $('cover').setAttribute('aria-pressed', !!(inst && inst.opts.cover));
-  $('select').hidden = !!selectedId; $('select').disabled = !hoveredId;
-  $('deselect').hidden = !selectedId;
+  $('select').disabled = !hoveredId;
   $('cross').classList.toggle('hit', !!hoveredId);
 }
 
@@ -290,13 +292,21 @@ wire('reset', () => {
   selectedId = null; rebuild(); setOffs({ ...OFS.ZERO });
 });
 wire('exit', () => { if (session) session.end(); });
-$('handle').addEventListener('click', () => {
-  const open = strip.classList.toggle('open'); $('handle').setAttribute('aria-expanded', open);
-  $('handle').querySelector('span').textContent = open ? 'Hide controls' : 'Controls';
-});
-// touches on our strip must not place the model
+// single round button: tap opens/closes the stack; it collapses ~4 s after the last tap
+let collapseT = 0;
+function bumpCollapse() { clearTimeout(collapseT); if (ctl.classList.contains('open')) collapseT = setTimeout(() => setOpen(false), 4000); }
+function setOpen(open) {
+  ctl.classList.toggle('open', open); fab.setAttribute('aria-expanded', open);
+  if (!open) moreOpen = false;
+  readout(); bumpCollapse();
+}
+fab.addEventListener('click', () => setOpen(!ctl.classList.contains('open')));
+wire('more', () => { moreOpen = true; });
+wire('back', () => { moreOpen = false; });
+ctl.addEventListener('click', bumpCollapse, true);
+// touches on our controls must not place the model
 overlay.addEventListener('beforexrselect', e => { if (e.target !== overlay) e.preventDefault(); });
-strip.addEventListener('beforexrselect', e => e.preventDefault());
+ctl.addEventListener('beforexrselect', e => e.preventDefault());
 
 // ---- placement ----
 function place() {
@@ -329,15 +339,70 @@ function pickRay(ray) {
   raycaster.set(new THREE.Vector3(...ray.origin), new THREE.Vector3(...ray.dir)); raycaster.far = 10;
   return PK.pickFromHits(raycaster.intersectObjects(roots(), true));
 }
+// ---- one beam: nearest of model raycast (M), hit-test point/plane (P/L) and CPU depth (D) ----
+let depthOK = false, depthLogged = false, lastSrc = '';
+const BEAM_COLOR = { M: '#1affb0', P: '#ffd400', L: '#4aa8ff', D: '#ff6bd6' };
+const dotTex = {};
+function dotTexture(src) {
+  if (dotTex[src]) return dotTex[src];
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.fillStyle = BEAM_COLOR[src]; g.beginPath(); g.arc(32, 32, 30, 0, 7); g.fill(); g.lineWidth = 4; g.strokeStyle = '#000'; g.stroke();
+  g.fillStyle = '#000'; g.font = 'bold 38px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(src, 32, 34);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return (dotTex[src] = t);
+}
+const dot = new THREE.Sprite(new THREE.SpriteMaterial({ depthTest: false, transparent: true }));
+dot.visible = false; dot.renderOrder = 12; scene.add(dot);
+
+const _lo = new THREE.Vector3(), _ld = new THREE.Vector3(), _inv = new THREE.Matrix4();
+function snapId(ray) {   // crosshair ray within SNAP_M of a part's box (boxes live in the modelHolder frame, rigid so distances carry over)
+  modelHolder.updateWorldMatrix(true, false); _inv.copy(modelHolder.matrixWorld).invert();
+  _lo.fromArray(ray.origin).applyMatrix4(_inv); _ld.fromArray(ray.dir).transformDirection(_inv);
+  const items = [];
+  for (const r of roots()) { const b = localBox(r); items.push({ id: r.userData.instanceId, min: b.min.toArray(), max: b.max.toArray() }); }
+  const s = BM.snapHover(items, _lo.toArray(), _ld.toArray(), BM.SNAP_M);
+  return s ? s.id : null;
+}
+function hitTestCand(frame, rs, ray) {
+  if (!hitSource || !frame) return null;
+  const hits = frame.getHitTestResults(hitSource); if (!hits.length) return null;
+  const pose = hits[0].getPose(rs); if (!pose) return null;
+  const m = pose.transform.matrix, pt = [m[12], m[13], m[14]];
+  return { src: BM.classifyHit([m[4], m[5], m[6]]), dist: Math.hypot(pt[0] - ray.origin[0], pt[1] - ray.origin[1], pt[2] - ray.origin[2]), point: pt };
+}
+function depthCand(frame, vp, ray) {
+  if (!depthOK || !frame || !vp || !vp.views.length) return null;
+  try {
+    const di = frame.getDepthInformation(vp.views[0]); if (!di) return null;
+    const d = di.getDepthInMeters(0.5, 0.5), pt = BM.depthToWorld(ray.origin, ray.dir, d);
+    if (!depthLogged && pt) { depthLogged = true; log('depth first reading ' + d.toFixed(2) + ' m'); }
+    return pt ? { src: 'D', dist: d, point: pt } : null;
+  } catch (e) { depthOK = false; log('depth read failed, off: ' + (e && e.message || e)); return null; }
+}
 function updateHover(frame) {
-  let hit = null, ray = null;
-  if (roots().length && (mode === 'placed' || (PREVIEW && !session))) { scene.updateMatrixWorld(true); ray = viewerRay(frame); hit = pickRay(ray); }
-  const id = hit ? hit.instanceId : null;
+  let modelHit = null, ray = null, rs = null, vp = null;
+  const live = mode === 'placed' || (PREVIEW && !session);
+  if (live && roots().length) {
+    scene.updateMatrixWorld(true);
+    rs = renderer.xr.getReferenceSpace(); vp = frame && rs ? frame.getViewerPose(rs) : null;
+    ray = vp ? PK.rayFromPose(vp.transform.position, vp.transform.orientation) : viewerRay(null);
+    modelHit = pickRay(ray);
+  }
+  let id = modelHit ? modelHit.instanceId : null;
+  if (!id && ray) id = snapId(ray);
   if (id !== hoveredId) { hoveredId = id; log('hover ' + (id || 'none')); applyTints(); readout(); }
-  beam.visible = !!hit && mode === 'placed';
-  if (beam.visible) {
-    const a = PK.beamStart(ray), p = beamGeo.attributes.position;
-    p.setXYZ(0, ...a); p.setXYZ(1, hit.point.x, hit.point.y, hit.point.z); p.needsUpdate = true;
+  const cands = [];
+  if (modelHit) cands.push({ src: 'M', dist: modelHit.distance, point: modelHit.point.toArray() });
+  if (ray && session && frame) { cands.push(hitTestCand(frame, rs, ray)); cands.push(depthCand(frame, vp, ray)); }
+  beamHit = ray && live ? BM.nearestHit(cands) : null;
+  const srcNow = beamHit ? beamHit.src : '';
+  if (srcNow !== lastSrc) { lastSrc = srcNow; log('beam source ' + (srcNow || 'none')); }
+  beam.visible = dot.visible = !!beamHit;
+  if (beamHit) {
+    const a = PK.beamStart(ray), p = beamGeo.attributes.position, h = beamHit.point;
+    p.setXYZ(0, ...a); p.setXYZ(1, h[0], h[1], h[2]); p.needsUpdate = true;
+    beam.material.color.set(BEAM_COLOR[beamHit.src]);
+    dot.material.map = dotTexture(beamHit.src); dot.material.needsUpdate = true;
+    dot.position.set(h[0], h[1], h[2]); const sc = Math.min(Math.max(beamHit.dist * 0.04, 0.012), 0.1); dot.scale.set(sc, sc, 1);
   }
 }
 function updateCross() {
@@ -359,7 +424,7 @@ function onFrame(time, frame) {
   if (!frame) { pivot.matrixWorldNeedsUpdate = true; controls.update(); updateHover(null); renderer.render(scene, camera); return; }
   const rs = renderer.xr.getReferenceSpace();
   pivot.matrixWorldNeedsUpdate = true;
-  if ((mode === 'reticle' || marking) && hitSource) {
+  if (mode === 'reticle' && hitSource) {
     const hits = frame.getHitTestResults(hitSource);
     if (hits.length !== hitCount) { hitCount = hits.length; log('hit-test hits ' + hitCount); }
     if (hits.length) { lastHit = hits[0]; reticle.visible = true; reticle.matrix.fromArray(hits[0].getPose(rs).transform.matrix); }
@@ -381,8 +446,15 @@ renderer.setAnimationLoop(onFrame);
 // ---- session ----
 async function enterAR() {
   try {
-    const s = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'light-estimation'], domOverlay: { root: overlay } });
+    const opts = { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'light-estimation', 'depth-sensing'], domOverlay: { root: overlay },
+      depthSensing: { usagePreference: ['cpu-optimized', 'gpu-optimized'], dataFormatPreference: ['luminance-alpha', 'float32'] } };
+    let s;
+    try { s = await navigator.xr.requestSession('immersive-ar', opts); }
+    catch (e) {   // a browser that rejects the depth config: retry without it
+      log('session with depth-sensing rejected (' + (e && e.message || e) + '), retrying without');
+      delete opts.depthSensing; opts.optionalFeatures = opts.optionalFeatures.filter(f => f !== 'depth-sensing');
+      s = await navigator.xr.requestSession('immersive-ar', opts);
+    }
     renderer.xr.setReferenceSpaceType((s.enabledFeatures || []).includes('local-floor') ? 'local-floor' : 'local');
     try {   // sharpness: render at the device's native resolution, capped for speed
       const nat = window.XRWebGLLayer && XRWebGLLayer.getNativeFramebufferScaleFactor ? XRWebGLLayer.getNativeFramebufferScaleFactor(s) : 1;
@@ -393,18 +465,21 @@ async function enterAR() {
     document.body.classList.add('inar'); grid.visible = false; pivot.visible = false; controls.enabled = false;
     setMode('reticle'); setHint('Move the phone to find the floor, tap to place'); selectPart(null);
     log('session started, features: ' + (s.enabledFeatures || []).join(','));
+    depthOK = (s.enabledFeatures || []).includes('depth-sensing') && s.depthUsage === 'cpu-optimized'; depthLogged = false;
+    log(depthOK ? 'depth sensing: cpu, format ' + s.depthDataFormat : 'depth sensing not available (' + ((s.enabledFeatures || []).includes('depth-sensing') ? 'usage ' + s.depthUsage : 'feature not granted') + '), skipped');
     s.addEventListener('select', ev => {
       if (marking) { if (dropMark()) setMarking(false); }
       else if (mode === 'reticle') place();
       else if (mode === 'placed') tapPick(ev);
     });
     s.addEventListener('end', () => {
-      session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = false; clearMarks(); reticle.visible = false;
+      session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; setOpen(false); clearMarks(); reticle.visible = false;
       document.body.classList.remove('inar'); grid.visible = true; pivot.visible = true; controls.enabled = true;
       pivot.matrix.identity(); pivot.matrixWorldNeedsUpdate = true; setHint(null); log('session ended'); scene.environment = roomEnv; scene.remove(xrLight); fit();
     });
     const viewer = await s.requestReferenceSpace('viewer');
-    hitSource = await s.requestHitTestSource({ space: viewer });
+    try { hitSource = await s.requestHitTestSource({ space: viewer, entityTypes: ['point', 'plane'] }); log('hit-test source: point+plane'); }
+    catch (e) { log('hit-test entityTypes rejected (' + (e && e.message || e) + '), default'); hitSource = await s.requestHitTestSource({ space: viewer }); }
   } catch (e) { msg.hidden = false; msg.textContent = 'Could not start AR: ' + (e && e.message || e); }
 }
 enterBtn.addEventListener('click', enterAR);
@@ -449,8 +524,7 @@ window.__ar = { select: selectPart, selected: () => selectedId, hovered: () => h
 (async function init() {
   if (q.has('help')) $('help').hidden = false;
   if (PREVIEW) {
-    document.body.classList.add('arpreview'); strip.classList.add('open');
-    $('handle').setAttribute('aria-expanded', true); $('handle').querySelector('span').textContent = 'Hide controls';
+    document.body.classList.add('arpreview');
   }
   fit();
   try { C = await createComposer('parts/catalog.json'); }
@@ -469,5 +543,6 @@ window.__ar = { select: selectPart, selected: () => selectedId, hovered: () => h
     msg.textContent = !window.isSecureContext ? 'AR needs HTTPS. Open this page over https (localhost works with port forwarding).'
       : 'AR is not available here: immersive-ar WebXR is not supported. Use Android Chrome with ARCore.';
   }
+  if (PREVIEW && q.get('open')) { if (q.get('open') === 'more') moreOpen = true; setOpen(true); }   // screenshots
   window.__ready = true;
 })();
