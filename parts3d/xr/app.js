@@ -59,6 +59,56 @@ const reticle = new THREE.Mesh(new THREE.RingGeometry(0.07, 0.09, 40).rotateX(-M
   new THREE.MeshBasicMaterial({ color: 0x1affb0, side: THREE.DoubleSide }));
 reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
 
+// ---- marks: world-fixed points (not children of pivot), distances to the stud tops ----
+const marks = [];   // { group, sprite, pos: Vector3 }
+let marking = false;
+const MAX_MARKS = 4;
+function studWorld(id) {
+  const m = C.host.mounts.find(h => h.id === id); if (!m) return null;
+  modelHolder.updateWorldMatrix(true, false);
+  return modelHolder.localToWorld(new THREE.Vector3(m.pos[0], m.pos[1], m.pos[2]).multiplyScalar(XM.M_PER_IN));
+}
+function labelTexture(text) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 96;
+  const g = c.getContext('2d'); g.fillStyle = 'rgba(10,14,22,.85)'; g.fillRect(0, 0, 512, 96);
+  g.fillStyle = '#fff'; g.font = 'bold 40px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 48);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function refreshMarks() {
+  const sp = studWorld('stud_pos'), sn = studWorld('stud_neg'), lines = [];
+  marks.forEach((m, i) => {
+    if (!sp || !sn) return;
+    const txt = XM.markText(i + 1, XM.distIn(m.pos.toArray(), sp.toArray()), XM.distIn(m.pos.toArray(), sn.toArray()));
+    if (m.sprite.material.map) m.sprite.material.map.dispose();
+    m.sprite.material.map = labelTexture(txt); m.sprite.material.needsUpdate = true;
+    lines.push(txt);
+  });
+  $('marks').textContent = marking ? 'Tap the scene to drop a mark' : lines.join('  |  ');
+}
+function dropMark() {
+  if (!reticle.visible || marks.length >= MAX_MARKS) return;
+  const pos = new THREE.Vector3(); reticle.matrix.decompose(pos, new THREE.Quaternion(), new THREE.Vector3());
+  const group = new THREE.Group(); group.position.copy(pos);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffd400, depthTest: false });
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.005, 16, 12), mat); ball.renderOrder = 10;
+  const h = Math.max(pos.y, 0.001);   // line to the floor (y = 0 in local-floor space)
+  const line = new THREE.Mesh(new THREE.CylinderGeometry(0.0005, 0.0005, h, 6), mat); line.position.y = -h / 2;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ depthTest: false, transparent: true }));
+  sprite.scale.set(0.12, 0.0225, 1); sprite.position.y = 0.03; sprite.renderOrder = 11;
+  group.add(ball, line, sprite); scene.add(group);
+  marks.push({ group, sprite, pos });
+}
+function setMarking(on) {
+  marking = on && mode === 'placed' && marks.length < MAX_MARKS;
+  $('mark').setAttribute('aria-pressed', marking);
+  if (!marking) { if (mode === 'placed') reticle.visible = false; }
+  refreshMarks();
+}
+function clearMarks() {
+  for (const m of marks) { scene.remove(m.group); m.sprite.material.map?.dispose(); m.sprite.material.dispose(); }
+  marks.length = 0; setMarking(false);
+}
+
 // ---- app state ----
 let C, state = [], offs = { ...OFS.ZERO }, selLug = null, busy = false, again = false;
 let session = null, hitSource = null, anchor = null, anchorFix = null, lastFrame = null, lastHit = null;
@@ -89,6 +139,7 @@ function applyOffsets() {
 function readout() {
   const li = lugInst(), p = li && C.partOf(li.part), k = p && numKey(p);
   $('ofs').textContent = OFS.describe(offs);
+  if (C) refreshMarks();
   $('sel').textContent = li ? 'Lug ' + sign(li.part) + ' ' + (k ? li.opts[k] + ' in ' : '') + li.yaw + '°' : 'no lugs';
   $('lugbtn').querySelector('b').textContent = li ? sign(li.part) : '-';
   const cs = covers(); $('cover').setAttribute('aria-pressed', cs.length > 0 && cs.every(i => i.opts.cover));
@@ -124,7 +175,9 @@ wire('hm', () => setOffs(XM.raise(offs, -XM.HEIGHT_IN))); wire('hp', () => setOf
 for (const [id, dir] of [['nl', 'left'], ['nr', 'right'], ['nu', 'up'], ['nd', 'down']])
   wire(id, () => setOffs(XM.nudge(offs, viewForward(), dir, pivotPsi())));
 wire('tm', () => setOffs(XM.turn(offs, -XM.TURN_DEG))); wire('tp', () => setOffs(XM.turn(offs, XM.TURN_DEG)));
-wire('again', () => { if (session) { mode = 'reticle'; anchor = null; hint.hidden = false; } });
+wire('again', () => { if (session) { setMarking(false); mode = 'reticle'; anchor = null; hint.hidden = false; } });
+wire('mark', () => setMarking(!marking));
+wire('clearmarks', clearMarks);
 wire('reset', () => {
   state = C.parseState(new URLSearchParams(location.hash.slice(1)).get('s')) || C.defaultState();
   selLug = lugs()[0]?.part || null; rebuild(); setOffs({ ...OFS.ZERO });
@@ -161,7 +214,7 @@ function onFrame(time, frame) {
   lastFrame = frame;
   if (!frame) { controls.update(); renderer.render(scene, camera); return; }
   const rs = renderer.xr.getReferenceSpace();
-  if (mode === 'reticle' && hitSource) {
+  if ((mode === 'reticle' || marking) && hitSource) {
     const hits = frame.getHitTestResults(hitSource);
     if (hits.length) { lastHit = hits[0]; reticle.visible = true; reticle.matrix.fromArray(hits[0].getPose(rs).transform.matrix); }
     else { reticle.visible = false; lastHit = null; }
@@ -192,9 +245,11 @@ async function enterAR() {
     session = s;
     document.body.classList.add('inar'); grid.visible = false; pivot.visible = false; controls.enabled = false;
     mode = 'reticle'; hint.hidden = false;
-    s.addEventListener('select', () => { if (mode === 'reticle') place(); });
+    s.addEventListener('select', () => {
+      if (marking) { dropMark(); setMarking(false); } else if (mode === 'reticle') place();
+    });
     s.addEventListener('end', () => {
-      session = null; hitSource = null; anchor = null; lastHit = null; mode = 'preview'; reticle.visible = false;
+      session = null; hitSource = null; anchor = null; lastHit = null; mode = 'preview'; clearMarks(); reticle.visible = false;
       document.body.classList.remove('inar'); grid.visible = true; pivot.visible = true; controls.enabled = true;
       pivot.matrix.identity(); hint.hidden = true; scene.environment = roomEnv; scene.remove(xrLight); fit();
     });

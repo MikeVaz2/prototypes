@@ -45,3 +45,9 @@ export function modelPose(basePos, psi, o) {
   const [wx, wz] = frameToWorld(o.x * OFS.IN, o.z * OFS.IN, psi);
   return { pos: [basePos[0] + wx, basePos[1] + o.h * OFS.IN, basePos[2] + wz], yaw: psi + o.yaw * Math.PI / 180 };
 }
+
+// ---- mark-a-point measuring (positions in metres, results in inches) ----
+export const M_PER_IN = 0.0254;
+export const distIn = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / M_PER_IN;
+export const fmtIn = d => d.toFixed(1);
+export const markText = (n, dPos, dNeg) => `M${n}: +${fmtIn(dPos)} in, −${fmtIn(dNeg)} in`;
