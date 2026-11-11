@@ -1,0 +1,67 @@
+{
+ "kind": "nut",
+ "id": "nut-38-pos",
+ "name": "3/8-16 hex nut with lock washer, stainless (pos stud)",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "across_flats": 0.56,
+  "nut_height": 0.33,
+  "thread_hole_diameter": 0.38,
+  "washer_thickness": 0.06,
+  "washer_od": 0.62,
+  "washer_id": 0.39
+ },
+ "colors": {
+  "steel": [
+   0.72,
+   0.74,
+   0.76,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "snap_to": [
+    "blueseas-2340-pos.top",
+    "lug-38-pos.top",
+    "stud_pos"
+   ],
+   "default_yaw_deg": 0,
+   "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring"
+  },
+  {
+   "id": "top",
+   "type": "stack",
+   "pos": [
+    0,
+    0.39,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "note": "top of nut (washer 0.06 + nut 0.33)"
+  }
+ ],
+ "notes": "Dimensions are typical 3/8-16 hex nut (about 0.56 in across flats, 0.33 in tall) and a split lock washer 0.06 in thick (estimates). Plain hex, no chamfer, washer not split."
+}

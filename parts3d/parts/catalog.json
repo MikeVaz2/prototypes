@@ -1,0 +1,461 @@
+{
+ "units": "in",
+ "glb_units": "m",
+ "host": "odyssey-odp-agm31",
+ "default_glb": "odyssey-full-stack.glb",
+ "parts": [
+  {
+   "id": "odyssey-odp-agm31",
+   "name": "Odyssey ODP-AGM31 (31-925S)",
+   "glb": "odyssey-odp-agm31.glb",
+   "default": true,
+   "thumb_color": "#1c1c20",
+   "kind": "battery",
+   "mounts": [
+    {
+     "id": "stud_neg",
+     "type": "stud",
+     "pos": [
+      -4.94,
+      8.81,
+      0.0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "polarity": "-",
+     "thread": "3/8-16"
+    },
+    {
+     "id": "stud_pos",
+     "type": "stud",
+     "pos": [
+      4.94,
+      8.81,
+      0.0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "polarity": "+",
+     "thread": "3/8-16"
+    }
+   ],
+   "options": {},
+   "short": "Battery",
+   "always_on": true
+  },
+  {
+   "id": "lug-38-pos",
+   "name": "Main cable ring lug, 2/4 AWG, 3/8\" hole (positive, red jacket)",
+   "glb": "lug-38-pos.glb",
+   "default": true,
+   "thumb_color": "#b87333",
+   "kind": "lug",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "snap_to": [
+      "stud_pos"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 15,
+     "note": "origin = hole centre on the tongue bottom face (sits directly on the stud boss ring); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed"
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.1,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": [
+        0,
+        0.1,
+        0
+       ],
+       "4awg": [
+        0,
+        0.09,
+        0
+       ]
+      }
+     },
+     "note": "tongue top on the stud axis; the next part in the stack (busbar tab, else nut) sits here"
+    }
+   ],
+   "options": {
+    "gauge": {
+     "type": "choice",
+     "default": "2awg",
+     "label": "Gauge",
+     "values": {
+      "2awg": {
+       "label": "2 AWG",
+       "nodes": [
+        "lug_2awg",
+        "cable_2awg"
+       ]
+      },
+      "4awg": {
+       "label": "4 AWG",
+       "nodes": [
+        "lug_4awg",
+        "cable_4awg"
+       ]
+      }
+     }
+    }
+   },
+   "short": "+ lug"
+  },
+  {
+   "id": "lug-38-neg",
+   "name": "Main cable ring lug, 2/4 AWG, 3/8\" hole (negative, black jacket)",
+   "glb": "lug-38-neg.glb",
+   "default": true,
+   "thumb_color": "#b87333",
+   "kind": "lug",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "snap_to": [
+      "stud_neg"
+     ],
+     "default_yaw_deg": 180,
+     "yaw_step_deg": 15,
+     "note": "origin = hole centre on the tongue bottom face (sits directly on the stud boss ring); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed"
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.1,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "by_option": {
+      "gauge": {
+       "2awg": [
+        0,
+        0.1,
+        0
+       ],
+       "4awg": [
+        0,
+        0.09,
+        0
+       ]
+      }
+     },
+     "note": "tongue top on the stud axis; the next part in the stack (busbar tab, else nut) sits here"
+    }
+   ],
+   "options": {
+    "gauge": {
+     "type": "choice",
+     "default": "2awg",
+     "label": "Gauge",
+     "values": {
+      "2awg": {
+       "label": "2 AWG",
+       "nodes": [
+        "lug_2awg",
+        "cable_2awg"
+       ]
+      },
+      "4awg": {
+       "label": "4 AWG",
+       "nodes": [
+        "lug_4awg",
+        "cable_4awg"
+       ]
+      }
+     }
+    }
+   },
+   "short": "\u2212 lug"
+  },
+  {
+   "id": "blueseas-2340-pos",
+   "name": "Blue Sea 2340 busbar (positive, red cover), battery-terminal mount",
+   "glb": "blueseas-2340-pos.glb",
+   "default": true,
+   "thumb_color": "#c81414",
+   "kind": "busbar",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "snap_to": [
+      "lug-38-pos.top",
+      "stud_pos"
+     ],
+     "default_yaw_deg": 90,
+     "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
+     "yaw_step_deg": 90
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.125,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "note": "top of the tab on the stud axis; the nut sits here"
+    }
+   ],
+   "options": {
+    "cover": {
+     "type": "bool",
+     "default": true,
+     "label": "Cover",
+     "nodes": [
+      "cover"
+     ]
+    }
+   },
+   "short": "+ busbar"
+  },
+  {
+   "id": "blueseas-2340-neg",
+   "name": "Blue Sea 2340 busbar (negative, black cover), battery-terminal mount",
+   "glb": "blueseas-2340-neg.glb",
+   "default": true,
+   "thumb_color": "#2a2a2e",
+   "kind": "busbar",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "snap_to": [
+      "lug-38-neg.top",
+      "stud_neg"
+     ],
+     "default_yaw_deg": 90,
+     "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
+     "yaw_step_deg": 90
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.125,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "note": "top of the tab on the stud axis; the nut sits here"
+    }
+   ],
+   "options": {
+    "cover": {
+     "type": "bool",
+     "default": true,
+     "label": "Cover",
+     "nodes": [
+      "cover"
+     ]
+    }
+   },
+   "short": "\u2212 busbar"
+  },
+  {
+   "id": "nut-38-pos",
+   "name": "3/8-16 hex nut with lock washer, stainless (pos stud)",
+   "glb": "nut-38-pos.glb",
+   "default": true,
+   "thumb_color": "#b8bcc2",
+   "kind": "nut",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "snap_to": [
+      "blueseas-2340-pos.top",
+      "lug-38-pos.top",
+      "stud_pos"
+     ],
+     "default_yaw_deg": 0,
+     "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring"
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.39,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "note": "top of nut (washer 0.06 + nut 0.33)"
+    }
+   ],
+   "options": {},
+   "short": "Nuts",
+   "chip": "nuts"
+  },
+  {
+   "id": "nut-38-neg",
+   "name": "3/8-16 hex nut with lock washer, stainless (neg stud)",
+   "glb": "nut-38-neg.glb",
+   "default": true,
+   "thumb_color": "#b8bcc2",
+   "kind": "nut",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "snap_to": [
+      "blueseas-2340-neg.top",
+      "lug-38-neg.top",
+      "stud_neg"
+     ],
+     "default_yaw_deg": 0,
+     "note": "origin = bottom of the lock washer on the stud axis; sits on the busbar tab top, else the lug tongue top, else the stud boss ring"
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.39,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "note": "top of nut (washer 0.06 + nut 0.33)"
+    }
+   ],
+   "options": {},
+   "short": "Nuts",
+   "chip": "nuts"
+  }
+ ]
+}

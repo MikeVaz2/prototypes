@@ -1,0 +1,124 @@
+{
+ "kind": "lug",
+ "id": "lug-38-pos",
+ "name": "Main cable ring lug, 2/4 AWG, 3/8\" hole (positive, red jacket)",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "hole_diameter": 0.39,
+  "gauges": {
+   "2awg": {
+    "tongue_width": 0.75,
+    "tongue_thickness": 0.1,
+    "overall_length": 2.0,
+    "barrel_od": 0.55,
+    "barrel_length": 0.75,
+    "cable_od": 0.45,
+    "cable_length": 3.0
+   },
+   "4awg": {
+    "tongue_width": 0.65,
+    "tongue_thickness": 0.09,
+    "overall_length": 1.8,
+    "barrel_od": 0.45,
+    "barrel_length": 0.65,
+    "cable_od": 0.38,
+    "cable_length": 3.0
+   }
+  }
+ },
+ "colors": {
+  "lug": [
+   0.8,
+   0.82,
+   0.84,
+   1.0
+  ],
+  "cable": [
+   0.75,
+   0.05,
+   0.05,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "snap_to": [
+    "stud_pos"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 15,
+   "note": "origin = hole centre on the tongue bottom face (sits directly on the stud boss ring); local +X runs toward the cable; yaw 0 points the cable at +X (battery right end, default for +), 180 at -X (left end, default for -); yaw about Y right-handed"
+  },
+  {
+   "id": "top",
+   "type": "stack",
+   "pos": [
+    0,
+    0.1,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "by_option": {
+    "gauge": {
+     "2awg": [
+      0,
+      0.1,
+      0
+     ],
+     "4awg": [
+      0,
+      0.09,
+      0
+     ]
+    }
+   },
+   "note": "tongue top on the stud axis; the next part in the stack (busbar tab, else nut) sits here"
+  }
+ ],
+ "options": {
+  "gauge": {
+   "type": "choice",
+   "default": "2awg",
+   "label": "Gauge",
+   "values": {
+    "2awg": {
+     "label": "2 AWG",
+     "nodes": [
+      "lug_2awg",
+      "cable_2awg"
+     ]
+    },
+    "4awg": {
+     "label": "4 AWG",
+     "nodes": [
+      "lug_4awg",
+      "cable_4awg"
+     ]
+    }
+   }
+  }
+ },
+ "notes": "ESTIMATE: typical catalog values for a closed-end heavy-duty tin-plated copper lug, not from a specific datasheet. All dimensions are estimates: tongue width/thickness, overall length, barrel OD, cable OD (with jacket), cable stub length 3 in, barrel length, 4 AWG values. Hole 0.39 in for a 3/8 stud. Barrel bottom is flush with the tongue bottom; barrel is solid (closed shape); the cable stub leaves the far end. Measure the real lug before ordering."
+}

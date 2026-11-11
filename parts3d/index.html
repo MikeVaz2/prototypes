@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene builder</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family:system-ui,sans-serif; background:#f5f6f8; color:#1c1f24; display:flex; flex-direction:column; overflow-x:hidden; }
+  main { flex:1; min-height:0; width:100%; max-width:900px; margin:0 auto; padding:12px 16px 0; display:flex; flex-direction:column; }
+  model-viewer { width:100%; flex:1; min-height:240px; background:#fff; border-radius:12px; --poster-color:#fff; }
+  .info { padding:8px 0 10px; font-size:14px; line-height:1.4; }
+  .info p { margin:4px 0 0; }
+  small, .note { color:#5b6470; font-size:12.5px; }
+  #tray { background:#fff; border-top:1px solid #d9dde3; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  #tray .row { max-width:900px; margin:0 auto; display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 14px; border-radius:22px;
+          border:2px solid #c9ced6; background:#fff; color:#1c1f24; font:inherit; font-size:15px; cursor:pointer; }
+  .chip .dot { width:14px; height:14px; border-radius:50%; border:1px solid rgba(0,0,0,.35); }
+  .chip[aria-pressed="true"] { border-color:#1a6ef0; background:#e8f0fe; font-weight:600; }
+  .chip[disabled] { opacity:1; cursor:default; }
+  .chip:focus-visible { outline:3px solid #1a6ef0; outline-offset:2px; }
+  .chip-wrap { display:inline-flex; align-items:center; }
+  .chip-wrap.has-edit .chip.main { border-top-right-radius:0; border-bottom-right-radius:0; }
+  .chip.edit { width:44px; padding:0; justify-content:center; border-top-left-radius:0; border-bottom-left-radius:0; border-left-width:1px; }
+  .chip.edit[aria-pressed="true"] { background:#1a6ef0; color:#fff; border-color:#1a6ef0; }
+  #panel { background:#fff; border-top:1px solid #d9dde3; padding:10px 16px; }
+  #panel[hidden] { display:none; }
+  #panel .row { max-width:900px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  #panel .title { flex:1 1 100%; font-weight:600; font-size:14px; }
+  #panel .btn { min-height:44px; padding:0 14px; border-radius:8px; border:2px solid #c9ced6; background:#fff; font:inherit; font-size:15px; cursor:pointer; color:inherit; }
+  #panel .btn[aria-pressed="true"] { border-color:#1a6ef0; background:#e8f0fe; font-weight:600; }
+  #panel .btn:focus-visible { outline:3px solid #1a6ef0; outline-offset:2px; }
+</style>
+</head>
+<body>
+<main>
+  <model-viewer id="mv" src="odyssey-full-stack.glb" alt="Odyssey ODP-AGM31 battery with lugs, busbars and nuts"
+    camera-controls shadow-intensity="1" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed"></model-viewer>
+  <div class="info">
+    <div id="caption"></div>
+    <p class="note">Datasheet-dimension model, not an exact CAD copy. Stack on each stud, bottom to top: boss ring, main cable lug, busbar tab, lock washer and nut; toggling a part re-stacks the rest. Tap a lug or busbar (or the gear on its chip, or long-press the chip) to rotate it, change lug gauge or remove a busbar cover.
+    AR: in Scene Viewer / Quick Look the default set
+    (battery, both lugs, busbars with covers, nuts) is shown, since they need a real file URL; WebXR shows your current selection.</p>
+  </div>
+</main>
+<section id="panel" aria-label="Selected part" hidden><div class="row" id="panelrow"></div></section>
+<nav id="tray" aria-label="Parts"><div class="row" id="chips"></div></nav>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+const IN = 0.0254, mv = document.getElementById('mv');
+const loader = new GLTFLoader(), cache = new Map();
+let catalog, host, state = [], selId = null, lastUrl = null, busy = false, again = false, defaultKey = '';
+
+const load = p => cache.has(p.id) ? cache.get(p.id)
+  : cache.set(p.id, loader.loadAsync(p.glb).then(g => g.scene)).get(p.id);
+const partOf = id => catalog.parts.find(p => p.id === id);
+const snapMount = p => (p.mounts || []).find(m => m.snap_to);
+const snapList = p => { const s = snapMount(p).snap_to; return Array.isArray(s) ? s : [s]; };   // chain entries "part.mount", then the host mount
+const chipId = p => p.chip || p.id;
+function topPos(p, inst) {   // part-local position (in) of the `top` mount, with by_option overrides
+  const m = p.mounts.find(x => x.id === 'top');
+  for (const [k, tbl] of Object.entries(m.by_option || {})) { const v = inst.opts[k]; if (tbl[v]) return tbl[v]; }
+  return m.pos;
+}
+const defOpts = p => Object.fromEntries(Object.entries(p.options || {}).map(([k, o]) => [k, o.default]));
+const defInst = p => { const m = snapMount(p);
+  return { part: p.id, mount: m ? snapList(p).slice(-1)[0] : '-', yaw: m ? (m.default_yaw_deg || 0) : 0, opts: defOpts(p) }; };
+const editable = p => !!(snapMount(p) && ((snapMount(p).yaw_step_deg || 0) > 0 || Object.keys(p.options || {}).length));
+const norm = d => ((d % 360) + 360) % 360;
+
+// ---- scene state <-> URL hash:  #s=part:mount:yaw:opt=0,opt=1~part:...   (optional &sel=<part id>) ----
+const ser = st => st.map(i => [i.part, i.mount, i.yaw,
+  Object.entries(i.opts).map(([k, v]) => k + '=' + (v === true ? 1 : v === false ? 0 : v)).join(',')].join(':')).join('~');
+function parse(str) {
+  const out = [];
+  for (const t of (str || '').split('~')) {
+    const [id, mount, yaw, o] = t.split(':'), p = partOf(id);
+    if (!p || out.some(x => x.part === id)) continue;
+    const d = defInst(p), sm = snapMount(p);
+    if (sm && mount !== d.mount) { if (!host.mounts.some(h => h.id === mount)) continue; d.mount = mount; }
+    const y = Number(yaw), step = sm && sm.yaw_step_deg;
+    if (step && yaw !== '' && Number.isFinite(y)) d.yaw = norm(Math.round(y / step) * step);
+    for (const kv of (o || '').split(',')) {
+      const [k, v] = kv.split('='), spec = (p.options || {})[k];
+      if (spec && spec.type === 'bool' && (v === '0' || v === '1')) d.opts[k] = v === '1';
+      else if (spec && spec.type === 'choice' && spec.values[v]) d.opts[k] = v;
+    }
+    out.push(d);
+  }
+  return out.some(i => i.part === host.id) ? out : null;   // invalid / missing -> defaults
+}
+const defaultState = () => catalog.parts.filter(p => p.default || p.always_on).map(defInst);
+function writeHash() {
+  const h = ser(state) === defaultKey ? '' : '#s=' + ser(state);
+  history.replaceState(null, '', location.pathname + location.search + h);
+}
+
+// Snap rule (same as build_catalog.py resolve): the part origin goes to the first present entry of snap_to
+// ("part.mount" = that part's mount on the same stud, else the host mount), rotated about Y by inst.yaw.
+function placements() {
+  const out = new Map();
+  const go = inst => {
+    if (out.has(inst.part)) return out.get(inst.part);
+    const p = partOf(inst.part);
+    let mat = new THREE.Matrix4();
+    if (p !== host) {
+      let pos = null;
+      for (const e of snapList(p).slice(0, -1)) {
+        const other = state.find(i => i.part === e.split('.')[0]);
+        if (other && snapMount(partOf(other.part)) && other.mount === inst.mount) {
+          const t = topPos(partOf(other.part), other);
+          pos = new THREE.Vector3(t[0] * IN, t[1] * IN, t[2] * IN).applyMatrix4(go(other));
+          break;
+        }
+      }
+      if (!pos) {
+        const hm = host.mounts.find(h => h.id === inst.mount);
+        if (!hm) { out.set(inst.part, null); return null; }
+        pos = new THREE.Vector3(hm.pos[0] * IN, hm.pos[1] * IN, hm.pos[2] * IN);
+      }
+      mat = new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(inst.yaw));
+      mat.setPosition(pos);
+    }
+    out.set(inst.part, mat);
+    return mat;
+  };
+  state.forEach(go);
+  return out;
+}
+
+async function buildGroup() {
+  const root = new THREE.Group(), used = [], pl = placements();
+  for (const inst of state) {
+    const p = partOf(inst.part), mat = pl.get(inst.part);
+    if (!mat) continue;
+    const obj = (await load(p)).clone(true);
+    // hide option nodes: bool off, or the nodes of the non-selected choice values
+    const hide = [];
+    for (const [k, o] of Object.entries(p.options || {})) {
+      if (o.type === 'bool' && !inst.opts[k]) hide.push(...o.nodes);
+      else if (o.type === 'choice') for (const [v, e] of Object.entries(o.values)) if (v !== inst.opts[k]) hide.push(...e.nodes);
+    }
+    for (const n of hide) { const x = obj.getObjectByName(n); if (x) x.removeFromParent(); }
+    // per-instance material names (suffix "#<part id>") so a tap maps back to the instance
+    obj.traverse(c => { if (c.isMesh) { c.material = c.material.clone(); c.material.name = (c.material.name || 'm') + '#' + inst.part; } });
+    obj.matrixAutoUpdate = false; obj.matrix.copy(mat); obj.matrixWorldNeedsUpdate = true;
+    root.add(obj); used.push(p);
+  }
+  root.updateMatrixWorld(true);
+  return { root, used };
+}
+
+function caption(root, used) {
+  const s = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).multiplyScalar(1 / IN);
+  const f = v => v.toFixed(1), mm = v => Math.round(v * 25.4);
+  document.getElementById('caption').innerHTML =
+    '<strong>' + state.map(i => { const p = partOf(i.part), o = p.options || {};
+      const off = Object.keys(o).filter(k => o[k].type === 'bool' && !i.opts[k]).map(k => 'no ' + o[k].label.toLowerCase())
+        .concat(Object.keys(o).filter(k => o[k].type === 'choice' && i.opts[k] !== o[k].default).map(k => o[k].values[i.opts[k]].label));
+      return p.short + (off.length ? ' (' + off.join(', ') + ')' : ''); }).join(', ') + '</strong><br>' +
+    'Overall ' + f(s.x) + ' &times; ' + f(s.z) + ' &times; ' + f(s.y) + ' in (' +
+    mm(s.x) + ' &times; ' + mm(s.z) + ' &times; ' + mm(s.y) + ' mm), L &times; W &times; H.<br>' +
+    '<small>' + used.map(p => p.name).join('; ') + '</small>';
+}
+
+function highlight() {   // subtle emissive tint on the selected instance (optional nicety)
+  try {
+    for (const m of mv.model.materials) {
+      const on = selId && (m.name || '').endsWith('#' + selId);
+      m.setEmissiveFactor(on ? [0.1, 0.25, 0.6] : [0, 0, 0]);
+    }
+  } catch (e) { /* ignore */ }
+}
+
+async function refresh(initial) {
+  if (busy) { again = true; return; }
+  busy = true;
+  try {
+    const { root, used } = await buildGroup();
+    caption(root, used);
+    if (initial && ser(state) === defaultKey) { if (selId) mv.addEventListener('load', highlight, { once: true }); return; }   // src already shows the default assembly
+    const orbit = mv.getCameraOrbit(), target = mv.getCameraTarget(), fov = mv.getFieldOfView();
+    const buf = await new GLTFExporter().parseAsync(root, { binary: true });
+    const url = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' }));
+    mv.addEventListener('load', () => {
+      if (!initial) {
+        mv.cameraOrbit = orbit.toString(); mv.cameraTarget = target.toString(); mv.fieldOfView = fov + 'deg';
+        if (mv.jumpCameraToGoal) mv.jumpCameraToGoal();
+      }
+      if (lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = url; highlight();
+    }, { once: true });
+    mv.src = url;
+  } finally {
+    busy = false;
+    if (again) { again = false; refresh(); }
+  }
+}
+
+function changed() { writeHash(); renderChips(); renderPanel(); refresh(); }
+
+function select(id) {   // toggles: selecting the selected part deselects it
+  const inst = state.find(i => i.part === id);
+  selId = inst && editable(partOf(id)) && selId !== id ? id : null;
+  renderChips(); renderPanel(); highlight();
+}
+
+function renderPanel() {
+  const panel = document.getElementById('panel'), row = document.getElementById('panelrow');
+  const inst = state.find(i => i.part === selId);
+  if (!inst) { panel.hidden = true; row.innerHTML = ''; return; }
+  const p = partOf(inst.part), step = snapMount(p).yaw_step_deg || 0;
+  panel.hidden = false; row.innerHTML = '';
+  const t = document.createElement('div'); t.className = 'title';
+  t.textContent = p.name + (step ? ' — yaw ' + inst.yaw + '°' : ''); row.appendChild(t);
+  const btn = (label, fn, pressed) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn';
+    b.textContent = label; if (pressed !== undefined) b.setAttribute('aria-pressed', pressed); b.addEventListener('click', fn); row.appendChild(b); };
+  if (step) btn('Rotate ' + step + '°', () => { inst.yaw = norm(inst.yaw + step); changed(); });
+  for (const [k, o] of Object.entries(p.options || {}))
+    if (o.type === 'bool') btn(o.label + ': ' + (inst.opts[k] ? 'on' : 'off'), () => { inst.opts[k] = !inst.opts[k]; changed(); }, inst.opts[k]);
+    else if (o.type === 'choice') btn(o.label + ': ' + o.values[inst.opts[k]].label, () => {
+      const ks = Object.keys(o.values); inst.opts[k] = ks[(ks.indexOf(inst.opts[k]) + 1) % ks.length]; changed(); });
+  btn('Reset', () => { Object.assign(inst, defInst(p)); changed(); });
+  btn('Close', () => select(selId));
+}
+
+function renderChips() {
+  const box = document.getElementById('chips'); box.innerHTML = '';
+  const seen = new Set();
+  for (const p of catalog.parts) {
+    if (seen.has(chipId(p))) continue; seen.add(chipId(p));
+    const members = catalog.parts.filter(q => chipId(q) === chipId(p)), grouped = members.length > 1;
+    const on = members.some(q => state.some(i => i.part === q.id)), ed = on && !grouped && editable(p);
+    const wrap = document.createElement('span'); wrap.className = 'chip-wrap' + (ed ? ' has-edit' : '');
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip main'; b.dataset.id = chipId(p); b.setAttribute('aria-pressed', on);
+    b.innerHTML = '<span class="dot" style="background:' + p.thumb_color + '"></span>' + p.short;
+    b.title = (grouped ? members.map(q => q.name).join(' + ') : p.name) + (ed ? ' (long-press to edit)' : '');
+    if (p.always_on) b.disabled = true;
+    let timer = null, long = false;
+    b.addEventListener('pointerdown', () => { long = false; if (ed) timer = setTimeout(() => { long = true; select(p.id); }, 550); });
+    for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => clearTimeout(timer));
+    b.addEventListener('click', () => {
+      if (long) { long = false; return; }
+      if (on) { state = state.filter(i => !members.some(q => q.id === i.part)); if (members.some(q => q.id === selId)) selId = null; }
+      else { for (const q of members) state.push(defInst(q)); state.sort((a, c) => catalog.parts.indexOf(partOf(a.part)) - catalog.parts.indexOf(partOf(c.part))); }
+      changed();
+    });
+    wrap.appendChild(b);
+    if (ed) {
+      const e = document.createElement('button');
+      e.type = 'button'; e.className = 'chip edit'; e.textContent = '\u2699'; e.setAttribute('aria-label', 'Edit ' + p.short);
+      e.setAttribute('aria-pressed', selId === p.id); e.addEventListener('click', () => select(p.id));
+      wrap.appendChild(e);
+    }
+    box.appendChild(wrap);
+  }
+}
+
+// a tap on the model selects the instance that was hit (drags for orbiting are ignored)
+let down = null;
+mv.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+mv.addEventListener('click', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const r = mv.getBoundingClientRect();
+  try {
+    const m = mv.materialFromPoint(e.clientX - r.left, e.clientY - r.top);
+    const id = m && (m.name || '').split('#')[1];
+    if (id && state.some(i => i.part === id) && editable(partOf(id))) { if (selId !== id) select(id); }
+    else if (selId) select(selId);
+  } catch (err) { /* the chip route still works */ }
+});
+
+catalog = await (await fetch('parts/catalog.json')).json();
+host = partOf(catalog.host);
+defaultKey = ser(defaultState());
+const q = new URLSearchParams(location.hash.slice(1));
+state = parse(q.get('s')) || defaultState();
+new URLSearchParams(location.search).get('off')?.split(',').forEach(id => { state = state.filter(i => i.part !== id || i.part === host.id); });  // test hook: ?off=id,id
+if (q.get('sel') && state.some(i => i.part === q.get('sel')) && editable(partOf(q.get('sel')))) selId = q.get('sel');   // test hook: &sel=<part id>
+renderChips(); renderPanel();
+refresh(true);
+</script>
+</body>
+</html>

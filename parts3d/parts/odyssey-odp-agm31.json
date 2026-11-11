@@ -1,0 +1,126 @@
+{
+ "name": "Odyssey ODP-AGM31 (31-925S)",
+ "units": "in",
+ "case": {
+  "length": 13.0,
+  "width": 6.8,
+  "height": 8.6
+ },
+ "lid": {
+  "height": 0.3,
+  "inset": 0.15
+ },
+ "overall_height": 9.6,
+ "terminals": [
+  {
+   "id": "neg",
+   "polarity": "-",
+   "x": 1.56,
+   "y": 3.4,
+   "type": "stud",
+   "thread": "3/8-16",
+   "height": 1.0
+  },
+  {
+   "id": "pos",
+   "polarity": "+",
+   "x": 11.44,
+   "y": 3.4,
+   "type": "stud",
+   "thread": "3/8-16",
+   "height": 1.0
+  }
+ ],
+ "terminal_style": {
+  "stud_diameter": 0.375,
+  "boss_diameter": 0.9,
+  "boss_height": 0.15,
+  "ring_outer_diameter": 0.8,
+  "ring_inner_diameter": 0.5,
+  "ring_height": 0.06
+ },
+ "label": {
+  "face": "front",
+  "color": "red",
+  "z_from": 2.6,
+  "z_to": 5.8,
+  "margin_x": 1.6,
+  "text": ""
+ },
+ "colors": {
+  "case": [
+   0.05,
+   0.05,
+   0.055,
+   1.0
+  ],
+  "lid": [
+   0.07,
+   0.07,
+   0.075,
+   1.0
+  ],
+  "stud": [
+   0.62,
+   0.64,
+   0.66,
+   1.0
+  ],
+  "ring_pos": [
+   0.8,
+   0.05,
+   0.05,
+   1.0
+  ],
+  "ring_neg": [
+   0.1,
+   0.1,
+   0.11,
+   1.0
+  ],
+  "label": [
+   0.75,
+   0.08,
+   0.08,
+   1.0
+  ]
+ },
+ "notes": "Terminal layout G per Odyssey drawing. x,y measured from top-left-back corner of case, inches.",
+ "kind": "battery",
+ "id": "odyssey-odp-agm31",
+ "mounts": [
+  {
+   "id": "stud_neg",
+   "type": "stud",
+   "pos": [
+    -4.94,
+    8.81,
+    0.0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "polarity": "-",
+   "thread": "3/8-16"
+  },
+  {
+   "id": "stud_pos",
+   "type": "stud",
+   "pos": [
+    4.94,
+    8.81,
+    0.0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "polarity": "+",
+   "thread": "3/8-16"
+  }
+ ],
+ "mounts_note": "pos = top of polarity ring on the boss (boss top 8.75 + ring 0.06); case-origin coords, inches (X from centre, Y up, Z from centre; +Z front)."
+}
