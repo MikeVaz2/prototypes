@@ -1,6 +1,7 @@
 // Scene composition for ar-xr.html. Ported from viewer.html (placements / applyLength / buildGroup / hash parse), same rules.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { kindOf } from './pick.js';
 
 const IN = 0.0254;
 const norm = d => ((d % 360) + 360) % 360;
@@ -97,7 +98,11 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
       }
       for (const n of hide) { const x = obj.getObjectByName(n); if (x) x.removeFromParent(); }
       for (const [k, o] of Object.entries(p.options || {})) if (o.type === 'number') applyLength(obj, inst.opts[k], o);
-      obj.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+      obj.traverse(c => { if (c.isMesh) {
+        c.castShadow = true; c.receiveShadow = true;
+        c.material = Array.isArray(c.material) ? c.material.map(m => m.clone()) : c.material.clone();   // per instance, so tints stay on this part
+      } });
+      obj.userData = { instanceId: inst.part, partId: p.id, kind: kindOf(p.id, host.id, 'cover' in (p.options || {})), tint: null };
       obj.matrixAutoUpdate = false; obj.matrix.copy(mat); obj.matrixWorldNeedsUpdate = true;
       root.add(obj);
     }
@@ -105,5 +110,6 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
     return root;
   }
 
-  return { catalog, host, partOf, defaultState, parseState, build, clampNum, snapMount };
+  const yawStep = id => { const p = partOf(id), m = p && snapMount(p); return (m && m.yaw_step_deg) || 0; };
+  return { catalog, host, partOf, defaultState, parseState, build, clampNum, snapMount, yawStep };
 }
