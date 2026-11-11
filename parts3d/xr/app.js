@@ -446,12 +446,24 @@ renderer.setAnimationLoop(onFrame);
 // ---- session ----
 async function enterAR() {
   try {
-    const opts = { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'light-estimation', 'depth-sensing'], domOverlay: { root: overlay },
-      depthSensing: { usagePreference: ['cpu-optimized', 'gpu-optimized'], dataFormatPreference: ['luminance-alpha', 'float32'] } };
+    // three 0.170 calls the GPU depth reader whenever 'depth-sensing' is enabled, whatever usage was granted,
+    // and that throws every frame in cpu-optimized mode. So depth is opt-in for experiments: ?depth=1.
+    const wantDepth = new URLSearchParams(location.search).get('depth') === '1';
+    const opts = { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'light-estimation'], domOverlay: { root: overlay } };
+    if (wantDepth) {
+      opts.optionalFeatures.push('depth-sensing');
+      opts.depthSensing = { usagePreference: ['cpu-optimized'], dataFormatPreference: ['luminance-alpha', 'float32'] };
+    }
     let s;
     try { s = await navigator.xr.requestSession('immersive-ar', opts); }
     catch (e) {   // a browser that rejects the depth config: retry without it
       log('session with depth-sensing rejected (' + (e && e.message || e) + '), retrying without');
+      delete opts.depthSensing; opts.optionalFeatures = opts.optionalFeatures.filter(f => f !== 'depth-sensing');
+      s = await navigator.xr.requestSession('immersive-ar', opts);
+    }
+    if ((s.enabledFeatures || []).includes('depth-sensing') && s.depthUsage !== 'cpu-optimized') {   // three would take its GPU depth path and throw every frame
+      log('depth usage ' + s.depthUsage + ' is not cpu-optimized, restarting without depth-sensing');
+      try { await s.end(); } catch (e) { /* already ended */ }
       delete opts.depthSensing; opts.optionalFeatures = opts.optionalFeatures.filter(f => f !== 'depth-sensing');
       s = await navigator.xr.requestSession('immersive-ar', opts);
     }
