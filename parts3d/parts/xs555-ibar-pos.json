@@ -1,0 +1,176 @@
+{
+ "kind": "terminal",
+ "id": "xs555-ibar-pos",
+ "name": "XS Power 555 I-Bar, dual top posts + side adapter (placeholder) (positive)",
+ "short": "XS I-Bar +",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "base": {
+   "shape": "round",
+   "size": 0.9,
+   "height": 0.45
+  },
+  "blocks": [
+   {
+    "x0": -0.9,
+    "x1": 0.9,
+    "y0": 0.0,
+    "y1": 0.45,
+    "z0": -0.3,
+    "z1": 0.3
+   }
+  ],
+  "studs": [
+   {
+    "x": -0.6,
+    "z": 0,
+    "y0": 0.45,
+    "length": 0.6,
+    "d": 0.3125,
+    "tpi": 18,
+    "thread": "5/16-18"
+   },
+   {
+    "x": 0.6,
+    "z": 0,
+    "y0": 0.45,
+    "length": 0.6,
+    "d": 0.3125,
+    "tpi": 18,
+    "thread": "5/16-18"
+   }
+  ],
+  "side_studs": [
+   {
+    "dx": 0,
+    "dz": 1,
+    "y": 0.22,
+    "length": 0.7,
+    "d": 0.375,
+    "tpi": 16,
+    "thread": "3/8-16",
+    "r0": 0.3
+   }
+  ]
+ },
+ "colors": {
+  "body": [
+   0.62,
+   0.64,
+   0.68,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "post",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 90,
+   "note": "origin = post axis at the adapter base top; assumption, see notes",
+   "needs": {
+    "kind": "stud",
+    "thread": "SAE-post",
+    "polarity": "+",
+    "consumes_in": 0.45
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "top1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "5/16-18",
+   "polarity": "+",
+   "rating_a": 200,
+   "rating_estimate": true,
+   "pos": [
+    -0.6,
+    0.45,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "5/16-18",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   }
+  },
+  {
+   "id": "top2",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "5/16-18",
+   "polarity": "+",
+   "rating_a": 200,
+   "rating_estimate": true,
+   "pos": [
+    0.6,
+    0.45,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "5/16-18",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   }
+  },
+  {
+   "id": "side1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "polarity": "+",
+   "rating_a": 300,
+   "rating_estimate": true,
+   "pos": [
+    0.0,
+    0.22,
+    0.3
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 2,
+    "max_stack_in": 0.55
+   }
+  }
+ ],
+ "height_above_seat_in": 1.05,
+ "source": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part. Listings (JS Alternators, Sonic Electronix): 4 x M6 x 20 mm screws and side-post caps, no outline dims. The real 555 fastens with M6 side-terminal screws, so it does NOT thread onto a 3/8-16 stud; modelled here as sitting on an SAE post (needs the SAE adapter). Assumption.",
+ "notes": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part. Listings (JS Alternators, Sonic Electronix): 4 x M6 x 20 mm screws and side-post caps, no outline dims. The real 555 fastens with M6 side-terminal screws, so it does NOT thread onto a 3/8-16 stud; modelled here as sitting on an SAE post (needs the SAE adapter). Assumption.",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "adapter",
+  "short": "XS 555 I-Bar +",
+  "swatch": "#c81414"
+ },
+ "fits_3_8_stud_directly": false
+}

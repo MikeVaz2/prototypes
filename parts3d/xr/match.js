@@ -59,9 +59,45 @@ export function outletsFor(part, opts, insts, partOf) {
   return out;
 }
 
+// Free outlets of an instance, for "Add to this": every connection of the part except its own mount (kind/form 'ring'),
+// enabled for its options and not full. Screws, crimps and studs all count. Independent of yaw and of the cover option (the cover never hides an outlet:
+// the Blue Sea cover leaves the screw terminals reachable). -> [{ key, conn, kind, thread }]
+export function freeOutlets(inst, insts, partOf) {
+  const p = inst && partOf(inst.part); if (!p) return [];
+  const out = [];
+  for (const c of p.connections || []) {
+    const kind = c.form || c.kind;
+    if (kind === 'ring' || !connEnabled(c, inst.opts)) continue;
+    const key = inst.id + '.' + c.id, used = insts.filter(i => i.on === key).map(i => consumes(partOf(i.part), i.opts));
+    if (kind === 'stud' && c.accepts ? !fits(c.accepts, used, 0).ok : used.length > 0) continue;
+    out.push({ key, conn: c.id, kind, thread: c.thread || (c.accepts && c.accepts.thread) || '' });
+  }
+  return out;
+}
+
 // one line when nothing is available: "No free 5/16 stud (+): all full" / ": none in the scene"
 export function noOutletMessage(part, outlets) {
   const n = needsOf(part); if (!n) return '';
   const pol = n.needs.polarity && n.needs.polarity !== 'any' ? ' (' + n.needs.polarity + ')' : '';
   return 'No free ' + threadShort(n.needs.thread) + ' stud' + pol + (outlets.length ? ': all full' : ': none in the scene');
+}
+
+// ---- highlight quick actions (#90) ----
+// Library parts that fit outlets chosen by keyFilter (key => bool). insts/partOf as in outletsFor; optsOf(part) = options the part would get (defaults).
+// -> [{ part, keys }]  keys = the free, compatible outlets of that part that pass the filter, in scene order. Parts with none are left out.
+export function partsFitting(parts, insts, partOf, keyFilter = () => true, optsOf = () => ({})) {
+  const out = [];
+  for (const part of parts) {
+    const keys = outletsFor(part, optsOf(part), insts, partOf).filter(o => o.ok && keyFilter(o.key)).map(o => o.key);
+    if (keys.length) out.push({ part, keys });
+  }
+  return out;
+}
+
+// surface parts (PowerBar 2104: 4 x #10 screws) mount on a real surface, never on another part. src = what the click or beam hit:
+// 'M' = a part's mesh (refused); 'P'/'L'/'D'/'G' = hit-test point or plane, depth, ground (allowed). Stud parts are placed through outlets instead.
+export const SURFACE_REFUSAL = 'Mounts on a surface, not on parts';
+export function surfaceDrop(part, src) {
+  if (mountKind(part) !== 'surface') return { ok: true };
+  return src === 'M' ? { ok: false, why: SURFACE_REFUSAL } : { ok: true };
 }

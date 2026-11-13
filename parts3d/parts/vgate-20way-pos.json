@@ -1,0 +1,776 @@
+{
+ "kind": "terminal",
+ "id": "vgate-20way-pos",
+ "name": "Vgate 20-way post terminal distribution block (placeholder) (positive)",
+ "short": "Vgate 20 +",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "base": {
+   "shape": "round",
+   "size": 0.9,
+   "height": 0.15
+  },
+  "blocks": [
+   {
+    "x0": 0.4,
+    "x1": 5.6,
+    "y0": 0.0,
+    "y1": 0.5,
+    "z0": -0.65,
+    "z1": 0.65
+   }
+  ],
+  "studs": [
+   {
+    "x": 0.9,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 0.9,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 1.4,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 1.4,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 1.9,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 1.9,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 2.4,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 2.4,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 2.9,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 2.9,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 3.4,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 3.4,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 3.9,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 3.9,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 4.4,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 4.4,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 4.9,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 4.9,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 5.4,
+    "z": -0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   },
+   {
+    "x": 5.4,
+    "z": 0.35,
+    "y0": 0.5,
+    "length": 0.6,
+    "d": 0.236,
+    "tpi": 25.4,
+    "thread": "M6-1.0"
+   }
+  ]
+ },
+ "colors": {
+  "body": [
+   0.62,
+   0.64,
+   0.68,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 45,
+   "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "+",
+    "consumes_in": 0.15
+   }
+  },
+  {
+   "id": "surface",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "fixed"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "bolt-down alternative"
+  }
+ ],
+ "connections": [
+  {
+   "id": "top1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    0.9,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top2",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    0.9,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top3",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    1.4,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top4",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    1.4,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top5",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    1.9,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top6",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    1.9,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top7",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    2.4,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top8",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    2.4,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top9",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    2.9,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top10",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    2.9,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top11",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    3.4,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top12",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    3.4,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top13",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    3.9,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top14",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    3.9,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top15",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    4.4,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top16",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    4.4,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top17",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    4.9,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top18",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    4.9,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top19",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    5.4,
+    0.5,
+    -0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  },
+  {
+   "id": "top20",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "M6-1.0",
+   "polarity": "+",
+   "rating_a": 40,
+   "rating_estimate": true,
+   "pos": [
+    5.4,
+    0.5,
+    0.35
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "M6-1.0",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   },
+   "note": "per-post rating is an estimate (bar total unknown)"
+  }
+ ],
+ "height_above_seat_in": 1.1,
+ "source": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part. From the listing: 20 posts, 8 AWG to 4/0 inputs, bolt-down or threaded-stud mount, M6 or 1/4-20 studs (M6 modelled). Block 5.2 x 1.3 x 0.5 in, 2 rows of 10 at 0.5 in pitch, studs 0.6 in above the block: all estimated.",
+ "notes": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part. From the listing: 20 posts, 8 AWG to 4/0 inputs, bolt-down or threaded-stud mount, M6 or 1/4-20 studs (M6 modelled). Block 5.2 x 1.3 x 0.5 in, 2 rows of 10 at 0.5 in pitch, studs 0.6 in above the block: all estimated.",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "adapter",
+  "short": "Vgate 20-way +",
+  "swatch": "#c81414"
+ }
+}

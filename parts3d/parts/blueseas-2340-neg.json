@@ -2,6 +2,7 @@
  "kind": "busbar",
  "id": "blueseas-2340-neg",
  "name": "Blue Sea 2340 busbar (negative, black cover), battery-terminal mount",
+ "short": "2340 −",
  "units": "in",
  "polarity": "-",
  "ratings": {
@@ -17,8 +18,9 @@
    "width": 1.0,
    "hole_diameter": 0.4,
    "hole_from_block_end": 2.35,
-   "thickness": 0.125,
-   "thickness_is_estimate": true
+   "thickness": 0.1181,
+   "thickness_is_estimate": false,
+   "thickness_note": "3 mm plate per founder 2026-11-12 (ticket #92)"
   },
   "joggle": {
    "offset": 0.26,
@@ -113,7 +115,7 @@
     "kind": "stud",
     "thread": "3/8-16",
     "polarity": "-",
-    "consumes_in": 0.125
+    "consumes_in": 0.1181
    }
   },
   {
@@ -121,7 +123,7 @@
    "type": "stack",
    "pos": [
     0,
-    0.125,
+    0.1181,
     0
    ],
    "axis": [
@@ -132,7 +134,7 @@
    "note": "top of the tab on the stud axis; the nut sits here"
   }
  ],
- "notes": "Source: Blue Sea Systems customer drawing PN 2340 (dimensioned drawing on bluesea.com, product 2340). Cover height, joggle offset and copper thickness are not dimensioned: measured from sheet 2 side view proportions (estimates). Drawing says #8-32 screws; the Amazon listing title says 10-24; drawing used. Plain shapes, no logos.",
+ "notes": "Source: Blue Sea Systems customer drawing PN 2340 (dimensioned drawing on bluesea.com). Cover height, joggle offset and copper thickness are not dimensioned: measured from sheet 2 side view proportions (estimates). Drawing says #8-32 screws; the Amazon listing title says 10-24; drawing used. Plain shapes, no logos.",
  "options": {
   "cover": {
    "type": "bool",
@@ -144,7 +146,7 @@
   }
  },
  "catalog": {
-  "category": "distribution",
+  "category": "Bus bars",
   "mountKind": "stud",
   "icon": "busbar"
  },

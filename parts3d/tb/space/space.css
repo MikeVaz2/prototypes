@@ -1,0 +1,48 @@
+/*
+ * tilesAndButtons relative space model.
+ *
+ * data-space on any element sets its font size; every spacing token is in em, so
+ * padding, margins, gaps, radii and borders scale with the text of that subtree.
+ * - Levels (xx-small … xxx-large) are multiples of 1rem: they follow the viewer's
+ *   default font size and zoom, and ignore the parent.
+ * - Steps (smaller | larger) move one --tb-space-step from the parent's size, so
+ *   they compose: larger inside larger is 1.44×.
+ */
+
+:root {
+  --tb-space-step: 1.2;
+  --tb-padding: 0.5em;
+  --tb-margin: 0em;
+  --tb-gap: 0.5em;
+  --tb-border-radius: 0.25em;
+  --tb-border-width: 0.0625em;
+  --tb-outline-width: 0.125em;
+  --tb-line-height: 1.4; /* unitless, so each element multiplies its own font size */
+  line-height: var(--tb-line-height);
+}
+
+/* Levels: CSS keyword ratios, anchored to the root font size. */
+[data-space='xx-small'] { font-size: 0.6rem; }
+[data-space='x-small'] { font-size: 0.75rem; }
+[data-space='small'] { font-size: 0.889rem; }
+[data-space='medium'] { font-size: 1rem; }
+[data-space='large'] { font-size: 1.2rem; }
+[data-space='x-large'] { font-size: 1.5rem; }
+[data-space='xx-large'] { font-size: 2rem; }
+[data-space='xxx-large'] { font-size: 3rem; }
+
+/* Steps: relative to the parent's font size. */
+[data-space='smaller'] { font-size: calc(1em / var(--tb-space-step)); }
+[data-space='larger'] { font-size: calc(1em * var(--tb-space-step)); }
+
+/* Apply the tokens. Each em resolves against this element's own font size. */
+[data-space-model='relative'] {
+  box-sizing: border-box;
+  padding: var(--tb-padding);
+  margin: var(--tb-margin);
+  gap: var(--tb-gap);
+  border-radius: var(--tb-border-radius);
+  border-width: var(--tb-border-width);
+  outline-width: var(--tb-outline-width);
+  line-height: var(--tb-line-height);
+}

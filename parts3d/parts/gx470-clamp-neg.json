@@ -1,0 +1,84 @@
+{
+ "kind": "gxclamp",
+ "id": "gx470-clamp-neg",
+ "name": "GX470 factory - clamp, cables crimped in (estimate)",
+ "short": "GX clamp −",
+ "units": "in",
+ "polarity": "-",
+ "dims": {
+  "id": 0.665,
+  "wall": 0.07,
+  "height": 0.55,
+  "ear": 0.28,
+  "barrel_length": 0.7,
+  "thin_od": 0.14,
+  "thin_length": 2.0,
+  "thick_od": 0.4,
+  "thick_length": 2.5
+ },
+ "colors": {
+  "clamp": [
+   0.45,
+   0.47,
+   0.5,
+   1.0
+  ],
+  "cable": [
+   0.12,
+   0.12,
+   0.13,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "post",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "-",
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 15,
+   "note": "origin = post axis at the clamp bottom (adapter base top); pinch-bolt ears at -X",
+   "needs": {
+    "kind": "stud",
+    "thread": "SAE-post",
+    "polarity": "-",
+    "consumes_in": 0.55
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "post",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "SAE-post",
+   "polarity": "-",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "notes": "ESTIMATE: GX470 factory negative clamp, plain stamped clamp with a pinch bolt, a thick and a thin cable stub crimped directly into it. Part number not recorded; all sizes are guesses (ring ID = SAE - post bottom 16.9 mm), measure the real one.",
+ "source": "ESTIMATE: GX470 factory negative clamp, plain stamped clamp with a pinch bolt, a thick and a thin cable stub crimped directly into it. Part number not recorded; all sizes are guesses (ring ID = SAE - post bottom 16.9 mm), measure the real one.",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "clamp",
+  "short": "GX470 clamp -",
+  "swatch": "#2a2a2e"
+ }
+}

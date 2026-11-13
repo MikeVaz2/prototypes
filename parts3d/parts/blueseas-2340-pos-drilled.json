@@ -1,0 +1,281 @@
+{
+ "kind": "busbar",
+ "id": "blueseas-2340-pos-drilled",
+ "name": "Blue Sea 2340 busbar with one drilled 3/8 hole (positive, red cover), battery-terminal mount",
+ "short": "2340 +",
+ "units": "in",
+ "polarity": "+",
+ "ratings": {
+  "voltage_dc": 32,
+  "current_continuous_a": 100,
+  "screws": "#8-32",
+  "screw_count": 4,
+  "material": "tin-plated copper"
+ },
+ "dims": {
+  "overall_length": 2.85,
+  "tab": {
+   "width": 1.0,
+   "hole_diameter": 0.4,
+   "hole_from_block_end": 2.35,
+   "thickness": 0.1181,
+   "thickness_is_estimate": false,
+   "thickness_note": "3 mm plate per founder 2026-11-12 (ticket #92)"
+  },
+  "joggle": {
+   "offset": 0.26,
+   "x_start": -0.85,
+   "x_end": -0.58,
+   "is_estimate": true
+  },
+  "screws": {
+   "row_spacing": 0.5,
+   "pitch": 0.63,
+   "head_diameter": 0.31,
+   "head_height": 0.1,
+   "stub_diameter": 0.164,
+   "positions_from_block_end": [
+    [
+     0.53,
+     -0.25
+    ],
+    [
+     1.16,
+     -0.25
+    ],
+    [
+     0.2,
+     0.25
+    ],
+    [
+     0.83,
+     0.25
+    ]
+   ]
+  },
+  "cover": {
+   "length": 1.54,
+   "width": 1.84,
+   "z_min": -0.84,
+   "z_max": 1.0,
+   "gap_above_tab": 0.063,
+   "base_height": 0.31,
+   "height_total_above_tab_bottom": 1.044,
+   "upper_inset": 0.06,
+   "height_is_estimate": true,
+   "cutout": {
+    "x_from_block_end": 0.2,
+    "z": 0.25,
+    "diameter": 0.9285,
+    "note": "cover cut by hand to clear the adapter: round opening, full cover height, SAE adapter hex base (0.750 in AF, 0.866 in across corners) + 1/16 in clearance"
+   }
+  },
+  "drill": {
+   "screw_index": 2,
+   "diameter": 0.40625,
+   "replaces_connection": "t3",
+   "edge_wall": {
+    "side_in": 0.0469,
+    "side_mm": 1.19,
+    "end_in": -0.0031,
+    "end_mm": -0.08,
+    "plate_width_in": 1.0,
+    "plate_width_is_estimate": true,
+    "note": "Edge wall = hole centre to nearest plate edge minus hole radius, from the model dims (plate width 1.0 in is an estimate). Side edge: 0.047 in (1.2 mm). Block-end edge: hole centre 0.20 in from the end minus radius 0.203 = -0.003 in (negative = hole breaks out of the end if the plate ends at the screw-block end; the real end distance is not dimensioned). Rule: safe only if hole centre to edge >= 0.3 in; otherwise 5/16.",
+    "rule_min_centre_to_edge_in": 0.3,
+    "centre_to_side_edge_in": 0.25,
+    "centre_to_end_edge_in": 0.2,
+    "safe_for_3_8": false,
+    "fallback": "5/16"
+   }
+  }
+ },
+ "colors": {
+  "copper": [
+   0.8,
+   0.82,
+   0.84,
+   1.0
+  ],
+  "screw": [
+   0.55,
+   0.57,
+   0.6,
+   1.0
+  ],
+  "cover": [
+   0.78,
+   0.05,
+   0.05,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 90,
+   "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
+   "yaw_step_deg": 90,
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "+",
+    "consumes_in": 0.1181
+   }
+  },
+  {
+   "id": "top",
+   "type": "stack",
+   "pos": [
+    0,
+    0.1181,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "note": "top of the tab on the stud axis; the nut sits here"
+  }
+ ],
+ "notes": "Source: Blue Sea Systems customer drawing PN 2340 (dimensioned drawing on bluesea.com). Cover height, joggle offset and copper thickness are not dimensioned: measured from sheet 2 side view proportions (estimates). Drawing says #8-32 screws; the Amazon listing title says 10-24; drawing used. Plain shapes, no logos. Variant: the end-most #8-32 screw (t3) is removed and its hole drilled to 13/32 for a 3/8-16 stud. Bar size unchanged. Coverless (cover cannot fit over the stud). See dims.drill.edge_wall.",
+ "options": {
+  "cover": {
+   "type": "bool",
+   "default": true,
+   "label": "Cover",
+   "nodes": [
+    "cover"
+   ],
+   "note": "cover cut by hand to clear the adapter (round opening around bar_hole). Cover stays on by default, like the plain 2340."
+  }
+ },
+ "catalog": {
+  "category": "Bus bars",
+  "mountKind": "stud",
+  "icon": "busbar",
+  "short": "2340 drilled +",
+  "swatch": "#c81414"
+ },
+ "connections": [
+  {
+   "id": "tab",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "3/8-16",
+   "polarity": "+",
+   "rating_a": 100,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "group": "bus",
+   "note": "tab on the battery stud; 100 A is the Blue Sea rating for the whole busbar"
+  },
+  {
+   "id": "t1",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "#8-32",
+   "polarity": "+",
+   "rating_a": 25,
+   "rating_estimate": true,
+   "pos": [
+    -1.82,
+    0.485,
+    -0.25
+   ],
+   "group": "bus",
+   "note": "per-screw rating is an estimate (100 A / 4)"
+  },
+  {
+   "id": "t2",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "#8-32",
+   "polarity": "+",
+   "rating_a": 25,
+   "rating_estimate": true,
+   "pos": [
+    -1.19,
+    0.485,
+    -0.25
+   ],
+   "group": "bus",
+   "note": "per-screw rating is an estimate (100 A / 4)"
+  },
+  {
+   "id": "t4",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "#8-32",
+   "polarity": "+",
+   "rating_a": 25,
+   "rating_estimate": true,
+   "pos": [
+    -1.52,
+    0.485,
+    0.25
+   ],
+   "group": "bus",
+   "note": "per-screw rating is an estimate (100 A / 4)"
+  },
+  {
+   "id": "bar_hole",
+   "kind": "stud",
+   "form": "stud",
+   "hole": true,
+   "thread": "3/8-16",
+   "polarity": "+",
+   "rating_a": 100,
+   "group": "bus",
+   "pos": [
+    -2.15,
+    0.3781,
+    0.25
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 1,
+    "max_stack_in": 0.7,
+    "note": "13/32 hole drilled out of the end-most #8-32 screw position (t3); takes a 3/8-16 stud with a nut under and over the plate (stud-38-16)"
+   }
+  }
+ ],
+ "rating_groups": {
+  "bus": {
+   "rating_a": 100,
+   "members": [
+    "tab",
+    "t1",
+    "t2",
+    "t4",
+    "bar_hole"
+   ],
+   "note": "Blue Sea 2340: 100 A continuous total"
+  }
+ }
+}

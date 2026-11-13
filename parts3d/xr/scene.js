@@ -9,6 +9,7 @@
 // Stacking: items on one outlet are ordered lug, busbar, other, nut (then insertion order); each sits on the previous item's `top` mount.
 import { needsOf, consumes, outletsFor, noOutletMessage, mountKind } from './match.js';
 import * as OFS from '../offsets.js';
+import * as JMP from './jumper.js';
 
 export const IN = 0.0254;
 const norm = d => ((d % 360) + 360) % 360;
@@ -32,7 +33,7 @@ export function createScene(catalog) {
     return { id, part: p.id, yaw: defaultYaw(p), opts: defOpts(p), on: sm ? host.id + '.' + snapList(p).slice(-1)[0] : null, at: !sm && isFree(p) && p !== host ? [0, 0, 0] : null };
   }
   const defaultState = () => catalog.parts.filter(p => p.default || p.always_on).map(p => defInst(p));
-  const emptyScene = () => ({ insts: defaultState(), offs: { ...OFS.ZERO }, marks: [], measures: [] });
+  const emptyScene = () => ({ insts: defaultState(), offs: { ...OFS.ZERO }, marks: [], measures: [], jumpers: [] });
   function nextId(insts, partId) {
     if (!insts.some(i => i.id === partId)) return partId;
     for (let n = 2; ; n++) if (!insts.some(i => i.id === partId + '_' + n)) return partId + '_' + n;
@@ -124,12 +125,15 @@ export function createScene(catalog) {
     const parts = ['s=' + serializeState(sc.insts)];
     const o = OFS.ser(sc.offs || OFS.ZERO), m = serializeMarks(sc.marks), d = serializeMeasures(sc.measures);
     if (o) parts.push('o=' + o); if (m) parts.push('m=' + m); if (d) parts.push('d=' + d);
+    const j = JMP.serialize(sc.jumpers); if (j) parts.push('j=' + j);
     return parts.join('&');
   }
   function fromHash(hash) {
     const h = new URLSearchParams(String(hash || '').replace(/^#/, ''));
     const insts = parseState(h.get('s'));
-    return { insts: insts || defaultState(), offs: OFS.parse(h.get('o')), marks: parseMarks(h.get('m')), measures: parseMeasures(h.get('d')), valid: !!insts };
+    const all = insts || defaultState();
+    const jumpers = JMP.parse(h.get('j')).filter(j => [j.a, j.b].every(k => { const c = connOf(all, k); return c && c.conn && c.conn.accepts; }));
+    return { insts: all, offs: OFS.parse(h.get('o')), marks: parseMarks(h.get('m')), measures: parseMeasures(h.get('d')), jumpers, valid: !!insts };
   }
 
   // ---- placement: { pos: [m], yaw: deg } per instance id (null when its outlet is missing) ----
@@ -153,7 +157,7 @@ export function createScene(catalog) {
       let r = null;
       const p = partOf(inst.part);
       if (!p) r = null;
-      else if (p === host) r = { pos: [0, 0, 0], yaw: 0 };
+      else if (p === host) r = { pos: (inst.at || [0, 0, 0]).map(v => v * IN), yaw: inst.yaw || 0 };   // the battery can be moved and turned; everything stacked on it follows
       else if (inst.at) r = { pos: inst.at.map(v => v * IN), yaw: inst.yaw };
       else if (inst.on) {
         const c = connOf(insts, inst.on), st = stackOf(inst.on), k = st.indexOf(inst), prev = k > 0 ? st[k - 1] : null;

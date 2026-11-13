@@ -44,7 +44,7 @@ export const normTool = (s, fallback = 'select') => TOOLS.includes(s) ? s : fall
 export const nextTool = t => TOOLS[(TOOLS.indexOf(t) + 1) % TOOLS.length];
 export const TOOL_BUTTONS = ['drop', 'undomark', 'clearmarks', 'mnew', 'mundo', 'mclear'];
 export const ALL_IDS = [...new Set(['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
-  'again', 'reset', 'select', 'deselect', 'exit', 'more', 'back', ...TOOL_BUTTONS])];
+  'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'opt', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'undoj', ...TOOL_BUTTONS])];
 // buttons of the open stack for a tool. Select keeps the part controls (minus the old mark buttons); Mark and Measure show only their own actions.
 // x = extras about the selected instance: { free (placed on a surface), num (has a length option), choice (has a choice option) }
 export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) {
@@ -54,9 +54,12 @@ export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) 
   const rot = rotStep > 0 ? ['rotm', 'rotp'] : [], common = ['again', 'reset', 'exit'];
   if (kind === 'fuse' || kind === 'bar' || kind === 'cable') {   // library parts: on a stud, or free on a surface
     let primary, more;
-    if (x.free) { primary = ['hp', 'hm', 'tp', 'tm', 'remove', 'deselect']; more = ['nl', 'nr', 'nu', 'nd', ...(x.num ? ['extp', 'extm'] : []), ...(x.choice ? ['gauge'] : []), 'addpart', ...common]; }
+    if (x.free) { primary = ['move', 'tp', 'tm', 'hp', 'hm', 'remove', 'deselect']; more = ['nl', 'nr', 'nu', 'nd', ...(x.num ? ['extp', 'extm'] : []), ...(x.choice ? ['gauge'] : []), 'addpart', ...common]; }
     else { primary = [...(x.num ? ['extp', 'extm'] : []), ...rot, 'remove', 'deselect']; more = [...(x.choice ? ['gauge'] : []), 'addpart', ...common]; }
     return { primary: [...primary, 'more'], more: ['back', ...more] };
+  }
+  if (kind === 'battery' && selected && x.free) {   // the host moves like any surface part (Move, turn, raise; nudges in More); its stack and jumpers follow. No Remove.
+    return { primary: ['move', 'tp', 'tm', 'hp', 'hm', 'more'], more: ['back', 'nl', 'nr', 'nu', 'nd', 'addpart', 'again', 'reset', 'exit'] };
   }
   const s = stackFor(kind, rotStep, selected);
   const prim = s.primary.filter(keep), mor = s.more.filter(keep), at = prim.indexOf('more');
@@ -64,6 +67,51 @@ export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) 
   else prim.splice(at, 0, 'addpart');
   mor.splice(1, 0, 'addpart');
   return { primary: prim, more: mor };
+}
+
+// ---- two rows (bottom row sticks, context row above it; never a third row) ----
+// bottom row: fixed contents. Undo only where something can be undone, Units live in the top-right menu.
+export function bottomFor(tool, inXR = false) {
+  return ['addpart', ...(tool === 'mark' ? ['undomark'] : tool === 'measure' ? ['mundo'] : ['opt']), 'more'];   // 'mode' is always first, added by the page
+}
+// Control paradigm, chosen in one place. In XR the beam is the pointer, so what it is on drives the row ('highlight').
+// Outside XR (mouse or touch) the user picks first and then acts: a click / tap selects, hover changes nothing in the row ('select').
+export const driveFor = inXR => inXR ? 'highlight' : 'select';
+// context row buttons, in order. Empty = show the tooltip line instead.
+// o = { markSel, measSel (a mark / measurement is selected or highlighted), tool, kind, rotStep, selected, x, adding: null|{stud, outlets}, more, inXR, quick: null|{kind:'part'|'outlet', isSel, point} (XR highlight),
+//        target: null|{kind:'part'|'outlet', point} (outside XR: what is selected) }
+// jumpers on top of the base row: o.linking (choosing the ends) = Cancel only; o.jumper (one is selected) = its edits; o.jfrom = "Cable from here" next to the
+// highlighted / selected thing; o.jundo = Undo of the last jumper change when nothing else owns the row.
+export function ctxFor(o) {
+  if (o.linking) return ['cancel'];
+  if (o.jumper && !o.adding && !o.more) return ['jgauge', 'jcolor', 'jremove', 'deselect'];
+  const base = ctxBase(o);
+  if (o.adding || o.more || o.markSel || o.measSel || (o.tool && o.tool !== 'select')) return base;
+  const out = [...base];
+  if (o.jfrom) { const k = out.indexOf('deselect'); if (k < 0) out.push('jfrom'); else out.splice(k, 0, 'jfrom'); }
+  if (o.jundo) out.push('undoj');
+  return out;
+}
+function ctxBase(o) {
+  const { markSel = false, measSel = false, tool = 'select', kind = null, rotStep = 0, selected = false, x = {}, adding = null, more = false, inXR = false, quick = null, target = null } = o;
+  if (markSel && !adding) return tool === 'mark' ? ['drop', 'rmmark', 'clearmarks'] : ['rmmark', 'deselect'];   // a selected (or, in XR, beam-highlighted) mark: its action is Remove
+  if (measSel && !adding) return ['rmmeasure', 'deselect'];
+  if (adding) return ['confirm', ...(adding.stud && adding.outlets > 1 ? ['next'] : []), 'cancel'];
+  const lay = stackForTool(tool, kind, rotStep, selected, x), drop = new Set(['more', 'back', 'addpart', 'select', ...(inXR ? [] : ['exit'])]);
+  const sel = [...new Set(lay.primary.filter(id => !drop.has(id)).concat(selected ? ['deselect'] : []))];
+  if (more) {
+    const rest = tool === 'select' ? (selected ? lay.more : ['hp', 'hm', 'tp', 'tm', ...lay.more]) : ['again', 'reset', 'exit'];
+    return ['back', ...new Set(rest.filter(id => !drop.has(id) || id === 'exit' && inXR))];
+  }
+  if (tool === 'mark') return ['drop', 'clearmarks'];
+  if (tool === 'measure') return ['mnew', 'mclear'];
+  if (driveFor(inXR) === 'select') {   // outside XR: the selection is the target; quick (hover) is ignored
+    if (target && target.kind === 'outlet') return ['qhere', 'deselect'];
+    return selected ? [...sel, 'qadd', ...(target && target.point ? ['qmeasure', 'qmark'] : [])] : [];
+  }
+  if (quick && selected && !(quick.kind === 'part' && quick.isSel)) return [quick.kind === 'outlet' ? 'qhere' : 'qselect', ...sel];   // the selection keeps its edit actions; the highlighted other thing is one tap ahead of them
+  if (quick && !(quick.kind === 'part' && quick.isSel)) return quick.kind === 'outlet' ? ['qhere'] : ['qselect', 'qadd', ...(quick.point ? ['qmeasure', 'qmark'] : [])];
+  return selected ? sel : [];
 }
 
 // ---- marks: label only when selected or hovered ----

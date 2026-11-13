@@ -1,0 +1,100 @@
+{
+ "kind": "terminal",
+ "id": "sae-adapter-pos",
+ "name": "SAE post adapter for 3/8-16 stud (positive)",
+ "short": "SAE adapt +",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "base": {
+   "shape": "hex",
+   "size": 0.75,
+   "height": 0.2
+  },
+  "posts": [
+   {
+    "x": 0,
+    "z": 0,
+    "y0": 0.2,
+    "height": 0.75,
+    "d_top": 0.689,
+    "d_bot": 0.7283
+   }
+  ]
+ },
+ "colors": {
+  "body": [
+   0.62,
+   0.64,
+   0.68,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 45,
+   "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "+",
+    "consumes_in": 0.6
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "post",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "SAE-post",
+   "polarity": "+",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0.2,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "SAE-post",
+    "max_items": 1,
+    "max_stack_in": 0.65,
+    "note": "tapered SAE post; a clamp sits on the base top"
+   }
+  }
+ ],
+ "height_above_seat_in": 0.95,
+ "source": "Founder spec 2026-11-12: + post ~17.5 mm, - ~15.9 mm top diameter, ~19 mm tall over a hex base, 3/4 to 1 in added. Hex AF 0.75 in, base 0.20 in, 1 mm taper are estimates.",
+ "notes": "Founder spec 2026-11-12: + post ~17.5 mm, - ~15.9 mm top diameter, ~19 mm tall over a hex base, 3/4 to 1 in added. Hex AF 0.75 in, base 0.20 in, 1 mm taper are estimates.",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "adapter",
+  "short": "SAE adapter +",
+  "swatch": "#c81414"
+ }
+}

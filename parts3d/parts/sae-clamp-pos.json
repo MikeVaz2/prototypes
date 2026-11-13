@@ -1,0 +1,90 @@
+{
+ "kind": "clamp",
+ "id": "sae-clamp-pos",
+ "name": "Generic SAE clamp terminal, factory cable end (positive)",
+ "short": "SAE clamp +",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "id": 0.728,
+  "od": 1.0,
+  "height": 0.6,
+  "ear": 0.3,
+  "barrel_od": 0.55,
+  "barrel_length": 0.8,
+  "cable_od": 0.45,
+  "cable_length": 4.0
+ },
+ "colors": {
+  "cable": [
+   0.78,
+   0.05,
+   0.05,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "post",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 15,
+   "note": "origin = post axis at the clamp bottom (adapter base top); cable toward +X",
+   "needs": {
+    "kind": "stud",
+    "thread": "SAE-post",
+    "polarity": "+",
+    "consumes_in": 0.6
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "post",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "SAE-post",
+   "polarity": "+",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "cable_end",
+   "kind": "splice",
+   "gauge": "2",
+   "polarity": "+",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    3.6,
+    0.3,
+    0
+   ]
+  }
+ ],
+ "notes": "ESTIMATE: generic factory-style SAE clamp, ring ID = post bottom diameter, OD 1.0, height 0.6, 2 AWG stub 4 in, bolt ear on the -X side. Not a product.",
+ "source": "estimate",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "clamp",
+  "short": "SAE clamp +",
+  "swatch": "#c81414"
+ }
+}

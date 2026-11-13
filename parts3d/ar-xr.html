@@ -4,15 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Parts AR (own WebXR)</title>
+<link rel="icon" href="data:,">
+<script>try{var t=localStorage.getItem('tb-theme');if(t==='light'||t==='dark'||t==='auto')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>try{var s=localStorage.getItem('tb-space');if(/^(xx-small|x-small|small|medium|large|x-large|xx-large|xxx-large)$/.test(s))document.documentElement.setAttribute('data-space',s)}catch(e){}</script>
+<link rel="stylesheet" href="tb/theme/theme.css">
+<link rel="stylesheet" href="tb/space/space.css">
+<link rel="stylesheet" href="tb/deck-look.css">
+<script type="module" src="tb/theme/theme.js"></script>
+<script type="module" src="tb/space/space.js"></script>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-11 21:40 editor-add-part';
+const BUILD = '2026-11-13 13:51 shoot';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
   var map = { imports: { 'three': cdn + 'build/three.module.js', 'three/addons/': cdn + 'examples/jsm/',
     './xr/app.js': './xr/app.js' + v, './xr/compose.js': './xr/compose.js' + v, './xr/xrmath.js': './xr/xrmath.js' + v,
-    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './offsets.js': './offsets.js' + v } };
+    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './xr/toasts.js': './xr/toasts.js' + v, './xr/icons.js': './xr/icons.js' + v, './xr/jumper.js': './xr/jumper.js' + v, './xr/presets.js': './xr/presets.js' + v, './xr/cats.js': './xr/cats.js' + v, './offsets.js': './offsets.js' + v } };
   var im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify(map); document.head.appendChild(im);
   var m = document.createElement('script'); m.type = 'module'; m.src = 'xr/app.js' + v; document.head.appendChild(m);
 })();
@@ -20,28 +28,16 @@ window.__BUILD = BUILD;
 <style>
   * { box-sizing: border-box; }
   html, body { margin:0; height:100%; }
-  body { font-family:system-ui,sans-serif; background:#f5f6f8; color:#1c1f24; display:flex; flex-direction:column; overflow:hidden; }
-  header { padding:10px 16px 6px; }
+  body { display:flex; flex-direction:column; overflow:hidden; }
+  header { padding:10px 64px 6px 16px; }
   h1 { margin:0; font-size:18px; }
-  #status, #msg { margin:4px 0 0; font-size:13.5px; color:#5b6470; }
-  #msg { color:#8a2b00; background:#fff3e8; border:1px solid #f0c9a8; border-radius:8px; padding:8px 10px; }
-  #stage { flex:1; min-height:0; margin:0 16px; background:#fff; border-radius:12px; overflow:hidden; }
+  #status { margin:4px 0 0; font-size:13.5px; color:var(--deck-muted); }
+  #stage { flex:1; min-height:0; margin:0 16px; border:1px solid var(--tb-border-color); border-radius:12px; overflow:hidden; }
   #stage canvas { display:block; }
-  .bar { padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
-  #enter { min-height:52px; width:100%; border-radius:12px; border:0; background:#1a6ef0; color:#fff; font:inherit; font-size:18px; font-weight:700; cursor:pointer; }
-  #units { display:flex; align-items:center; gap:0; margin:0 0 8px; font-size:14px; }
-  #units span { margin-right:10px; color:#5b6470; font-weight:600; }
-  #units button { min-height:44px; padding:0 16px; border:2px solid #1a6ef0; background:#fff; color:#1a6ef0; font:inherit; font-weight:700; cursor:pointer; }
-  #units button:first-of-type { border-radius:10px 0 0 10px; } #units button:last-of-type { border-radius:0 10px 10px 0; border-left-width:0; }
-  #units button[aria-pressed="true"] { background:#1a6ef0; color:#fff; }
-  #row { display:flex; align-items:center; gap:8px; }
-  #mode { min-width:84px; height:44px; border-radius:22px; border:2px solid #fff; background:#0a6b3a; color:#fff; font:inherit; padding:0 12px; cursor:pointer;
-          touch-action:manipulation; box-shadow:0 2px 8px rgba(0,0,0,.5); line-height:1; }
-  #mode small { display:block; font-size:9px; font-weight:700; opacity:.85; letter-spacing:.08em; } #mode b { display:block; font-size:15px; }
-  #mode[data-tool="mark"] { background:#8a5a00; } #mode[data-tool="measure"] { background:#6a1b9a; }
-  #mode:focus-visible { outline:3px solid #ffd400; outline-offset:2px; }
-  #enter[hidden], #msg[hidden], #help[hidden], #hint[hidden] { display:none; }
-  #help { margin:0 16px 8px; padding:8px 12px 8px 28px; background:#fff; border:1px solid #d9dde3; border-radius:8px; font-size:13px; line-height:1.4; max-height:30vh; overflow:auto; }
+  .bar { display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  #enter { min-height:3.25rem; width:100%; font-size:1.1rem; }
+  #enter[hidden], #help[hidden], #hint[hidden] { display:none; }
+  #help { margin:0 16px 8px; padding:8px 12px 8px 28px; border:1px solid var(--tb-border-color); border-radius:8px; font-size:13px; line-height:1.4; max-height:30vh; overflow:auto; }
   #help h2 { margin:0 0 4px -16px; font-size:14px; }
 
   /* AR overlay root: the browser makes it fullscreen in a session; it ignores touches except on its children */
@@ -49,61 +45,86 @@ window.__BUILD = BUILD;
   body #overlay { display:block; }
   body:not(.inar):not(.arpreview) #overlay .build { display:none; }
   body.inar header, body.inar #stage, body.inar .bar, body.inar #help { display:none; }
-  #hint { position:absolute; top:calc(12px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); background:rgba(10,14,22,.8); color:#fff;
-          padding:8px 14px; border-radius:20px; font-size:15px; white-space:nowrap; }
+  #hint { position:absolute; top:calc(12px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); padding:8px 14px; border-radius:20px; font-size:15px; white-space:nowrap; }
   body.arpreview #hint { display:none; }
-  #info { position:absolute; left:8px; bottom:calc(10px + var(--lift, 0px) + env(safe-area-inset-bottom)); max-width:calc(100% - 96px); font-size:12px; line-height:1.3; color:#fff;
-          background:rgba(10,14,22,.72); padding:4px 8px; border-radius:8px; pointer-events:none; }
-  #info div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #info div:empty { display:none; }
-  #ctl { position:absolute; right:10px; bottom:calc(10px + var(--lift, 0px) + env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:flex-end; gap:8px; pointer-events:none; }
-  #ctl > * { pointer-events:auto; }
-  #fab { width:64px; height:64px; border-radius:50%; border:3px solid #fff; background:#0b3d91; color:#fff; font:inherit; font-size:13px; font-weight:800;
-         line-height:1.1; padding:0; cursor:pointer; touch-action:manipulation; box-shadow:0 2px 8px rgba(0,0,0,.5); }
-  #fab[aria-expanded="true"] { background:#1a6ef0; }
-  #stack { display:none; flex-direction:column; gap:4px; width:150px; }
-  #ctl.open #stack { display:flex; }
-  #ctl.open #stack.more { display:grid; grid-template-columns:repeat(2, 100px); width:auto; }
-  #stack button { min-height:48px; padding:0 6px; border-radius:12px; border:2px solid #fff; background:#0b3d91; color:#fff; font:inherit; font-size:16px; font-weight:700;
-                  cursor:pointer; touch-action:manipulation; line-height:1.05; }
-  #stack button small { display:block; font-size:10px; font-weight:600; opacity:.9; }
-  #stack button:active { background:#1a6ef0; }
-  #stack button[disabled] { opacity:.4; }
-  #stack button[aria-pressed="true"] { background:#ffd400; color:#000; border-color:#ffd400; }
-  #stack button[hidden], #cross[hidden], #dbg[hidden] { display:none; }
-  #stack button.flash { outline:3px solid #ffd400; }
-  #again, #confirm { background:#0a6b3a !important; } #remove { background:#7a1010 !important; } #addpart, #next { background:#0b3d91; } #cancel { background:#555 !important; }
-  #again { background:#0a6b3a !important; } #reset { background:#444 !important; } #exit { background:#7a1010 !important; border-color:#ff8a80 !important; }
-  #select { background:#0a6b3a !important; } #deselect, #back, #more { background:#555 !important; }
-  #stack button:focus-visible, #fab:focus-visible { outline:3px solid #ffd400; outline-offset:2px; }
-  @media (orientation: landscape) {
-    #ctl { top:8px; }
-    #ctl { justify-content:flex-end; }
-    #stack { max-height:calc(100vh - 100px); overflow:hidden; }
-    #ctl.open #stack.more { grid-template-columns:repeat(3, 100px); }
-  }
-  /* Add part: library list, one-line toast, outlet prompt */
-  #lib { position:absolute; left:8px; right:8px; bottom:calc(86px + var(--lift, 0px) + env(safe-area-inset-bottom)); max-height:52vh; max-width:420px; margin-left:auto; display:flex; flex-direction:column;
-         background:rgba(10,14,22,.94); color:#fff; border:2px solid #fff; border-radius:14px; pointer-events:auto; overflow:hidden; }
-  #lib[hidden] { display:none; }
-  #lib .lh { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; font-size:15px; }
-  #lib .lh button { min-height:40px; padding:0 12px; border-radius:10px; border:2px solid #fff; background:#555; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
-  #liblist { list-style:none; margin:0; padding:0 6px 6px; overflow:auto; }
-  #liblist li.cat { padding:6px 6px 2px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.7; }
-  #liblist button { width:100%; min-height:48px; display:flex; align-items:center; gap:10px; text-align:left; padding:4px 8px; margin:2px 0; border-radius:10px; border:1px solid #3a4352;
-                    background:#182030; color:#fff; font:inherit; font-size:15px; cursor:pointer; touch-action:manipulation; }
-  #liblist button:active, #liblist button:hover { background:#1a6ef0; }
-  #liblist .ic { flex:none; width:34px; height:34px; border-radius:8px; border:1px solid rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#fff; text-shadow:0 0 3px #000; }
-  #liblist .nm { flex:1; min-width:0; } #liblist .nm small { display:block; font-size:11px; opacity:.7; }
-  #liblist .mk { flex:none; font-size:11px; opacity:.8; }
-  #toast { position:absolute; top:6px; left:50%; transform:translateX(-50%); max-width:calc(100% - 24px); background:rgba(10,14,22,.88); color:#fff;
-           padding:7px 14px; border-radius:18px; font-size:14px; text-align:center; pointer-events:none; }
-  body.inar #toast { top:calc(44px + env(safe-area-inset-top)); }
-  #toast[hidden] { display:none; } #toast.warn { background:rgba(138,43,0,.92); }
+  /* toasts: glass, top of the screen under the menu button, in XR too (they live in the dom-overlay root). Max 3. Never over the bottom rows. */
+  #toasts { position:absolute; left:0; right:0; top:calc(3.6rem + env(safe-area-inset-top)); display:flex; flex-direction:column; align-items:center; gap:0.4rem;
+            padding:0 calc(0.5rem + env(safe-area-inset-right)) 0 calc(0.5rem + env(safe-area-inset-left)); pointer-events:none; }
+  .toast { display:flex; align-items:center; gap:0.5rem; width:max-content; max-width:min(100%, 30rem); padding:0.3rem 0.4rem 0.3rem 1rem; border-radius:1.4rem;
+           font-size:0.95rem; line-height:1.25; pointer-events:auto; touch-action:pan-y; user-select:none; -webkit-user-select:none; cursor:pointer; transition:opacity .2s; }
+  .toast.drag { transition:none; } .toast.out { opacity:0; }
+  body.inar .toast { --tb-glass-opacity:92%; }
+  .toast .tx { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+  .toast.warn, .toast.error { border-color:var(--deck-accent); } .toast.error .tx { font-weight:700; } .toast.warn .tx { color:var(--deck-accent); }
+  .toast button { flex:none; min-height:2.25rem; min-width:2.25rem; padding:0; font-size:1.1rem; line-height:1; touch-action:manipulation; }
+  /* menu: hamburger pill at the top right (the tilesDeck .deck-button look) and a small glass panel; outside XR only */
+  #menubtn { position:absolute; top:calc(0.5rem + env(safe-area-inset-top)); right:calc(0.5rem + env(safe-area-inset-right)); min-height:2.75rem; min-width:2.75rem; padding:0; font-size:1.3rem; line-height:1; pointer-events:auto; touch-action:manipulation; }
+  #menu { position:absolute; top:calc(3.6rem + env(safe-area-inset-top)); right:calc(0.5rem + env(safe-area-inset-right)); z-index:1; display:flex; flex-direction:column; align-items:stretch; gap:0.6rem;
+          padding:0.8rem 1rem; border-radius:1.25rem; pointer-events:auto; }
+  #menu .row { display:flex; align-items:center; justify-content:space-between; gap:0.8rem; font-size:0.85rem; }
+  #menu .row button { min-height:2.5rem; flex-direction:row; gap:0.4em; padding:0.3em 1em; }
+  #menu[hidden], #menubtn[hidden] { display:none; }
+  body.inar #menu, body.inar #menubtn { display:none; }
+  #menu small { display:inline; font-size:inherit; }
   #cross { position:absolute; left:50%; top:50%; width:26px; height:26px; margin:-13px 0 0 -13px; pointer-events:none; }
   #cross:before, #cross:after { content:""; position:absolute; background:#fff; box-shadow:0 0 2px #000; }
   #cross:before { left:12px; top:0; width:2px; height:26px; } #cross:after { top:12px; left:0; height:2px; width:26px; }
   #cross.hit:before, #cross.hit:after { background:#1affb0; }
+  /* Two rows, fixed to the viewport bottom (safe-area aware), in XR and outside it. Bottom row always visible; the row above is context:
+     actions, the Add library, More, or a tooltip line. Both scroll sideways when crowded, never wrap, never a third row.
+     Look: tilesDeck (tb/deck-look.css): glass pills (.tiles-nav) with outlined pill buttons (.deck-button). */
+  #ctl { background:transparent; min-width:0; touch-action:pan-x; position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; flex-direction:column; gap:0.4rem; pointer-events:auto;
+         padding:0 calc(0.5rem + env(safe-area-inset-right)) calc(0.5rem + env(safe-area-inset-bottom)) calc(0.5rem + env(safe-area-inset-left)); }
+  #ctx, #bottom { display:flex; align-items:center; justify-content:safe center; gap:0.4rem; padding:0.4rem 1rem; border-radius:999px; }
+  #bottom { overflow-x:auto; overflow-y:hidden; scrollbar-width:none; } #bottom::-webkit-scrollbar { display:none; }
+  body.inar #ctx, body.inar #bottom { --tb-glass-opacity:92%; }   /* over the camera feed the blur may not apply: more tint, same token */
+  #ctx { flex-wrap:nowrap; min-width:0; overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; touch-action:pan-x; scrollbar-width:none; -webkit-overflow-scrolling:touch; height:calc(32px + 0.8rem + 2px); }
+  #ctx::-webkit-scrollbar { display:none; }
+  #ctx > * { flex:0 0 auto; }
+  /* compact: one line (icon + text), sized to content, never stretched; 40px tall on touch, 32px with a mouse */
+  #ctl button { flex:0 0 auto; flex-direction:row; gap:0.35em; padding:0.35em 0.8em; min-height:32px; font-size:0.85em; line-height:1; white-space:nowrap; touch-action:manipulation; }
+  @media (pointer: coarse) { #ctl button { min-height:40px; } #ctx { height:calc(40px + 0.8rem + 2px); } }
+  #ctl .t { white-space:nowrap; }
+  #ctl button svg { flex:none; }
+  #ctl [hidden] { display:none !important; }
+  #ctl button[disabled] { opacity:.4; }
+  #mode b { font-weight:inherit; color:var(--deck-accent); }
+  #remove { color:var(--deck-accent); }
+  /* Landscape (phone sideways, wide windows): ONE row of two glass cards. Left = context card (grows, scrolls), right = fixed Mode / Add / More
+     (icon only when the row is narrow). Portrait keeps the two stacked rows. Pure CSS, so rotating changes it live, in XR dom-overlay too. */
+  #ctl { container-type:inline-size; container-name:ctl; }
+  @media (orientation: landscape) {
+    #ctl { flex-direction:row; align-items:stretch; gap:0.5rem; }
+    #ctx { flex:1 1 0; min-width:0; justify-content:flex-start; } #ctx.lib, #ctx.acts { justify-content:flex-start; }
+    #bottom { flex:0 0 auto; height:calc(32px + 0.8rem + 2px); justify-content:center; padding:0.4rem 0.6rem; overflow:visible; }
+  }
+  @media (orientation: landscape) and (pointer: coarse) { #bottom { height:calc(40px + 0.8rem + 2px); } }
+  @container ctl (max-width: 480px) { @media (orientation: landscape) { #bottom .t { display:none; } #bottom button { padding:0.35em 0.7em; } } }
+  /* tooltip line (no actions), or a short chip in front of the actions (mark / measure tools, adding) */
+  #info { display:flex; align-items:center; gap:8px; font-size:0.7em; line-height:1.3; white-space:nowrap; color:var(--deck-muted); }
+  #selthumb { flex:none; width:1.8em; height:1.8em; object-fit:contain; } #selthumb[hidden] { display:none; }
+  #info div { overflow:hidden; text-overflow:ellipsis; } #info div:empty { display:none; }
+  #ctx.acts #info { max-width:46%; }
+  #ctx.acts #ofs, #ctx.acts[data-tool="mark"] #sel, #ctx.acts[data-tool="measure"] #sel { display:none; }
+  #ctx.acts:not(.chip) #info, #ctx.lib #info { display:none; }
+  /* Add part library inside the context row */
+  #lib { display:flex; align-items:center; gap:6px; }
+  #ctx.lib > *:not(#lib) { display:none; }
+  #libtitle { font-size:0.65em; color:var(--deck-muted); white-space:nowrap; }
+  #liblist { list-style:none; margin:0; padding:0; display:flex; align-items:center; gap:6px; } #liblist li { flex:none; }
+  #liblist li.cat { padding:0 2px; font-size:0.6em; letter-spacing:.08em; text-transform:uppercase; opacity:.7; }
+  #liblist button { padding-left:0.45em; }
+  #libcat { display:inline-flex; align-items:center; gap:0.35em; white-space:nowrap; } #libcat svg, #liblist button svg { flex:none; }
+  #liblist button.on { font-weight:700; }
+  #liblist .ic { flex:none; width:1.7em; height:1.7em; margin:-0.4em 0; object-fit:contain; }
+  /* Options list (long-press on the Option button) inside the context row, same pattern as the library */
+  #optlist { display:flex; align-items:center; gap:6px; } #optlist[hidden] { display:none; }
+  #ctx.optsl > *:not(#optlist) { display:none; } #ctx.optsl #info { display:none; }
+  #opttitle { font-size:0.65em; color:var(--deck-muted); white-space:nowrap; }
+  #optul { list-style:none; margin:0; padding:0; display:flex; align-items:center; gap:6px; } #optul li { flex:none; } #optul button.on { font-weight:700; }
+  /* outside XR the page leaves room for the controls (one row in landscape, two in portrait) (--ctlh is measured) so nothing hides behind them */
+  body:not(.inar) { padding-bottom:var(--ctlh, 124px); }
+  body:not(.inar) .build { left:auto; right:calc(3.8rem + env(safe-area-inset-right)); bottom:auto; top:2px; }
   .build { position:fixed; left:4px; bottom:2px; font:10px/1 monospace; color:#6b7480; opacity:.8; pointer-events:none; z-index:30; }
   #overlay .build { position:absolute; top:2px; bottom:auto; color:#fff; }
   #dbg { position:absolute; left:4px; top:46px; right:4px; max-height:30vh; overflow:hidden; margin:0; padding:3px 5px; background:rgba(0,0,0,.65); color:#9fffc4;
@@ -114,75 +135,86 @@ window.__BUILD = BUILD;
 <header>
   <h1>Parts AR</h1>
   <p id="status">Loading parts...</p>
-  <p id="msg" hidden></p>
 </header>
 <ol id="help" hidden>
   <h2>What to try (?help)</h2>
   <li>Enter AR, sweep the phone over the floor until the green ring shows, tap to place.</li>
-  <li>Tap the round button (bottom right): the stack of actions must stay on screen after placing and collapses after 4 s, and the model must not jump when you use any button.</li>
+  <li>Two rows stick to the bottom: Mode, Add, Undo, More; above them the context row (actions or a tooltip line). The model must not jump when you use any button.</li>
   <li>Height up and down: the model moves 0.5 in and stays where you left it.</li>
   <li>Nudge arrows: up moves away from you, left and right follow your view. Walk around and try again.</li>
-  <li>Turn: 5 degrees per tap. Aim the crosshair at a part (beam + tint), press Select or tap the part: the round button shows its name and the stack its controls (lug: length, rotate, gauge; busbar: cover, rotate; nut: none). Tap empty space or Deselect to go back.</li>
-  <li>While the ring shows, tap the scene to place; tapping the round button or stack must not place.</li>
-  <li>Mode chip (next to the round button) cycles Select, Mark, Measure. Mark: Drop (or tap the scene) drops a dot; its label shows when you select it or aim within 2 cm. Measure: tap A then B for a line with the distance. Units (Inches or Millimeters) are chosen on this page before AR.</li>
-  <li>Preview editor (this page, no AR): click a part to select, drag to orbit, Mark and Measure by clicking the model. Add part (stack or More) lists the library; stud parts show pulsing rings on compatible studs (click one or use Next, then Place); surface parts drop where you click.</li>
+  <li>Turn: 5 degrees per tap. Aim the crosshair at a part (beam + tint), press Select or tap the part: the context row shows its controls (lug: length, rotate, gauge; busbar: cover, rotate; nut: none). Tap empty space or Deselect to go back.</li>
+  <li>While the ring shows, tap the scene to place; tapping the rows must not place.</li>
+  <li>Mode (bottom row) cycles Select, Mark, Measure. Mark: Drop (or tap the scene) drops a dot; its label shows when you select it or aim within 2 cm. Measure: tap A then B for a line with the distance. Units and Theme are in the menu (top right, outside AR). Alerts show as toasts at the top.</li>
+  <li>Preview editor (this page, no AR): click a part to select, drag to orbit, Mark and Measure by clicking the model. Add part (bottom row) lists the library; stud parts show pulsing rings on compatible studs (click one or use Next, then Place); surface parts drop where you click.</li>
   <li>Place again: ring returns, tap a new spot. Reset: offsets and parts back to default.</li>
   <li>Exit AR and check the page returns. Compare the battery with the real one for size.</li>
 </ol>
 <div id="stage"></div>
 <div class="bar">
-  <div id="units" role="group" aria-label="Units"><span>Units</span>
-    <button type="button" id="u-in" data-u="in" aria-pressed="true">Inches</button><button type="button" id="u-mm" data-u="mm" aria-pressed="false">Millimeters</button></div>
-  <button id="enter" hidden>Enter AR</button>
+  <button id="enter" data-space-model="relative" hidden>Enter AR</button>
 </div>
 
 <div class="build" id="build0"></div>
 <div id="overlay">
   <div class="build" id="build1"></div>
-  <div id="toast" hidden></div>
-  <div id="hint" hidden>Move the phone to find the floor, tap to place</div>
+  <div id="toasts" aria-live="polite"></div>
+  <button id="menubtn" type="button" data-theme="auto" data-surface="glass" aria-label="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="menu">&#9776;</button>
+  <div id="menu" data-theme="auto" data-surface="glass" data-space="large" data-space-model="relative" hidden>
+    <div class="row"><span>Theme</span><tb-theme></tb-theme></div>
+    <div class="row"><span>Units</span><button data-space-model="relative" id="unitbtn" type="button" aria-label="Units"><small>in</small></button></div>
+  </div>
+  <div id="hint" data-theme="auto" data-surface="glass" hidden>Move the phone to find the floor, tap to place</div>
   <div id="cross" hidden></div>
   <pre id="dbg" hidden></pre>
-  <div id="info"><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
-  <div id="lib" hidden role="dialog" aria-label="Add part"><div class="lh"><b>Add part</b><button id="libclose" type="button">Close</button></div><ul id="liblist"></ul></div>
-  <div id="ctl">
-    <div id="stack">
-      <button id="extp" type="button" aria-label="Extension plus 1 inch">+1<small>ext in</small></button>
-      <button id="extm" type="button" aria-label="Extension minus 1 inch">&minus;1<small>ext in</small></button>
-      <button id="rotm" type="button" aria-label="Rotate right"><span>&#8635;</span><small>15&deg;</small></button>
-      <button id="rotp" type="button" aria-label="Rotate left"><span>&#8634;</span><small>15&deg;</small></button>
-      <button id="cover" type="button" aria-pressed="true">Cover</button>
-      <button id="hp" type="button" aria-label="Raise 0.5 inch">&uarr;<small>0.5 in</small></button>
-      <button id="hm" type="button" aria-label="Lower 0.5 inch">&darr;<small>0.5 in</small></button>
-      <button id="tp" type="button" aria-label="Turn left 5 degrees">&#8634;<small>5&deg;</small></button>
-      <button id="tm" type="button" aria-label="Turn right 5 degrees">&#8635;<small>5&deg;</small></button>
-      <button id="deselect" type="button">Deselect</button>
-      <button id="select" type="button" disabled>Select</button>
-      <button id="gauge" type="button" aria-label="Toggle gauge"><span>2 AWG</span><small>gauge</small></button>
-      <button id="nl" type="button" aria-label="Nudge left">&larr;<small>nudge</small></button>
-      <button id="nr" type="button" aria-label="Nudge right">&rarr;<small>nudge</small></button>
-      <button id="nu" type="button" aria-label="Nudge away">&#9650;<small>nudge</small></button>
-      <button id="nd" type="button" aria-label="Nudge toward me">&#9660;<small>nudge</small></button>
-      <button id="again" type="button">Place<small>again</small></button>
-      <button id="drop" type="button">Drop<small>mark here</small></button>
-      <button id="undomark" type="button">Undo<small>last mark</small></button>
-      <button id="clearmarks" type="button">Clear marks</button>
-      <button id="mnew" type="button">Start new<small>measure</small></button>
-      <button id="mundo" type="button">Undo<small>measure</small></button>
-      <button id="mclear" type="button">Clear<small>measures</small></button>
-      <button id="addpart" type="button" aria-label="Add part">Add<small>part</small></button>
-      <button id="remove" type="button" aria-label="Remove selected part">Remove<small>part</small></button>
-      <button id="confirm" type="button">Place<small>here</small></button>
-      <button id="next" type="button">Next<small>outlet</small></button>
-      <button id="cancel" type="button">Cancel</button>
-      <button id="reset" type="button">Reset</button>
-      <button id="exit" type="button">Exit AR</button>
-      <button id="more" type="button">More</button>
-      <button id="back" type="button">Back</button>
+  <div id="ctl" data-theme="auto" data-space="large" data-space-model="relative">
+    <div id="ctx" data-tool="select" data-space-model="relative" data-surface="glass">
+      <div id="info"><img id="selthumb" alt="" hidden><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
+      <div id="lib" hidden aria-label="Add part"><button data-space-model="relative" id="libclose" type="button">Back</button><button data-space-model="relative" id="libcat" type="button" aria-label="Category filter"></button><b id="libtitle">Add part</b><ul id="liblist"></ul></div>
+      <button data-space-model="relative" id="qselect" type="button">Select</button><button data-space-model="relative" id="qadd" type="button">Add to this</button><button data-space-model="relative" id="qmeasure" type="button">Measure from here</button><button data-space-model="relative" id="qmark" type="button">Mark here</button><button data-space-model="relative" id="qhere" type="button">Add part here</button>
+      <button data-space-model="relative" id="extp" type="button" aria-label="Extension plus 1 inch">+1<small>ext in</small></button>
+      <button data-space-model="relative" id="extm" type="button" aria-label="Extension minus 1 inch">&minus;1<small>ext in</small></button>
+      <button data-space-model="relative" id="rotm" type="button" aria-label="Rotate right"><span>&#8635;</span><small>15&deg;</small></button>
+      <button data-space-model="relative" id="rotp" type="button" aria-label="Rotate left"><span>&#8634;</span><small>15&deg;</small></button>
+      <button data-space-model="relative" id="cover" type="button" aria-pressed="true">Cover</button>
+      <button data-space-model="relative" id="move" type="button" aria-label="Move part on its surface">Move</button>
+      <button data-space-model="relative" id="hp" type="button" aria-label="Raise 0.5 inch">&uarr;<small>0.5 in</small></button>
+      <button data-space-model="relative" id="hm" type="button" aria-label="Lower 0.5 inch">&darr;<small>0.5 in</small></button>
+      <button data-space-model="relative" id="tp" type="button" aria-label="Turn left 5 degrees">&#8634;<small>5&deg;</small></button>
+      <button data-space-model="relative" id="tm" type="button" aria-label="Turn right 5 degrees">&#8635;<small>5&deg;</small></button>
+      <button data-space-model="relative" id="deselect" type="button">Deselect</button>
+      <button data-space-model="relative" id="select" type="button" disabled hidden>Select</button>
+      <button data-space-model="relative" id="gauge" type="button" aria-label="Toggle gauge"><span>2 AWG</span><small>gauge</small></button>
+      <button data-space-model="relative" id="nl" type="button" aria-label="Nudge left">&larr;<small>nudge</small></button>
+      <button data-space-model="relative" id="nr" type="button" aria-label="Nudge right">&rarr;<small>nudge</small></button>
+      <button data-space-model="relative" id="nu" type="button" aria-label="Nudge away">&#9650;<small>nudge</small></button>
+      <button data-space-model="relative" id="nd" type="button" aria-label="Nudge toward me">&#9660;<small>nudge</small></button>
+      <button data-space-model="relative" id="again" type="button">Place<small>again</small></button>
+      <button data-space-model="relative" id="drop" type="button">Drop<small>mark here</small></button>
+      <button data-space-model="relative" id="rmmark" type="button">Remove</button><button data-space-model="relative" id="rmmeasure" type="button">Remove</button>
+      <button data-space-model="relative" id="clearmarks" type="button">Clear marks</button>
+      <button data-space-model="relative" id="mnew" type="button">Start new<small>measure</small></button>
+      <button data-space-model="relative" id="mclear" type="button">Clear<small>measures</small></button>
+      <button data-space-model="relative" id="remove" type="button" aria-label="Remove selected part">Remove<small>part</small></button>
+      <button data-space-model="relative" id="confirm" type="button">Place<small>here</small></button>
+      <button data-space-model="relative" id="next" type="button">Next<small>outlet</small></button>
+      <button data-space-model="relative" id="cancel" type="button">Cancel</button>
+      <button data-space-model="relative" id="reset" type="button">Reset</button>
+      <button data-space-model="relative" id="exit" type="button">Exit AR</button>
+      <button data-space-model="relative" id="jfrom" type="button" aria-label="Cable from here">Cable</button>
+      <button data-space-model="relative" id="jgauge" type="button" aria-label="Jumper gauge">Gauge</button>
+      <button data-space-model="relative" id="jcolor" type="button" aria-label="Jumper color">Color</button>
+      <button data-space-model="relative" id="jremove" type="button" aria-label="Remove jumper">Remove</button>
+      <button data-space-model="relative" id="undoj" type="button" aria-label="Undo last jumper change">Undo</button>
+      <div id="optlist" hidden aria-label="Options"><button data-space-model="relative" id="optback" type="button">Back</button><b id="opttitle">Options</b><ul id="optul"></ul></div>
+      <button data-space-model="relative" id="back" type="button">Back</button>
     </div>
-    <div id="row">
-      <button id="mode" type="button" aria-label="Mode: Select. Tap to change"><small>MODE</small><b>Select</b></button>
-      <button id="fab" type="button" aria-expanded="false" aria-controls="stack">Scene</button>
+    <div id="bottom" data-space-model="relative" data-surface="glass">
+      <button data-space-model="relative" id="mode" type="button" aria-label="Mode: Select. Tap to change"><small>MODE</small><b>Select</b></button>
+      <button data-space-model="relative" id="addpart" type="button" aria-label="Add part">Add<small>part</small></button>
+      <button data-space-model="relative" id="undomark" type="button">Undo<small>last mark</small></button>
+      <button data-space-model="relative" id="mundo" type="button">Undo<small>measure</small></button>
+      <button data-space-model="relative" id="opt" type="button" aria-label="Terminal option. Tap for the next, hold for the list">Option</button>
+      <button data-space-model="relative" id="more" type="button" aria-pressed="false" aria-label="More">More</button>
     </div>
   </div>
 </div>

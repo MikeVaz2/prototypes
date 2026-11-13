@@ -1,0 +1,172 @@
+{
+ "kind": "terminal",
+ "id": "setscrew-multi-neg",
+ "name": "Multi-input set-screw stud terminal (placeholder) (negative)",
+ "short": "Setscrew −",
+ "units": "in",
+ "polarity": "-",
+ "dims": {
+  "base": {
+   "shape": "round",
+   "size": 1.0,
+   "height": 0.25
+  },
+  "blocks": [
+   {
+    "x0": -0.8,
+    "x1": 0.8,
+    "y0": 0.25,
+    "y1": 0.75,
+    "z0": -0.5,
+    "z1": 0.5
+   }
+  ],
+  "studs": [
+   {
+    "x": 0,
+    "z": 0,
+    "y0": 0.75,
+    "length": 0.6,
+    "d": 0.375,
+    "tpi": 16,
+    "thread": "3/8-16"
+   }
+  ],
+  "set_screws": [
+   {
+    "x": -0.5,
+    "z": 0,
+    "y": 0.75
+   },
+   {
+    "x": 0,
+    "z": 0.3,
+    "y": 0.75
+   },
+   {
+    "x": 0.5,
+    "z": 0,
+    "y": 0.75
+   }
+  ]
+ },
+ "colors": {
+  "body": [
+   0.62,
+   0.64,
+   0.68,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "-",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 45,
+   "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "-",
+    "consumes_in": 0.6
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "top1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "polarity": "-",
+   "rating_a": 300,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0.75,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 2,
+    "max_stack_in": 0.45
+   }
+  },
+  {
+   "id": "port1",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "set-screw",
+   "gauge": "8-2/0",
+   "polarity": "-",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    -0.5,
+    0.75,
+    0
+   ]
+  },
+  {
+   "id": "port2",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "set-screw",
+   "gauge": "8-2/0",
+   "polarity": "-",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0.75,
+    0
+   ]
+  },
+  {
+   "id": "port3",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "set-screw",
+   "gauge": "8-2/0",
+   "polarity": "-",
+   "rating_a": 150,
+   "rating_estimate": true,
+   "pos": [
+    0.5,
+    0.75,
+    0
+   ]
+  }
+ ],
+ "height_above_seat_in": 1.35,
+ "source": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part.",
+ "notes": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part. Three set-screw cable ports (to 2/0, estimate) plus one 3/8-16 top stud. No SAE post, so the factory clamp does not attach.",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "adapter",
+  "short": "Set-screw multi -",
+  "swatch": "#2a2a2e"
+ }
+}

@@ -2,17 +2,22 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { kindOf } from './pick.js';
-import { createScene, IN } from './scene.js';
+import { createScene, IN, baseOf } from './scene.js';
 
 export async function createComposer(catalogUrl = 'parts/catalog.json', base = '') {
   const catalog = await (await fetch(base + catalogUrl)).json();
   const SC = createScene(catalog), host = SC.host, partOf = SC.partOf;
   const loader = new GLTFLoader(), cache = new Map();
-  const load = p => cache.has(p.id) ? cache.get(p.id) : cache.set(p.id, loader.loadAsync(base + p.glb).then(g => g.scene)).get(p.id);
+  const load = p => {
+    if (!cache.has(p.id)) cache.set(p.id, loader.loadAsync(base + p.glb).then(g => g.scene, e => { cache.delete(p.id); const x = new Error(e && e.message || 'load failed'); x.partName = p.short || p.name || p.id; throw x; }));
+    return cache.get(p.id);
+  };
+  const preload = ids => Promise.allSettled([...new Set(ids)].map(id => { const p = partOf(baseOf(id)); return p ? load(p) : null; }));
 
   const matrixOf = pl => { const m = new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(pl.yaw)); m.setPosition(pl.pos[0], pl.pos[1], pl.pos[2]); return m; };
 
   function applyLength(obj, len, o) {
+    if (!o.nodes || len == null) return;   // parametric only in the GLB build (copper-bar): nothing to stretch at runtime
     obj.updateMatrixWorld(true);
     const d = (len - o.default) * IN, s = len / o.default;
     const match = pat => { const re = new RegExp('^' + pat.replace('*', '[^_]+') + '$'); const r = []; obj.traverse(c => { if (re.test(c.name)) r.push(c); }); return r; };
@@ -46,5 +51,5 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
     return root;
   }
 
-  return { catalog, host, partOf, SC, build, matrixOf, defaultState: SC.defaultState, parseState: SC.parseState, clampNum: SC.clampNum, yawStep: SC.yawStep };
+  return { catalog, host, partOf, SC, build, preload, matrixOf, defaultState: SC.defaultState, parseState: SC.parseState, clampNum: SC.clampNum, yawStep: SC.yawStep };
 }

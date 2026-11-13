@@ -1,5 +1,6 @@
 {
  "name": "Odyssey ODP-AGM31 (31-925S)",
+ "short": "Battery",
  "units": "in",
  "case": {
   "length": 13.0,
@@ -124,7 +125,7 @@
  ],
  "mounts_note": "pos = top of polarity ring on the boss (boss top 8.75 + ring 0.06); case-origin coords, inches (X from centre, Y up, Z from centre; +Z front).",
  "catalog": {
-  "category": "battery",
+  "category": "Battery",
   "mountKind": "surface",
   "icon": "battery"
  },

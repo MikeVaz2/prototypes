@@ -2,6 +2,7 @@
  "kind": "nut",
  "id": "nut-38-pos",
  "name": "3/8-16 hex nut with lock washer, stainless (pos stud)",
+ "short": "Nut 3/8 +",
  "units": "in",
  "polarity": "+",
  "dims": {
@@ -71,7 +72,7 @@
  ],
  "notes": "Dimensions are typical 3/8-16 hex nut (about 0.56 in across flats, 0.33 in tall) and a split lock washer 0.06 in thick (estimates). Plain hex, no chamfer, washer not split.",
  "catalog": {
-  "category": "hardware",
+  "category": "Hardware",
   "mountKind": "stud",
   "icon": "nut"
  },

@@ -2,9 +2,10 @@
  "kind": "splice",
  "id": "butt-splice-1-0",
  "name": "Butt splice 1/0 AWG with adhesive heat shrink",
+ "short": "Splice 1/0",
  "units": "in",
  "catalog": {
-  "category": "cable",
+  "category": "Cables",
   "mountKind": "surface",
   "icon": "splice",
   "short": "1/0 splice",

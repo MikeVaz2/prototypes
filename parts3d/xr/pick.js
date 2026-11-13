@@ -24,8 +24,11 @@ export function instanceIdOf(obj) {
   return null;
 }
 // first intersection (three.js order: nearest first) that belongs to a part -> { instanceId, point, distance } | null
+// hidden nodes (a cover switched off, helpers) still answer a raycast, so they are skipped: a click goes through to what the user sees
+export const isShown = obj => { for (let o = obj; o; o = o.parent) if (o.visible === false) return false; return !!obj; };
 export function pickFromHits(hits) {
   for (const h of hits || []) {
+    if (!isShown(h.object)) continue;
     const id = instanceIdOf(h.object);
     if (id) return { instanceId: id, point: h.point, distance: h.distance };
   }
@@ -89,4 +92,11 @@ export function stackFor(kind, rotStep = 0, selected = false) {
   else if (kind === 'nut') { primary = ['deselect']; more = common; }
   else { primary = ['mark', 'hp', 'hm', 'tp', 'tm']; more = ['nl', 'nr', 'nu', 'nd', selected ? 'deselect' : 'select', 'again', 'clearmarks', 'reset', 'exit']; }
   return { primary: [...primary, 'more'], more: ['back', ...more] };
+}
+
+// click versus drag outside XR: movement under 6 px (mouse) or 10 px (touch) between pointerdown and pointerup is a click.
+// A slow click is still a click on a mouse; a touch held over 800 ms is a long press, not a tap.
+export function isClick(moved, ms, pointerType = 'mouse') {
+  const touch = pointerType === 'touch' || pointerType === 'pen';
+  return moved <= (touch ? 10 : 6) && (!touch || ms <= 800);
 }

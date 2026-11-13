@@ -46,7 +46,7 @@
     }
    ],
    "options": {},
-   "category": "battery",
+   "category": "Battery",
    "mountKind": "surface",
    "icon": "battery",
    "connections": [
@@ -105,7 +105,8 @@
    ],
    "compatible": {},
    "short": "Battery",
-   "always_on": true
+   "always_on": true,
+   "thumb": "parts/thumbs/odyssey-odp-agm31.png"
   },
   {
    "id": "lug-38-pos",
@@ -221,7 +222,7 @@
      "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
    },
-   "category": "cable",
+   "category": "Lugs",
    "mountKind": "stud",
    "icon": "lug",
    "connections": [
@@ -295,10 +296,16 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
     ]
    },
-   "short": "+ lug"
+   "short": "Lug 3/8 +",
+   "thumb": "parts/thumbs/lug-38-pos.png"
   },
   {
    "id": "lug-38-neg",
@@ -414,7 +421,7 @@
      "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
    },
-   "category": "cable",
+   "category": "Lugs",
    "mountKind": "stud",
    "icon": "lug",
    "connections": [
@@ -488,10 +495,16 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
     ]
    },
-   "short": "\u2212 lug"
+   "short": "Lug 3/8 \u2212",
+   "thumb": "parts/thumbs/lug-38-neg.png"
   },
   {
    "id": "blueseas-2340-pos",
@@ -530,7 +543,7 @@
       "kind": "stud",
       "thread": "3/8-16",
       "polarity": "+",
-      "consumes_in": 0.125
+      "consumes_in": 0.1181
      }
     },
     {
@@ -538,7 +551,7 @@
      "type": "stack",
      "pos": [
       0,
-      0.125,
+      0.1181,
       0
      ],
      "axis": [
@@ -559,7 +572,7 @@
      ]
     }
    },
-   "category": "distribution",
+   "category": "Bus bars",
    "mountKind": "stud",
    "icon": "busbar",
    "connections": [
@@ -652,7 +665,12 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
     ]
    },
    "rating_groups": {
@@ -668,7 +686,8 @@
      "note": "Blue Sea 2340: 100 A continuous total"
     }
    },
-   "short": "+ busbar"
+   "short": "2340 +",
+   "thumb": "parts/thumbs/blueseas-2340-pos.png"
   },
   {
    "id": "blueseas-2340-neg",
@@ -707,7 +726,7 @@
       "kind": "stud",
       "thread": "3/8-16",
       "polarity": "-",
-      "consumes_in": 0.125
+      "consumes_in": 0.1181
      }
     },
     {
@@ -715,7 +734,7 @@
      "type": "stack",
      "pos": [
       0,
-      0.125,
+      0.1181,
       0
      ],
      "axis": [
@@ -736,7 +755,7 @@
      ]
     }
    },
-   "category": "distribution",
+   "category": "Bus bars",
    "mountKind": "stud",
    "icon": "busbar",
    "connections": [
@@ -829,7 +848,12 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
     ]
    },
    "rating_groups": {
@@ -845,7 +869,8 @@
      "note": "Blue Sea 2340: 100 A continuous total"
     }
    },
-   "short": "\u2212 busbar"
+   "short": "2340 \u2212",
+   "thumb": "parts/thumbs/blueseas-2340-neg.png"
   },
   {
    "id": "nut-38-pos",
@@ -904,7 +929,7 @@
     }
    ],
    "options": {},
-   "category": "hardware",
+   "category": "Hardware",
    "mountKind": "stud",
    "icon": "nut",
    "connections": [],
@@ -917,11 +942,17 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
     ]
    },
-   "short": "Nuts",
-   "chip": "nuts"
+   "short": "Nut 3/8 +",
+   "chip": "nuts",
+   "thumb": "parts/thumbs/nut-38-pos.png"
   },
   {
    "id": "nut-38-neg",
@@ -980,7 +1011,7 @@
     }
    ],
    "options": {},
-   "category": "hardware",
+   "category": "Hardware",
    "mountKind": "stud",
    "icon": "nut",
    "connections": [],
@@ -993,11 +1024,17 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
     ]
    },
-   "short": "Nuts",
-   "chip": "nuts"
+   "short": "Nut 3/8 \u2212",
+   "chip": "nuts",
+   "thumb": "parts/thumbs/nut-38-neg.png"
   },
   {
    "id": "powerbar-2104",
@@ -1070,7 +1107,7 @@
      }
     }
    },
-   "category": "distribution",
+   "category": "Bus bars",
    "mountKind": "surface",
    "icon": "powerbar",
    "connections": [
@@ -1258,7 +1295,8 @@
      "note": "Blue Sea 2104: 600 A bar; per-stud 300 A is an estimate"
     }
    },
-   "short": "PowerBar"
+   "short": "PowerBar",
+   "thumb": "parts/thumbs/powerbar-2104.png"
   },
   {
    "id": "mrbf-5191",
@@ -1381,7 +1419,7 @@
      }
     }
    },
-   "category": "fusing",
+   "category": "Fuses",
    "mountKind": "stud",
    "icon": "fuse",
    "connections": [
@@ -1435,10 +1473,16 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
     ]
    },
-   "short": "MRBF fuse"
+   "short": "MRBF 300A",
+   "thumb": "parts/thumbs/mrbf-5191.png"
   },
   {
    "id": "copper-bar",
@@ -1544,7 +1588,7 @@
      "note": "geometry rebuild: python make_part.py parts\\copper-bar.json out.glb length=8 studs=2.5:3/8-16,5.0:5/16-18 (writes out.glb.connections.json)"
     }
    },
-   "category": "distribution",
+   "category": "Bus bars",
    "mountKind": "stud",
    "icon": "bar",
    "connections": [
@@ -1680,7 +1724,17 @@
      "powerbar-2104.s2",
      "powerbar-2104.s3",
      "powerbar-2104.s4",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-pos.top1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-pos.side1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-pos.top",
+     "stud-38-16-neg.top"
     ]
    },
    "rating_rule": {
@@ -1724,7 +1778,8 @@
     ],
     "stud_x_rule": "x >= 1.0 from the hole, >= 1.0 apart, <= length - 0.5"
    },
-   "short": "Copper bar"
+   "short": "Copper bar",
+   "thumb": "parts/thumbs/copper-bar.png"
   },
   {
    "id": "lug-joint-38",
@@ -1787,7 +1842,7 @@
      ]
     }
    },
-   "category": "cable",
+   "category": "Cables",
    "mountKind": "surface",
    "icon": "joint",
    "connections": [
@@ -1854,7 +1909,8 @@
    "compatible": {
     "free": []
    },
-   "short": "Lug joint"
+   "short": "Lug joint",
+   "thumb": "parts/thumbs/lug-joint-38.png"
   },
   {
    "id": "butt-splice-1-0",
@@ -1901,7 +1957,7 @@
      }
     }
    },
-   "category": "cable",
+   "category": "Cables",
    "mountKind": "surface",
    "icon": "splice",
    "connections": [
@@ -1937,7 +1993,8 @@
    "compatible": {
     "free": []
    },
-   "short": "1/0 splice"
+   "short": "Splice 1/0",
+   "thumb": "parts/thumbs/butt-splice-1-0.png"
   },
   {
    "id": "factory-cable-end",
@@ -2047,7 +2104,7 @@
      }
     }
    },
-   "category": "marker",
+   "category": "Cables",
    "mountKind": "surface",
    "icon": "marker",
    "connections": [
@@ -2125,7 +2182,17 @@
      "powerbar-2104.s4",
      "copper-bar.s1",
      "copper-bar.s2",
-     "lug-joint-38.bolt"
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-pos.top1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-pos.side1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-pos.top",
+     "stud-38-16-neg.top"
     ]
    },
    "label_by_option": {
@@ -2134,7 +2201,8 @@
      "-": "factory -"
     }
    },
-   "short": "Factory cable"
+   "short": "Factory end",
+   "thumb": "parts/thumbs/factory-cable-end.png"
   },
   {
    "id": "lug-516-pos",
@@ -2261,7 +2329,7 @@
      "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
    },
-   "category": "cable",
+   "category": "Lugs",
    "mountKind": "stud",
    "icon": "lug",
    "connections": [
@@ -2340,10 +2408,16 @@
    ],
    "compatible": {
     "ring": [
-     "mrbf-5191.fuse_out"
+     "mrbf-5191.fuse_out",
+     "r4t-g31-pos.side1",
+     "blaze-4runner-pos.side1",
+     "blaze-4runner-pos.side2",
+     "xs555-ibar-pos.top1",
+     "xs555-ibar-pos.top2"
     ]
    },
-   "short": "5/16 lug +"
+   "short": "Lug 5/16 +",
+   "thumb": "parts/thumbs/lug-516-pos.png"
   },
   {
    "id": "lug-516-neg",
@@ -2470,7 +2544,7 @@
      "note": "Extension cable length in inches, barrel end to the joint. Scaled in the browser; the GLB holds the default (6 in)."
     }
    },
-   "category": "cable",
+   "category": "Lugs",
    "mountKind": "stud",
    "icon": "lug",
    "connections": [
@@ -2548,9 +2622,3430 @@
     }
    ],
    "compatible": {
-    "ring": []
+    "ring": [
+     "r4t-g31-neg.side1",
+     "blaze-4runner-neg.side1",
+     "blaze-4runner-neg.side2",
+     "xs555-ibar-neg.top1",
+     "xs555-ibar-neg.top2"
+    ]
    },
-   "short": "5/16 lug -"
+   "short": "Lug 5/16 \u2212",
+   "thumb": "parts/thumbs/lug-516-neg.png"
+  },
+  {
+   "id": "sae-adapter-pos",
+   "name": "SAE post adapter for 3/8-16 stud (positive)",
+   "glb": "sae-adapter-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.2,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.65,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
+    ]
+   },
+   "short": "SAE adapt +",
+   "thumb": "parts/thumbs/sae-adapter-pos.png"
+  },
+  {
+   "id": "sae-adapter-neg",
+   "name": "SAE post adapter for 3/8-16 stud (negative)",
+   "glb": "sae-adapter-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "-",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.2,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.65,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
+    ]
+   },
+   "short": "SAE adapt \u2212",
+   "thumb": "parts/thumbs/sae-adapter-neg.png"
+  },
+  {
+   "id": "sae-clamp-pos",
+   "name": "Generic SAE clamp terminal, factory cable end (positive)",
+   "glb": "sae-clamp-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "clamp",
+   "mounts": [
+    {
+     "id": "post",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 15,
+     "note": "origin = post axis at the clamp bottom (adapter base top); cable toward +X",
+     "needs": {
+      "kind": "stud",
+      "thread": "SAE-post",
+      "polarity": "+",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "clamp",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "SAE-post",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "id": "cable_end",
+     "kind": "splice",
+     "gauge": "2",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      3.6,
+      0.3,
+      0
+     ]
+    }
+   ],
+   "compatible": {
+    "post": [
+     "sae-adapter-pos.post",
+     "r4t-g31-pos.post",
+     "blaze-4runner-pos.post",
+     "slee-sok20002-pos.post"
+    ]
+   },
+   "short": "SAE clamp +",
+   "thumb": "parts/thumbs/sae-clamp-pos.png"
+  },
+  {
+   "id": "sae-clamp-neg",
+   "name": "Generic SAE clamp terminal, factory cable end (negative)",
+   "glb": "sae-clamp-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "clamp",
+   "mounts": [
+    {
+     "id": "post",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 15,
+     "note": "origin = post axis at the clamp bottom (adapter base top); cable toward +X",
+     "needs": {
+      "kind": "stud",
+      "thread": "SAE-post",
+      "polarity": "-",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "clamp",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "SAE-post",
+     "polarity": "-",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "id": "cable_end",
+     "kind": "splice",
+     "gauge": "2",
+     "polarity": "-",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      3.6,
+      0.3,
+      0
+     ]
+    }
+   ],
+   "compatible": {
+    "post": [
+     "sae-adapter-neg.post",
+     "r4t-g31-neg.post",
+     "blaze-4runner-neg.post",
+     "slee-sok20002-neg.post"
+    ]
+   },
+   "short": "SAE clamp \u2212",
+   "thumb": "parts/thumbs/sae-clamp-neg.png"
+  },
+  {
+   "id": "r4t-g31-pos",
+   "name": "R4T Group 31 terminal (placeholder) (positive)",
+   "glb": "r4t-g31-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.3,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.5,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "+",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.5,
+      0.15,
+      0.0
+     ],
+     "axis": [
+      1,
+      0,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
+    ]
+   },
+   "short": "R4T G31 +",
+   "thumb": "parts/thumbs/r4t-g31-pos.png"
+  },
+  {
+   "id": "r4t-g31-neg",
+   "name": "R4T Group 31 terminal (placeholder) (negative)",
+   "glb": "r4t-g31-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "-",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.3,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.5,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "-",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.5,
+      0.15,
+      0.0
+     ],
+     "axis": [
+      1,
+      0,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
+    ]
+   },
+   "short": "R4T G31 \u2212",
+   "thumb": "parts/thumbs/r4t-g31-neg.png"
+  },
+  {
+   "id": "blaze-4runner-pos",
+   "name": "Blaze Off-Road billet terminal, 4Runner/GX (placeholder) (positive)",
+   "glb": "blaze-4runner-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.45,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "+",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.55,
+      0.22,
+      0.0
+     ],
+     "axis": [
+      1,
+      0,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    },
+    {
+     "id": "side2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "+",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.0,
+      0.22,
+      0.55
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
+    ]
+   },
+   "short": "Blaze 4R +",
+   "thumb": "parts/thumbs/blaze-4runner-pos.png"
+  },
+  {
+   "id": "blaze-4runner-neg",
+   "name": "Blaze Off-Road billet terminal, 4Runner/GX (placeholder) (negative)",
+   "glb": "blaze-4runner-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "-",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.45,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "-",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.55,
+      0.22,
+      0.0
+     ],
+     "axis": [
+      1,
+      0,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    },
+    {
+     "id": "side2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "-",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.0,
+      0.22,
+      0.55
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
+    ]
+   },
+   "short": "Blaze 4R \u2212",
+   "thumb": "parts/thumbs/blaze-4runner-neg.png"
+  },
+  {
+   "id": "slee-sok20002-pos",
+   "name": "SLEE billet terminal SOK20002 (placeholder) (positive)",
+   "glb": "slee-sok20002-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.35,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.5,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0.0,
+      0.18,
+      0.5
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.65
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
+    ]
+   },
+   "short": "SLEE 20002 +",
+   "thumb": "parts/thumbs/slee-sok20002-pos.png"
+  },
+  {
+   "id": "slee-sok20002-neg",
+   "name": "SLEE billet terminal SOK20002 (placeholder) (negative)",
+   "glb": "slee-sok20002-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "SAE-post",
+     "polarity": "-",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.35,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "SAE-post",
+      "max_items": 1,
+      "max_stack_in": 0.5,
+      "note": "tapered SAE post; a clamp sits on the base top"
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0.0,
+      0.18,
+      0.5
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.65
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
+    ]
+   },
+   "short": "SLEE 20002 \u2212",
+   "thumb": "parts/thumbs/slee-sok20002-neg.png"
+  },
+  {
+   "id": "setscrew-multi-pos",
+   "name": "Multi-input set-screw stud terminal (placeholder) (positive)",
+   "glb": "setscrew-multi-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "top1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.75,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     }
+    },
+    {
+     "id": "port1",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "set-screw",
+     "gauge": "8-2/0",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      -0.5,
+      0.75,
+      0
+     ]
+    },
+    {
+     "id": "port2",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "set-screw",
+     "gauge": "8-2/0",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.75,
+      0
+     ]
+    },
+    {
+     "id": "port3",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "set-screw",
+     "gauge": "8-2/0",
+     "polarity": "+",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0.5,
+      0.75,
+      0
+     ]
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
+    ]
+   },
+   "short": "Setscrew +",
+   "thumb": "parts/thumbs/setscrew-multi-pos.png"
+  },
+  {
+   "id": "setscrew-multi-neg",
+   "name": "Multi-input set-screw stud terminal (placeholder) (negative)",
+   "glb": "setscrew-multi-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.6
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "top1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.75,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     }
+    },
+    {
+     "id": "port1",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "set-screw",
+     "gauge": "8-2/0",
+     "polarity": "-",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      -0.5,
+      0.75,
+      0
+     ]
+    },
+    {
+     "id": "port2",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "set-screw",
+     "gauge": "8-2/0",
+     "polarity": "-",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.75,
+      0
+     ]
+    },
+    {
+     "id": "port3",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "set-screw",
+     "gauge": "8-2/0",
+     "polarity": "-",
+     "rating_a": 150,
+     "rating_estimate": true,
+     "pos": [
+      0.5,
+      0.75,
+      0
+     ]
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
+    ]
+   },
+   "short": "Setscrew \u2212",
+   "thumb": "parts/thumbs/setscrew-multi-neg.png"
+  },
+  {
+   "id": "xs555-ibar-pos",
+   "name": "XS Power 555 I-Bar, dual top posts + side adapter (placeholder) (positive)",
+   "glb": "xs555-ibar-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "post",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 90,
+     "note": "origin = post axis at the adapter base top; assumption, see notes",
+     "needs": {
+      "kind": "stud",
+      "thread": "SAE-post",
+      "polarity": "+",
+      "consumes_in": 0.45
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "top1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "+",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      -0.6,
+      0.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     }
+    },
+    {
+     "id": "top2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "+",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.6,
+      0.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0.0,
+      0.22,
+      0.3
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    }
+   ],
+   "compatible": {
+    "post": [
+     "sae-adapter-pos.post",
+     "r4t-g31-pos.post",
+     "blaze-4runner-pos.post",
+     "slee-sok20002-pos.post"
+    ]
+   },
+   "short": "XS I-Bar +",
+   "thumb": "parts/thumbs/xs555-ibar-pos.png"
+  },
+  {
+   "id": "xs555-ibar-neg",
+   "name": "XS Power 555 I-Bar, dual top posts + side adapter (placeholder) (negative)",
+   "glb": "xs555-ibar-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "post",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 90,
+     "note": "origin = post axis at the adapter base top; assumption, see notes",
+     "needs": {
+      "kind": "stud",
+      "thread": "SAE-post",
+      "polarity": "-",
+      "consumes_in": 0.45
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "top1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "-",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      -0.6,
+      0.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     }
+    },
+    {
+     "id": "top2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "5/16-18",
+     "polarity": "-",
+     "rating_a": 200,
+     "rating_estimate": true,
+     "pos": [
+      0.6,
+      0.45,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "5/16-18",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     }
+    },
+    {
+     "id": "side1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0.0,
+      0.22,
+      0.3
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 2,
+      "max_stack_in": 0.55
+     }
+    }
+   ],
+   "compatible": {
+    "post": [
+     "sae-adapter-neg.post",
+     "r4t-g31-neg.post",
+     "blaze-4runner-neg.post",
+     "slee-sok20002-neg.post"
+    ]
+   },
+   "short": "XS I-Bar \u2212",
+   "thumb": "parts/thumbs/xs555-ibar-neg.png"
+  },
+  {
+   "id": "vgate-20way-pos",
+   "name": "Vgate 20-way post terminal distribution block (placeholder) (positive)",
+   "glb": "vgate-20way-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.15
+     }
+    },
+    {
+     "id": "surface",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "fixed"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "bolt-down alternative"
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "top1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      0.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      0.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top3",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top4",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top5",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top6",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top7",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top8",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top9",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top10",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top11",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top12",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top13",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top14",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top15",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top16",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top17",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top18",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top19",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      5.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top20",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "+",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      5.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole",
+     "stud-38-16-pos.top"
+    ],
+    "surface": []
+   },
+   "short": "Vgate 20 +",
+   "thumb": "parts/thumbs/vgate-20way-pos.png"
+  },
+  {
+   "id": "vgate-20way-neg",
+   "name": "Vgate 20-way post terminal distribution block (placeholder) (negative)",
+   "glb": "vgate-20way-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "terminal",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 45,
+     "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.15
+     }
+    },
+    {
+     "id": "surface",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "fixed"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "bolt-down alternative"
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "adapter",
+   "connections": [
+    {
+     "id": "top1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      0.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      0.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top3",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top4",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top5",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top6",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      1.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top7",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top8",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top9",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top10",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      2.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top11",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top12",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top13",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top14",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      3.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top15",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top16",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top17",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.9,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top18",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      4.9,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top19",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      5.4,
+      0.5,
+      -0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    },
+    {
+     "id": "top20",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "M6-1.0",
+     "polarity": "-",
+     "rating_a": 40,
+     "rating_estimate": true,
+     "pos": [
+      5.4,
+      0.5,
+      0.35
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "M6-1.0",
+      "max_items": 2,
+      "max_stack_in": 0.45
+     },
+     "note": "per-post rating is an estimate (bar total unknown)"
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole",
+     "stud-38-16-neg.top"
+    ],
+    "surface": []
+   },
+   "short": "Vgate 20 \u2212",
+   "thumb": "parts/thumbs/vgate-20way-neg.png"
+  },
+  {
+   "id": "blueseas-2340-pos-drilled",
+   "name": "Blue Sea 2340 busbar with one drilled 3/8 hole (positive, red cover), battery-terminal mount",
+   "glb": "blueseas-2340-pos-drilled.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "busbar",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 90,
+     "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
+     "yaw_step_deg": 90,
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.1181
+     }
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.1181,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "note": "top of the tab on the stud axis; the nut sits here"
+    }
+   ],
+   "options": {
+    "cover": {
+     "type": "bool",
+     "default": true,
+     "label": "Cover",
+     "nodes": [
+      "cover"
+     ],
+     "note": "cover cut by hand to clear the adapter (round opening around bar_hole). Cover stays on by default, like the plain 2340."
+    }
+   },
+   "category": "Bus bars",
+   "mountKind": "stud",
+   "icon": "busbar",
+   "connections": [
+    {
+     "id": "tab",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 100,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "group": "bus",
+     "note": "tab on the battery stud; 100 A is the Blue Sea rating for the whole busbar"
+    },
+    {
+     "id": "t1",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.82,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t2",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.19,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t4",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "+",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.52,
+      0.485,
+      0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "bar_hole",
+     "kind": "stud",
+     "form": "stud",
+     "hole": true,
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 100,
+     "group": "bus",
+     "pos": [
+      -2.15,
+      0.3781,
+      0.25
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 1,
+      "max_stack_in": 0.7,
+      "note": "13/32 hole drilled out of the end-most #8-32 screw position (t3); takes a 3/8-16 stud with a nut under and over the plate (stud-38-16)"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "stud-38-16-pos.top"
+    ]
+   },
+   "rating_groups": {
+    "bus": {
+     "rating_a": 100,
+     "members": [
+      "tab",
+      "t1",
+      "t2",
+      "t4",
+      "bar_hole"
+     ],
+     "note": "Blue Sea 2340: 100 A continuous total"
+    }
+   },
+   "short": "2340 +",
+   "thumb": "parts/thumbs/blueseas-2340-pos-drilled.png"
+  },
+  {
+   "id": "blueseas-2340-neg-drilled",
+   "name": "Blue Sea 2340 busbar with one drilled 3/8 hole (negative, black cover), battery-terminal mount",
+   "glb": "blueseas-2340-neg-drilled.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "busbar",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 90,
+     "note": "hole centre on bottom face of tab; local -X runs from the hole toward the screw block; yaw about Y (right-handed, as three.js rotation.y) = rotation about the stud axis: +90 deg points the body at +Z (battery front/label side, default), -90 at -Z (back edge); yaw_step_deg = allowed rotation increment",
+     "yaw_step_deg": 90,
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.1181
+     }
+    },
+    {
+     "id": "top",
+     "type": "stack",
+     "pos": [
+      0,
+      0.1181,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "note": "top of the tab on the stud axis; the nut sits here"
+    }
+   ],
+   "options": {
+    "cover": {
+     "type": "bool",
+     "default": true,
+     "label": "Cover",
+     "nodes": [
+      "cover"
+     ],
+     "note": "cover cut by hand to clear the adapter (round opening around bar_hole). Cover stays on by default, like the plain 2340."
+    }
+   },
+   "category": "Bus bars",
+   "mountKind": "stud",
+   "icon": "busbar",
+   "connections": [
+    {
+     "id": "tab",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 100,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "group": "bus",
+     "note": "tab on the battery stud; 100 A is the Blue Sea rating for the whole busbar"
+    },
+    {
+     "id": "t1",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "-",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.82,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t2",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "-",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.19,
+      0.485,
+      -0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "t4",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "#8-32",
+     "polarity": "-",
+     "rating_a": 25,
+     "rating_estimate": true,
+     "pos": [
+      -1.52,
+      0.485,
+      0.25
+     ],
+     "group": "bus",
+     "note": "per-screw rating is an estimate (100 A / 4)"
+    },
+    {
+     "id": "bar_hole",
+     "kind": "stud",
+     "form": "stud",
+     "hole": true,
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 100,
+     "group": "bus",
+     "pos": [
+      -2.15,
+      0.3781,
+      0.25
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 1,
+      "max_stack_in": 0.7,
+      "note": "13/32 hole drilled out of the end-most #8-32 screw position (t3); takes a 3/8-16 stud with a nut under and over the plate (stud-38-16)"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "stud-38-16-neg.top"
+    ]
+   },
+   "rating_groups": {
+    "bus": {
+     "rating_a": 100,
+     "members": [
+      "tab",
+      "t1",
+      "t2",
+      "t4",
+      "bar_hole"
+     ],
+     "note": "Blue Sea 2340: 100 A continuous total"
+    }
+   },
+   "short": "2340 \u2212",
+   "thumb": "parts/thumbs/blueseas-2340-neg-drilled.png"
+  },
+  {
+   "id": "stud-38-16-pos",
+   "name": "3/8-16 stud with nut under and over the bar (positive)",
+   "glb": "stud-38-16-pos.glb",
+   "default": false,
+   "thumb_color": "#b8bcc2",
+   "kind": "studbolt",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 30,
+     "note": "origin = stud axis at the top of the bar plate (bar_hole outlet); plate sits between the under nut and the lock washer + nut over it",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "+",
+      "consumes_in": 0.508
+     }
+    }
+   ],
+   "options": {},
+   "category": "Hardware",
+   "mountKind": "stud",
+   "icon": "stud",
+   "connections": [
+    {
+     "id": "top",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "+",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.39,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 1,
+      "max_stack_in": 0.65,
+      "note": "0.65 in of thread above the nut; the SAE adapter threads on with 0.60 in"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_pos",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-pos.side1",
+     "setscrew-multi-pos.top1",
+     "xs555-ibar-pos.side1",
+     "blueseas-2340-pos-drilled.bar_hole"
+    ]
+   },
+   "short": "Stud 3/8 +",
+   "thumb": "parts/thumbs/stud-38-16-pos.png"
+  },
+  {
+   "id": "stud-38-16-neg",
+   "name": "3/8-16 stud with nut under and over the bar (negative)",
+   "glb": "stud-38-16-neg.glb",
+   "default": false,
+   "thumb_color": "#b8bcc2",
+   "kind": "studbolt",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "accepts": [
+      "3/8-16",
+      "3/8"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 30,
+     "note": "origin = stud axis at the top of the bar plate (bar_hole outlet); plate sits between the under nut and the lock washer + nut over it",
+     "needs": {
+      "kind": "stud",
+      "thread": "3/8-16",
+      "polarity": "-",
+      "consumes_in": 0.508
+     }
+    }
+   ],
+   "options": {},
+   "category": "Hardware",
+   "mountKind": "stud",
+   "icon": "stud",
+   "connections": [
+    {
+     "id": "top",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "3/8-16",
+     "polarity": "-",
+     "rating_a": 300,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.39,
+      0
+     ],
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "accepts": {
+      "thread": "3/8-16",
+      "max_items": 1,
+      "max_stack_in": 0.65,
+      "note": "0.65 in of thread above the nut; the SAE adapter threads on with 0.60 in"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "odyssey-odp-agm31.stud_neg",
+     "powerbar-2104.s1",
+     "powerbar-2104.s2",
+     "powerbar-2104.s3",
+     "powerbar-2104.s4",
+     "copper-bar.s1",
+     "copper-bar.s2",
+     "lug-joint-38.bolt",
+     "slee-sok20002-neg.side1",
+     "setscrew-multi-neg.top1",
+     "xs555-ibar-neg.side1",
+     "blueseas-2340-neg-drilled.bar_hole"
+    ]
+   },
+   "short": "Stud 3/8 \u2212",
+   "thumb": "parts/thumbs/stud-38-16-neg.png"
+  },
+  {
+   "id": "gx470-clamp-pos",
+   "name": "GX470 factory + clamp, Toyota 90982-05054 (estimate)",
+   "glb": "gx470-clamp-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "gxclamp",
+   "mounts": [
+    {
+     "id": "post",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "+",
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 15,
+     "note": "origin = post axis at the clamp bottom (adapter base top); pinch-bolt ears at -X",
+     "needs": {
+      "kind": "stud",
+      "thread": "SAE-post",
+      "polarity": "+",
+      "consumes_in": 0.55
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "clamp",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "SAE-post",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "id": "m8",
+     "kind": "screw",
+     "form": "screw",
+     "thread": "M8",
+     "polarity": "+",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0.3,
+      0.97
+     ]
+    }
+   ],
+   "compatible": {
+    "post": [
+     "sae-adapter-pos.post",
+     "r4t-g31-pos.post",
+     "blaze-4runner-pos.post",
+     "slee-sok20002-pos.post"
+    ]
+   },
+   "short": "GX clamp +",
+   "thumb": "parts/thumbs/gx470-clamp-pos.png"
+  },
+  {
+   "id": "gx470-clamp-neg",
+   "name": "GX470 factory - clamp, cables crimped in (estimate)",
+   "glb": "gx470-clamp-neg.glb",
+   "default": false,
+   "thumb_color": "#2a2a2e",
+   "kind": "gxclamp",
+   "mounts": [
+    {
+     "id": "post",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "polarity": "-",
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 15,
+     "note": "origin = post axis at the clamp bottom (adapter base top); pinch-bolt ears at -X",
+     "needs": {
+      "kind": "stud",
+      "thread": "SAE-post",
+      "polarity": "-",
+      "consumes_in": 0.55
+     }
+    }
+   ],
+   "options": {},
+   "category": "Terminals",
+   "mountKind": "stud",
+   "icon": "clamp",
+   "connections": [
+    {
+     "id": "post",
+     "kind": "ring",
+     "form": "ring",
+     "thread": "SAE-post",
+     "polarity": "-",
+     "rating_a": 250,
+     "rating_estimate": true,
+     "pos": [
+      0,
+      0,
+      0
+     ]
+    }
+   ],
+   "compatible": {
+    "post": [
+     "sae-adapter-neg.post",
+     "r4t-g31-neg.post",
+     "blaze-4runner-neg.post",
+     "slee-sok20002-neg.post"
+    ]
+   },
+   "short": "GX clamp \u2212",
+   "thumb": "parts/thumbs/gx470-clamp-neg.png"
   }
  ]
 }

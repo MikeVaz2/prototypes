@@ -1,0 +1,136 @@
+{
+ "kind": "terminal",
+ "id": "r4t-g31-pos",
+ "name": "R4T Group 31 terminal (placeholder) (positive)",
+ "short": "R4T G31 +",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "base": {
+   "shape": "round",
+   "size": 1.0,
+   "height": 0.3
+  },
+  "posts": [
+   {
+    "x": 0,
+    "z": 0,
+    "y0": 0.3,
+    "height": 0.6,
+    "d_top": 0.689,
+    "d_bot": 0.7283
+   }
+  ],
+  "side_studs": [
+   {
+    "dx": 1,
+    "dz": 0,
+    "y": 0.15,
+    "length": 0.7,
+    "d": 0.3125,
+    "tpi": 18,
+    "thread": "5/16-18",
+    "r0": 0.5
+   }
+  ]
+ },
+ "colors": {
+  "body": [
+   0.62,
+   0.64,
+   0.68,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 45,
+   "note": "origin = stud axis at the polarity ring top; threads onto the battery 3/8-16 stud (internal thread)",
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "+",
+    "consumes_in": 0.6
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "post",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "SAE-post",
+   "polarity": "+",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0.3,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "SAE-post",
+    "max_items": 1,
+    "max_stack_in": 0.5,
+    "note": "tapered SAE post; a clamp sits on the base top"
+   }
+  },
+  {
+   "id": "side1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "5/16-18",
+   "polarity": "+",
+   "rating_a": 200,
+   "rating_estimate": true,
+   "pos": [
+    0.5,
+    0.15,
+    0.0
+   ],
+   "axis": [
+    1,
+    0,
+    0
+   ],
+   "accepts": {
+    "thread": "5/16-18",
+    "max_items": 2,
+    "max_stack_in": 0.55
+   }
+  }
+ ],
+ "height_above_seat_in": 0.9,
+ "source": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part.",
+ "notes": "ESTIMATE: no published dimensions found (web search 2026-11-12); sizes are placeholders, measure the real part.",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "adapter",
+  "short": "R4T G31 +",
+  "swatch": "#c81414"
+ }
+}

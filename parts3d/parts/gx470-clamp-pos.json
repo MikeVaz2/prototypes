@@ -1,0 +1,106 @@
+{
+ "kind": "gxclamp",
+ "id": "gx470-clamp-pos",
+ "name": "GX470 factory + clamp, Toyota 90982-05054 (estimate)",
+ "short": "GX clamp +",
+ "units": "in",
+ "polarity": "+",
+ "dims": {
+  "id": 0.728,
+  "wall": 0.07,
+  "height": 0.55,
+  "ear": 0.28,
+  "tab_reach": 0.6,
+  "m8_diameter": 0.315,
+  "m8_tpi": 20.3,
+  "m8_length": 0.5,
+  "m8_nut_af": 0.51,
+  "m8_nut_height": 0.25,
+  "thin_od": 0.14,
+  "thin_length": 0.8,
+  "thick_od": 0.4,
+  "thick_length": 2.5,
+  "strap_width": 0.7,
+  "strap_thickness": 0.04,
+  "strap_length": 1.0
+ },
+ "colors": {
+  "clamp": [
+   0.45,
+   0.47,
+   0.5,
+   1.0
+  ],
+  "cable": [
+   0.78,
+   0.05,
+   0.05,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "post",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "+",
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 15,
+   "note": "origin = post axis at the clamp bottom (adapter base top); pinch-bolt ears at -X",
+   "needs": {
+    "kind": "stud",
+    "thread": "SAE-post",
+    "polarity": "+",
+    "consumes_in": 0.55
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "post",
+   "kind": "ring",
+   "form": "ring",
+   "thread": "SAE-post",
+   "polarity": "+",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "m8",
+   "kind": "screw",
+   "form": "screw",
+   "thread": "M8",
+   "polarity": "+",
+   "rating_a": 250,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0.3,
+    0.97
+   ]
+  }
+ ],
+ "notes": "ESTIMATE from memory of the part, not dimensioned: Toyota 90982-05054 (GX470/4Runner positive battery clamp) is a stamped clamp with a pinch bolt and a side tab carrying a small threaded stud (assumed M8). Ring end (thin stub) and thick cable ring on that stud, flat strap stub rising from the clamp. All sizes (ring ID = SAE + post bottom 18.5 mm, wall 0.07, height 0.55, tab, strap 0.7 x 1.0 in) are guesses; measure the real one.",
+ "source": "ESTIMATE from memory of the part, not dimensioned: Toyota 90982-05054 (GX470/4Runner positive battery clamp) is a stamped clamp with a pinch bolt and a side tab carrying a small threaded stud (assumed M8). Ring end (thin stub) and thick cable ring on that stud, flat strap stub rising from the clamp. All sizes (ring ID = SAE + post bottom 18.5 mm, wall 0.07, height 0.55, tab, strap 0.7 x 1.0 in) are guesses; measure the real one.",
+ "catalog": {
+  "category": "Terminals",
+  "mountKind": "stud",
+  "icon": "clamp",
+  "short": "GX470 clamp +",
+  "swatch": "#c81414"
+ }
+}

@@ -2,9 +2,10 @@
  "kind": "joint",
  "id": "lug-joint-38",
  "name": "Lug-to-lug joint, 3/8 bolt and nut, boot (extension to factory cable)",
+ "short": "Lug joint",
  "units": "in",
  "catalog": {
-  "category": "cable",
+  "category": "Cables",
   "mountKind": "surface",
   "icon": "joint",
   "short": "Lug joint",

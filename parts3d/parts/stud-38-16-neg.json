@@ -1,0 +1,94 @@
+{
+ "kind": "studbolt",
+ "id": "stud-38-16-neg",
+ "name": "3/8-16 stud with nut under and over the bar (negative)",
+ "short": "Stud 3/8 −",
+ "units": "in",
+ "polarity": "-",
+ "dims": {
+  "diameter": 0.375,
+  "tpi": 16,
+  "plate_thickness": 0.1181,
+  "nut_height": 0.33,
+  "across_flats": 0.56,
+  "washer_thickness": 0.06,
+  "washer_od": 0.62,
+  "washer_id": 0.39,
+  "stud_below_nut": 0.06,
+  "exposed": 0.65
+ },
+ "colors": {
+  "steel": [
+   0.72,
+   0.74,
+   0.76,
+   1.0
+  ]
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "polarity": "-",
+   "accepts": [
+    "3/8-16",
+    "3/8"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 30,
+   "note": "origin = stud axis at the top of the bar plate (bar_hole outlet); plate sits between the under nut and the lock washer + nut over it",
+   "needs": {
+    "kind": "stud",
+    "thread": "3/8-16",
+    "polarity": "-",
+    "consumes_in": 0.508
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "top",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "3/8-16",
+   "polarity": "-",
+   "rating_a": 300,
+   "rating_estimate": true,
+   "pos": [
+    0,
+    0.39,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "3/8-16",
+    "max_items": 1,
+    "max_stack_in": 0.65,
+    "note": "0.65 in of thread above the nut; the SAE adapter threads on with 0.60 in"
+   }
+  }
+ ],
+ "source": "estimate: standard 3/8-16 hex nut 0.56 AF x 0.33, lock washer 0.06 (as nut-38); 0.06 in of stud below the under nut",
+ "notes": "ESTIMATE: stainless 3/8-16 stud. Nut under the bar, lock washer + nut over it, 0.65 in of thread left for the SAE adapter. Plate thickness 3 mm.",
+ "catalog": {
+  "category": "Hardware",
+  "mountKind": "stud",
+  "icon": "stud",
+  "short": "3/8 stud -",
+  "swatch": "#b8bcc2"
+ }
+}

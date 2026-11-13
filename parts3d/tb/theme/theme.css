@@ -1,0 +1,167 @@
+/*
+ * tilesAndButtons theming.
+ *
+ * data-theme on any element: auto (or empty) | light | dark | inverse.
+ * - Colors are defined once with light-dark(); data-theme only sets color-scheme.
+ * - --tb-scheme carries the *resolved* scheme (light | dark) down the tree.
+ * - inverse reads its parent's --tb-scheme with a container style query, so the
+ *   nearest themed ancestor always wins and inverse can nest.
+ */
+
+@property --tb-scheme {
+  syntax: 'light | dark';
+  inherits: true;
+  initial-value: light;
+}
+
+:root {
+  --tb-font-color: light-dark(#000, #fff);
+  --tb-background-color: light-dark(#fff, #000);
+  --tb-border-color: light-dark(#000, #fff);
+  --tb-hover-color: light-dark(#000, #fff);
+  --tb-hover-background: light-dark(#eee, #333);
+  --tb-hover-border-color: light-dark(#000, #fff);
+  --tb-outline-color: light-dark(#0b57d0, #8ab4f8);
+  --tb-glow-color: light-dark(#00a37a, #00ffaa);
+  --tb-glass-opacity: 60%;
+  --tb-glass-blur: 12px;
+}
+
+/* Auto: the page root without data-theme, or data-theme="auto" / "". */
+:root:not([data-theme]),
+[data-theme='auto'],
+[data-theme=''] {
+  color-scheme: light dark;
+  --tb-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]),
+  [data-theme='auto'],
+  [data-theme=''] {
+    --tb-scheme: dark;
+  }
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --tb-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --tb-scheme: dark;
+}
+
+/* Inverse: opposite of the parent's resolved scheme. */
+@container style(--tb-scheme: dark) {
+  [data-theme='inverse'] {
+    color-scheme: light;
+    --tb-scheme: light;
+  }
+}
+
+@container style(--tb-scheme: light) {
+  [data-theme='inverse'] {
+    color-scheme: dark;
+    --tb-scheme: dark;
+  }
+}
+
+/* Every themed element paints its own surface. */
+:root,
+[data-theme] {
+  color: var(--tb-font-color);
+  background-color: var(--tb-background-color);
+}
+
+/* Glossy buttons: highlight and shade are mixed from the surface token, so they
+   follow light, dark and inverse. */
+:where([data-theme]) button {
+  cursor: pointer;
+  --tb-border-radius: 0.5em;
+  --tb-border-width: 0.01em;
+  --tb-padding: 0.25em 0.5em;
+  --tb-gloss-base: var(--tb-background-color);
+  padding: var(--tb-padding);
+  color: var(--tb-font-color);
+  background-color: var(--tb-gloss-base);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--tb-gloss-base), white 28%) 0%,
+    color-mix(in srgb, var(--tb-gloss-base), white 8%) 48%,
+    var(--tb-gloss-base) 52%,
+    color-mix(in srgb, var(--tb-gloss-base), black 8%) 100%
+  );
+  border: var(--tb-border-width) solid var(--tb-border-color);
+  border-radius: var(--tb-border-radius);
+  box-shadow:
+    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.18)),
+    0 1px 2px rgb(0 0 0 / 0.18);
+}
+
+:where([data-theme]) button:hover {
+  --tb-gloss-base: var(--tb-hover-background);
+  color: var(--tb-hover-color);
+  border-color: var(--tb-hover-border-color);
+}
+
+:where([data-theme]) button:active {
+  --tb-gloss-base: color-mix(in srgb, var(--tb-hover-background), var(--tb-font-color) 10%);
+}
+
+/* Glow focus ring; the outline stays for forced-colors and high-contrast users. */
+:where([data-theme]) button:focus-visible {
+  outline: 2px solid var(--tb-outline-color);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0.4em var(--tb-glow-color),
+    0 0 1em var(--tb-glow-color);
+}
+
+/*
+ * Glass surface: data-surface="glass" (or .glass). The tint is the theme's own
+ * background, mixed with transparency, so glass follows the resolved scheme and
+ * flips under inverse. Needs something behind it to frost.
+ */
+[data-surface='glass'],
+.glass {
+  background-color: color-mix(in srgb, var(--tb-background-color) var(--tb-glass-opacity), transparent);
+  background-image: linear-gradient(
+    to bottom,
+    light-dark(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.08)),
+    transparent 60%
+  );
+  -webkit-backdrop-filter: blur(var(--tb-glass-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--tb-glass-blur)) saturate(1.5);
+  border: var(--tb-border-width, 1px) solid color-mix(in srgb, var(--tb-font-color) 14%, transparent);
+  border-radius: var(--tb-border-radius, 0.5em);
+  box-shadow:
+    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.12)),
+    0 0.5em 2em rgb(0 0 0 / 0.12);
+}
+
+/* Viewers who ask for more contrast or less transparency get a solid surface.
+   Separate rules on purpose: a browser that doesn't know one feature (Firefox and
+   prefers-reduced-transparency) drops the whole rule, which would lose the other. */
+@media (prefers-contrast: more) {
+  [data-surface='glass'],
+  .glass {
+    background-color: var(--tb-background-color);
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--tb-border-color);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-surface='glass'],
+  .glass {
+    background-color: var(--tb-background-color);
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--tb-border-color);
+  }
+}

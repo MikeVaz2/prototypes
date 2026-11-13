@@ -51,3 +51,16 @@ export const M_PER_IN = 0.0254;
 export const distIn = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / M_PER_IN;
 export const fmtIn = d => d.toFixed(1);
 export const markText = (n, dPos, dNeg, src) => `M${n}${src ? ' (' + src + ')' : ''}: +${fmtIn(dPos)} in, −${fmtIn(dNeg)} in`;
+
+// ---- sliding a surface part on its mount plane ----
+// Where a ray (origin, dir: any frame, y up) meets the horizontal plane y = h, as [x, h, z]; null when the ray is parallel to the plane or the plane is behind the origin.
+export function rayPlaneY(origin, dir, h) {
+  if (Math.abs(dir[1]) < 1e-9) return null;
+  const t = (h - origin[1]) / dir[1];
+  return t < 0 ? null : [origin[0] + dir[0] * t, h, origin[2] + dir[2] * t];
+}
+// New position of a part sliding on the plane y = h while the ray moves: ray hit plus the grab offset [dx, dz] (part position minus hit at press time; [0, 0] = centre on the hit). Height never changes.
+export function slidePoint(origin, dir, h, grab = [0, 0]) {
+  const p = rayPlaneY(origin, dir, h);
+  return p ? [p[0] + grab[0], h, p[2] + grab[1]] : null;
+}

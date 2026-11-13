@@ -2,9 +2,10 @@
  "kind": "factory",
  "id": "factory-cable-end",
  "name": "Factory cable end marker (stub with lug), labelled factory + / factory -",
+ "short": "Factory end",
  "units": "in",
  "catalog": {
-  "category": "marker",
+  "category": "Cables",
   "mountKind": "surface",
   "icon": "marker",
   "short": "Factory cable",

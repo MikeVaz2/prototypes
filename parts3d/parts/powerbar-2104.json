@@ -2,9 +2,10 @@
  "kind": "powerbar",
  "id": "powerbar-2104",
  "name": "Blue Sea 2104 PowerBar 600 A, 4 x 3/8-16 studs",
+ "short": "PowerBar",
  "units": "in",
  "catalog": {
-  "category": "distribution",
+  "category": "Bus bars",
   "mountKind": "surface",
   "icon": "powerbar",
   "short": "PowerBar",
@@ -277,5 +278,5 @@
    }
   }
  },
- "notes": "Source: Blue Sea customer drawing PN 2104 (the dimensioned drawing on bluesea.com (product 2104)): base 7 in long, studs 3/8-16 x4 on 1.25 in pitch, mounting holes 6.25 x 1.32 in for #10, bar block top 1.3 in, stud top 2.0 in, base 0.5 in, #8-32 screws x4 on the block ends. Estimates: base width 2.0 in, bar block 5.5 x 1.0 in, rounded corners, end screw positions, nut flange 0.15 in, per-stud and per-screw ratings. No red/black accents: the real bar is tinned copper on a black base; polarity is a label option only."
+ "notes": "Source: Blue Sea customer drawing PN 2104 (dimensioned drawing on bluesea.com): base 7 in long, studs 3/8-16 x4 on 1.25 in pitch, mounting holes 6.25 x 1.32 in for #10, bar block top 1.3 in, stud top 2.0 in, base 0.5 in, #8-32 screws x4 on the block ends. Estimates: base width 2.0 in, bar block 5.5 x 1.0 in, rounded corners, end screw positions, nut flange 0.15 in, per-stud and per-screw ratings. No red/black accents: the real bar is tinned copper on a black base; polarity is a label option only."
 }

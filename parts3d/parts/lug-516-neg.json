@@ -2,6 +2,7 @@
  "kind": "lug",
  "id": "lug-516-neg",
  "name": "SC-style ring lug, 2/4/6 AWG, 5/16\" hole (negative, black jacket)",
+ "short": "Lug 5/16 −",
  "units": "in",
  "polarity": "-",
  "dims": {
@@ -182,7 +183,7 @@
  },
  "notes": "ESTIMATE: SC-style closed-barrel tin copper ring lug with a 5/16 hole (0.33 in). All dimensions are estimates by analogy with the 3/8 lug (6 AWG: tongue 0.56 x 0.08, 1.65 long, barrel 0.38 OD). Measure the real lug before ordering. Fits the 5/16-18 output stud of the MRBF 5191.",
  "catalog": {
-  "category": "cable",
+  "category": "Lugs",
   "mountKind": "stud",
   "icon": "lug",
   "short": "5/16 lug -",

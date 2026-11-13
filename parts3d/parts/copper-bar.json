@@ -2,9 +2,10 @@
  "kind": "copperbar",
  "id": "copper-bar",
  "name": "Custom copper bar, 1 in wide, studs along its length",
+ "short": "Copper bar",
  "units": "in",
  "catalog": {
-  "category": "distribution",
+  "category": "Bus bars",
   "mountKind": "stud",
   "icon": "bar",
   "short": "Copper bar",

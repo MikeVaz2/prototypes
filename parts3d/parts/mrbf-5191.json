@@ -2,9 +2,10 @@
  "kind": "mrbf",
  "id": "mrbf-5191",
  "name": "Blue Sea 5191 MRBF terminal fuse block, 30-300 A, 58 V",
+ "short": "MRBF 300A",
  "units": "in",
  "catalog": {
-  "category": "fusing",
+  "category": "Fuses",
   "mountKind": "stud",
   "icon": "fuse",
   "short": "MRBF fuse",

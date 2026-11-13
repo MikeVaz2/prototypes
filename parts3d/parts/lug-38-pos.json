@@ -2,6 +2,7 @@
  "kind": "lug",
  "id": "lug-38-pos",
  "name": "Main cable ring lug, 2/4 AWG, 3/8\" hole (positive, red jacket)",
+ "short": "Lug 3/8 +",
  "units": "in",
  "polarity": "+",
  "dims": {
@@ -160,7 +161,7 @@
  },
  "notes": "ESTIMATE: typical catalog values for a closed-end heavy-duty tin-plated copper lug, not from a specific datasheet. All dimensions are estimates: tongue width/thickness, overall length, barrel OD, cable OD (with jacket), cable stub length 3 in, barrel length, 4 AWG values. Hole 0.39 in for a 3/8 stud. Barrel bottom is flush with the tongue bottom; barrel is solid (closed shape); the cable stub leaves the far end. Measure the real lug before ordering. The cable stub is the extension cable; its free end carries a heat-shrink joint marker (butt splice to the factory cable, 1.5 in long, dark grey). cable_length = default extension (6 in), barrel to joint.",
  "catalog": {
-  "category": "cable",
+  "category": "Lugs",
   "mountKind": "stud",
   "icon": "lug"
  },
