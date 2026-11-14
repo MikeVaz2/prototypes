@@ -1,9 +1,12 @@
 // One scene model for preview and AR. Pure (no DOM, no three.js): tests run in node.
 // Scene = { insts, offs, marks, measures }
 //   inst    = { id, part, yaw, opts, on, at }
-//             on = "hostInstId.connId" of the stud outlet it sits on (stacking), or null;  at = [x,y,z] inches in the model frame (free surface part), or null
+//             Tree: surface (anchor / floor, the model frame) -> surface parts (battery, PowerBar) -> stacked parts (terminals, lugs, nuts ...).
+//             on = "hostInstId.connId" of the stud outlet it sits on (stacking), or null;  at = [x,y,z] inches in the SURFACE frame (surface part), or null
+//             yaw is always relative to the parent (the surface for a surface part, the part below for a stacked part), so turning or moving a parent carries its children.
 //   offs    = { h, x, z, yaw } whole-model placement correction (offsets.js)
 //   marks   = [{ p: [x,y,z] metres, src }]   measures = [{ a: [x,y,z], b: [x,y,z] }]   both in the model frame (follow the model between preview and AR)
+// Hash v=2 (relative yaws). A hash without v=2 is the old absolute format and is migrated on load (fromHash).
 // Hash: s=<id>:<mount>:<yaw>:<opt>=<v>,...~...   mount = "-" | legacy host mount id | "<hostId>.<conn>" | "@x,y,z"
 //       o=h,x,z,yaw   m=x,y,z,S~...   d=ax,ay,az,bx,by,bz~...   (positions in inches, 2 decimals)
 // Stacking: items on one outlet are ordered lug, busbar, other, nut (then insertion order); each sits on the previous item's `top` mount.
@@ -122,7 +125,7 @@ export function createScene(catalog) {
   }
   // scene -> "s=...&o=...&m=...&d=..." (no leading #)
   function toHash(sc) {
-    const parts = ['s=' + serializeState(sc.insts)];
+    const parts = ['s=' + serializeState(sc.insts), 'v=2'];
     const o = OFS.ser(sc.offs || OFS.ZERO), m = serializeMarks(sc.marks), d = serializeMeasures(sc.measures);
     if (o) parts.push('o=' + o); if (m) parts.push('m=' + m); if (d) parts.push('d=' + d);
     const j = JMP.serialize(sc.jumpers); if (j) parts.push('j=' + j);
@@ -130,7 +133,8 @@ export function createScene(catalog) {
   }
   function fromHash(hash) {
     const h = new URLSearchParams(String(hash || '').replace(/^#/, ''));
-    const insts = parseState(h.get('s'));
+    let insts = parseState(h.get('s'));
+    if (insts && h.get('v') !== '2') insts = migrateYaws(insts);   // old format: absolute yaws
     const all = insts || defaultState();
     const jumpers = JMP.parse(h.get('j')).filter(j => [j.a, j.b].every(k => { const c = connOf(all, k); return c && c.conn && c.conn.accepts; }));
     return { insts: all, offs: OFS.parse(h.get('o')), marks: parseMarks(h.get('m')), measures: parseMeasures(h.get('d')), jumpers, valid: !!insts };
@@ -146,10 +150,19 @@ export function createScene(catalog) {
     for (const [k, tbl] of Object.entries(m.by_option || {})) { const v = inst.opts[k]; if (tbl[v]) return tbl[v]; }
     return m.pos;
   };
-  function placements(insts) {
+  // Parent of a stacked instance: the previous item on the same outlet (stack order), else the part owning the outlet.
+  // -> { parent: inst, pos: [m] in the parent's frame } or null (outlet missing)
+  const stackOf = (insts, key) => insts.map((i, n) => ({ i, n })).filter(x => x.i.on === key)
+    .sort((a, b) => rank(partOf(a.i.part)) - rank(partOf(b.i.part)) || a.n - b.n).map(x => x.i);
+  function parentOf(insts, inst) {
+    if (!inst.on || inst.at || partOf(inst.part) === host) return null;
+    const c = connOf(insts, inst.on); if (!(c && c.conn)) return null;
+    const st = stackOf(insts, inst.on), k = st.indexOf(inst), prev = k > 0 ? st[k - 1] : null;
+    return prev ? { parent: prev, pos: topLocal(partOf(prev.part), prev).map(v => v * IN) } : { parent: c.h, pos: c.conn.pos.map(v => v * IN) };
+  }
+  // local pose per instance id: { parent: id | null (the surface), pos: [m] in the parent frame, yaw: deg relative to the parent }; null when unplaceable
+  function locals(insts) {
     const out = new Map(), busy = new Set();
-    const stackOf = key => insts.map((i, n) => ({ i, n })).filter(x => x.i.on === key)
-      .sort((a, b) => rank(partOf(a.i.part)) - rank(partOf(b.i.part)) || a.n - b.n).map(x => x.i);
     const go = inst => {
       if (out.has(inst.id)) return out.get(inst.id);
       if (busy.has(inst.id)) return null;
@@ -157,19 +170,10 @@ export function createScene(catalog) {
       let r = null;
       const p = partOf(inst.part);
       if (!p) r = null;
-      else if (p === host) r = { pos: (inst.at || [0, 0, 0]).map(v => v * IN), yaw: inst.yaw || 0 };   // the battery can be moved and turned; everything stacked on it follows
-      else if (inst.at) r = { pos: inst.at.map(v => v * IN), yaw: inst.yaw };
+      else if (p === host || inst.at) r = { parent: null, pos: (inst.at || [0, 0, 0]).map(v => v * IN), yaw: inst.yaw || 0 };
       else if (inst.on) {
-        const c = connOf(insts, inst.on), st = stackOf(inst.on), k = st.indexOf(inst), prev = k > 0 ? st[k - 1] : null;
-        if (c && c.conn) {
-          if (prev) {
-            const pp = go(prev);
-            if (pp) r = { pos: add3(pp.pos, rotY(topLocal(partOf(prev.part), prev).map(v => v * IN), pp.yaw)), yaw: inst.yaw };
-          } else {
-            const hp = go(c.h);
-            if (hp) r = { pos: add3(hp.pos, rotY(c.conn.pos.map(v => v * IN), hp.yaw)), yaw: inst.yaw };
-          }
-        }
+        const pr = parentOf(insts, inst);
+        if (pr && go(pr.parent)) r = { parent: pr.parent.id, pos: pr.pos, yaw: inst.yaw || 0 };
       }
       busy.delete(inst.id);
       out.set(inst.id, r);
@@ -177,6 +181,28 @@ export function createScene(catalog) {
     };
     insts.forEach(go);
     return out;
+  }
+  // world (surface-frame) pose per id, composed down the tree: { pos: [m], yaw: deg }
+  function placements(insts) {
+    const loc = locals(insts), out = new Map();
+    const go = id => {
+      if (out.has(id)) return out.get(id);
+      const l = loc.get(id); let r = null;
+      if (l) {
+        if (l.parent == null) r = { pos: l.pos, yaw: l.yaw };
+        else { const pp = go(l.parent); if (pp) r = { pos: add3(pp.pos, rotY(l.pos, pp.yaw)), yaw: pp.yaw + l.yaw }; }
+      }
+      out.set(id, r); return r;
+    };
+    insts.forEach(i => go(i.id));
+    return out;
+  }
+  // old absolute-yaw scenes -> relative yaws (v=2): a stacked part's yaw minus its parent's (both were absolute)
+  function migrateYaws(insts) {
+    return insts.map(i => {
+      const pr = parentOf(insts, i);
+      return pr ? { ...i, yaw: r1(norm(i.yaw - pr.parent.yaw)) } : i;
+    });
   }
   // where a new instance would sit on an outlet right now (model frame, metres), or null
   function seatOf(insts, partId, key) {
@@ -192,7 +218,10 @@ export function createScene(catalog) {
     const o = outlets(partId, defOpts(p), insts).find(x => x.key === key);
     if (!o) return { ok: false, why: 'not a compatible outlet' };
     if (!o.ok) return { ok: false, why: o.why };
-    const inst = { ...defInst(p, nextId(insts, partId)), on: key, at: null };
+    let inst = { ...defInst(p, nextId(insts, partId)), on: key, at: null };
+    // the part's default yaw is a pose in the surface frame; stored relative to its parent so it looks the same and then follows the parent
+    const pr = parentOf([...insts, inst], inst), pw = pr && placements([...insts, inst]).get(pr.parent.id);
+    if (pw) inst = { ...inst, yaw: r1(norm(inst.yaw - pw.yaw)) };
     return { ok: true, inst, insts: [...insts, inst] };
   }
   function addAt(insts, partId, atInches, yaw) {
@@ -216,5 +245,5 @@ export function createScene(catalog) {
 
   return { catalog, host, partOf, defInst, defaultState, emptyScene, nextId, yawStep, defaultYaw, defOpts, clampNum, isFree, snapMount, hostInst, connOf,
     parseState, serializeState, parseMarks, serializeMarks, parseMeasures, serializeMeasures, toHash, fromHash,
-    placements, seatOf, outlets, addOnOutlet, addAt, removeInst, removalSet, noOutletMessage };
+    placements, locals, parentOf, migrateYaws, seatOf, outlets, addOnOutlet, addAt, removeInst, removalSet, noOutletMessage };
 }

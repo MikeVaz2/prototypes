@@ -44,7 +44,7 @@ export const normTool = (s, fallback = 'select') => TOOLS.includes(s) ? s : fall
 export const nextTool = t => TOOLS[(TOOLS.indexOf(t) + 1) % TOOLS.length];
 export const TOOL_BUTTONS = ['drop', 'undomark', 'clearmarks', 'mnew', 'mundo', 'mclear'];
 export const ALL_IDS = [...new Set(['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
-  'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'opt', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'undoj', ...TOOL_BUTTONS])];
+  'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'opt', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'undoj', 'xray', 'rec', ...TOOL_BUTTONS])];
 // buttons of the open stack for a tool. Select keeps the part controls (minus the old mark buttons); Mark and Measure show only their own actions.
 // x = extras about the selected instance: { free (placed on a surface), num (has a length option), choice (has a choice option) }
 export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) {
@@ -83,6 +83,14 @@ export const driveFor = inXR => inXR ? 'highlight' : 'select';
 // jumpers on top of the base row: o.linking (choosing the ends) = Cancel only; o.jumper (one is selected) = its edits; o.jfrom = "Cable from here" next to the
 // highlighted / selected thing; o.jundo = Undo of the last jumper change when nothing else owns the row.
 export function ctxFor(o) {
+  const r = ctxCore(o);
+  if (!o.xrayUi) return r;
+  // x-ray and recording mode: in More (after Back) for everyone, and with the battery's own actions when it is selected
+  if (o.more && r[0] === 'back') return ['back', 'xray', 'rec', ...r.slice(1)];
+  if (!o.more && !o.linking && !o.jumper && !o.adding && o.tool === 'select' && o.kind === 'battery' && o.selected && r.includes('deselect')) { const k = r.indexOf('deselect'); return [...r.slice(0, k), 'xray', ...r.slice(k)]; }
+  return r;
+}
+function ctxCore(o) {
   if (o.linking) return ['cancel'];
   if (o.jumper && !o.adding && !o.more) return ['jgauge', 'jcolor', 'jremove', 'deselect'];
   const base = ctxBase(o);

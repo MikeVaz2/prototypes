@@ -13,9 +13,12 @@ import * as MT from './match.js';
 import * as SCN from './scene.js';
 import { createToasts, gestureOutcome } from './toasts.js';
 import * as IC from './icons.js';
+import { createScan } from './scan.js';
 import * as CT from './cats.js';
 import * as JMP from './jumper.js';
 import * as PR from './presets.js';
+import * as LC from './lifecycle.js';
+import * as RC from './rec.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -142,15 +145,19 @@ function toolPrompt() {
   if (tool === 'measure') return pendingA ? 'Measure: tap point B' : 'Measure: tap point A';
   return '';
 }
-// labels: a mark shows its text only when selected or when the beam passes within ~2 cm; measurements always show their distance
+function markHeightIn(m) {   // inches above the battery's top face (model frame), or null when there is no battery body
+  const hr = roots().find(o => o.userData.partId === C.host.id); if (!hr) return null;
+  return (toModel(m.pos.toArray())[1] - localBox(hr).max.y) / SCN.IN;
+}
+// labels: a mark shows its text only when selected; measurements always show their distance
 function refreshMarks() {
-  const sp = C && studWorld('stud_pos'), sn = C && studWorld('stud_neg'), vis = MD.labelIndices(marks.length, selMark, hovMark), lines = [];
+  const lines = [];   // a mark shows its label only when selected: its height above the battery top (no raw coordinates)
   marks.forEach((m, i) => {
-    const on = !!(sp && sn && vis.includes(i));
+    const on = !!(C && RC.markLabelVisible(i, selMark));
     m.sprite.visible = on;
     m.ball.material.color.set(i === selMark ? 0xffffff : 0xffd400); m.ball.scale.setScalar(i === selMark ? 1.5 : 1);
     if (!on) return;
-    const txt = MD.markTextU(i + 1, XM.distIn(m.pos.toArray(), sp.toArray()), XM.distIn(m.pos.toArray(), sn.toArray()), m.src, units);
+    const txt = RC.markHeightText(i + 1, markHeightIn(m), v => MD.fmtLen(v, units));
     setLabel(m, txt); lines.push(txt);
   });
   measures.forEach((ms, i) => { setLabel(ms, MD.fmtLen(XM.distIn(ms.a, ms.b), units)); ms.group.children[0].material.color.set(i === selMeasure || i === hovMeasure ? 0xffffff : 0x00e5ff); });
@@ -262,6 +269,7 @@ function setTool(t) {
 }
 // a scene tap in a session (placed): what it does depends on the tool
 function onSceneTap(ev) {
+  if (rec.on) return;   // recording: scene taps do nothing
   if (moving) { endMove(); return; }   // the tap drops the part where the beam put it
   if (linking) { if (linking.target) pickLink(linking.target); else toast('Aim at a stud', true); return; }
   if (adding) { confirmAdd(); return; }
@@ -284,7 +292,8 @@ $('unitbtn').addEventListener('click', () => setUnits(units === 'mm' ? 'in' : 'm
 syncUnitButtons();
 
 // ---- app state ----
-let moreOpen = false;
+let moreOpen = false, recOpen = false;
+const rec = { on: false, bar: false, chosen: false };   // recording mode (#126)
 let adding = null;   // Add part in progress: { partId, kind: 'stud'|'surface', outlets: [{ key, seat: [x,y,z] model frame m }], target: key|null, lock: ray|null }
 let selOutlet = null, selPoint = null;   // outside XR: a selected outlet (key) and the surface point the click hit
 let moving = null;   // XR Move: { id }, the part follows the beam on its mount plane until the next tap
@@ -298,6 +307,8 @@ function setMode(m) { if (m !== mode) log('mode ' + mode + ' -> ' + m); mode = m
 const tmpV = new THREE.Vector3();
 const raycaster = new THREE.Raycaster();
 let hitCount = -1;
+const scan = createScan();   // surface-scan hint (xr/scan.js)
+function scanHint(t) { setHint(t); }
 
 const instOf = id => state.find(i => i.id === id) || null;
 const selInst = () => instOf(selectedId);
@@ -312,15 +323,15 @@ async function rebuild() {
   try {
     const root = await C.build(state);
     modelHolder.clear(); modelHolder.add(root);
-    hoveredId = null; outletPts = null; fitCache.clear(); hideQuick(); applyTints(); refreshOutline(); updateJumpers(); updateHeights(); readout(); persistSoon();
+    hoveredId = null; outletPts = null; fitCache.clear(); hideQuick(); edgeFor = null; edgeLines = []; applyXray(); applyTints(); refreshOutline(); updateJumpers(); updateHeights(); readout(); persistSoon();
   } catch (e) {
     const bad = e && e.partName ? e.partName : 'a part';
     log('rebuild failed: ' + (e && e.message)); toast('Could not load ' + bad + ' (' + (e && e.message || 'error') + '). Try again.', true, 0, 'error');
   } finally { busy = false; if (again) { again = false; rebuild(); } }
 }
-const roots = () => (modelHolder.children[0]?.children || []).filter(o => o.userData.instanceId);
+const roots = () => modelHolder.children[0]?.userData.bodies || [];   // part bodies (meshes) of every instance, wherever they sit in the tree
 
-// ---- selection: tint (emissive on per-instance materials) + outline ----
+// ---- selection: an accent edge outline on the selected part (no full-surface tint, the real scene stays visible); hover keeps a faint white tint ----
 // selection colour = the theme accent (--tb-outline-color), resolved through a probe element because the token is a light-dark() value
 const accent = new THREE.Color(0x2f6fde);
 function readAccent() {
@@ -340,14 +351,13 @@ function setTint(root, want) {
     for (const m of Array.isArray(c.material) ? c.material : [c.material]) {
       if (!m.emissive) continue;
       if (!m.userData.e0) m.userData.e0 = { c: m.emissive.clone(), i: m.emissiveIntensity };
-      if (want === 'selected') { m.emissive.copy(accent); m.emissiveIntensity = 0.7; }
-      else if (want === 'hover') { m.emissive.set(0xffffff); m.emissiveIntensity = 0.18; }
+      if (want === 'hover') { m.emissive.set(0xffffff); m.emissiveIntensity = 0.18; }
       else { m.emissive.copy(m.userData.e0.c); m.emissiveIntensity = m.userData.e0.i; }
     }
   });
 }
 function applyTints() {
-  for (const r of roots()) { const w = PK.tintFor(r.userData.instanceId, selectedId, hoveredId); if (r.userData.tint !== w) setTint(r, w); }
+  for (const r of roots()) { const w = PK.tintFor(r.userData.instanceId, selectedId, rec.on ? null : hoveredId); if (r.userData.tint !== w) setTint(r, w); }
 }
 function localBox(obj) {   // box of obj in the modelHolder frame (outline lives in inner)
   scene.updateMatrixWorld(true);
@@ -358,10 +368,39 @@ function localBox(obj) {   // box of obj in the modelHolder frame (outline lives
   } });
   return b;
 }
+const edgeMat = new THREE.LineBasicMaterial({ color: 0x2f6fde, depthTest: false, transparent: true, opacity: 0.95 });
+let edgeLines = [], edgeFor = null;   // edge lines of the selected part's meshes (children of those meshes, so they follow every pose change)
+function clearEdges() { for (const l of edgeLines) { l.removeFromParent(); l.geometry.dispose(); } edgeLines = []; edgeFor = null; }
 function refreshOutline() {
   const r = roots().find(o => o.userData.instanceId === selectedId);
-  outline.visible = !!r; outline.material.color.copy(accent);
-  if (r) outline.box.copy(localBox(r)).expandByScalar(0.002);
+  outline.visible = !!r && !rec.on; outline.material.color.copy(accent); edgeMat.color.copy(accent);
+  if (!r) { clearEdges(); return; }
+  outline.box.copy(localBox(r)).expandByScalar(0.002);
+  if (edgeFor !== r) {
+    clearEdges(); edgeFor = r;
+    r.traverse(m => { if (!m.isMesh || m.userData.isEdge) return; const l = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 35), edgeMat); l.userData.isEdge = true; l.renderOrder = 8; l.raycast = () => {}; m.add(l); edgeLines.push(l); });
+  }
+  for (const l of edgeLines) l.visible = !rec.on;
+}
+// ---- x-ray: the host (battery) can be Solid, Ghost, Wireframe or hidden; parts on it stay solid. Per session (sessionStorage). ----
+const xray = RC.createXray({ get: k => sessionStorage.getItem(k), set: (k, v) => sessionStorage.setItem(k, v) });
+function applyXray() {
+  for (const r of roots()) {
+    const look = RC.xrayLook(xray.modeFor(r.userData.partId === C.host.id));
+    r.visible = look.visible;
+    r.traverse(c => {
+      if (!c.isMesh || c.userData.isEdge) return;
+      c.castShadow = look.shadow;
+      for (const m of Array.isArray(c.material) ? c.material : [c.material]) {
+        m.transparent = look.transparent; m.opacity = look.opacity; m.depthWrite = look.depthWrite; m.wireframe = look.wireframe; m.needsUpdate = true;
+      }
+    });
+  }
+}
+function setXray(m) {
+  if (m === 'next') xray.next(); else xray.set(m);
+  applyXray(); if (xray.mode === 'hide' && selectedId && selInst() && selInst().part === C.host.id) selectPart(null);
+  log('xray ' + xray.mode); readout();
 }
 function selectPart(id, pt = null) {
   id = id && instOf(id) ? id : null; if (selJumper) { selJumper = null; tintJumpers(); }
@@ -403,13 +442,13 @@ function readout() {
   const tg = inXR ? null : selTarget();
   const quickView = inXR && quick && { kind: quick.kind, isSel: quick.kind === 'part' && quick.id === selectedId, point: !!quick.point, fit: quick.fit.length };
   const jf = jfromKeys(inXR, quick, tg);
-  const acts = libOpen || optOpen ? [] : MD.ctxFor({ linking: !!linking, jumper: !!selJumper, jfrom: !!(jf && jf.length), jundo: jundo.length > 0, markSel: !selectedId && (selMark >= 0 || (inXR && hovMark >= 0)), measSel: !selectedId && selMeasure >= 0, tool, kind, rotStep: step, selected: !!selectedId, x: ex, more: moreOpen, inXR, quick: quickView, target: tg && { kind: tg.kind, point: !!tg.point },
+  const acts = libOpen || optOpen || recOpen ? [] : MD.ctxFor({ xrayUi: true, linking: !!linking, jumper: !!selJumper, jfrom: !!(jf && jf.length), jundo: jundo.length > 0, markSel: !selectedId && (selMark >= 0 || (inXR && hovMark >= 0)), measSel: !selectedId && selMeasure >= 0, tool, kind, rotStep: step, selected: !!selectedId, x: ex, more: moreOpen, inXR, quick: quickView, target: tg && { kind: tg.kind, point: !!tg.point },
     adding: adding ? { stud: adding.kind === 'stud', outlets: adding.outlets.length } : null });
   const low = MD.bottomFor(tool, inXR);
   for (const id of MD.ALL_IDS) $(id).hidden = !acts.includes(id) && !low.includes(id);
   for (const id of acts) ctx.appendChild($(id));   // keep the layout order of the list
   bottom.appendChild($('mode')); for (const id of low) bottom.appendChild($(id));
-  ctx.classList.toggle('lib', libOpen); ctx.classList.toggle('optsl', optOpen); $('optlist').hidden = !optOpen; ctx.classList.toggle('acts', acts.length > 0);
+  ctx.classList.toggle('lib', libOpen); ctx.classList.toggle('optsl', optOpen); $('optlist').hidden = !optOpen; ctx.classList.toggle('recsl', recOpen); $('recopts').hidden = !recOpen; ctx.classList.toggle('acts', acts.length > 0);
   ctx.classList.toggle('chip', acts.length > 0 && (tool !== 'select' || !!adding || !!inst || !!selJumper || !!linking || jundo.length > 0 || selMark >= 0 || selMeasure >= 0)); ctx.dataset.tool = tool;
   $('more').setAttribute('aria-pressed', moreOpen && !adding);
   const cur = inXR ? quick : tg; $('qadd').disabled = !(cur && (cur.fit.length || (cur.free && cur.free.length)));   // enabled when the part has free outlets even if no library part fits yet (click says so)
@@ -425,12 +464,13 @@ function readout() {
   for (const [id, ch, w] of [['nl', '&larr;', 'left'], ['nr', '&rarr;', 'right'], ['nu', '&#9650;', 'away'], ['nd', '&#9660;', 'toward me']]) lab(id, ch, st.nudgeLabel, 'Nudge ' + w + ' ' + st.nudgeLabel);
   compactButtons();
   $('cross').classList.toggle('hit', !!hoveredId);
+  updateRecUi();
 }
 // every control is one line: icon + short verb; the full wording stays in aria-label and title
 function compactButtons() {
   for (const id of Object.keys(IC.BUTTONS)) {
     const b = $(id); if (!b) continue;
-    const txt = id === 'mode' ? MD.TOOL_LABEL[tool] : id === 'gauge' ? (b.dataset.v || 'Gauge') : id === 'jgauge' ? (b.dataset.v || 'Gauge') : id === 'jcolor' ? (b.dataset.v || 'Color') : id === 'opt' ? (b.dataset.v || 'Option') : null;
+    const txt = id === 'mode' ? MD.TOOL_LABEL[tool] : id === 'gauge' ? (b.dataset.v || 'Gauge') : id === 'jgauge' ? (b.dataset.v || 'Gauge') : id === 'jcolor' ? (b.dataset.v || 'Color') : id === 'opt' ? (b.dataset.v || 'Option') : id === 'xray' || id === 'rbxray' ? 'X-ray ' + RC.XRAY_SHORT[xray.mode] : id === 'rbpause' ? (cycle.paused ? 'Resume' : 'Pause') : null;
     const m = IC.markup(id, txt); if (m && b.dataset.m !== m) { b.innerHTML = m; b.dataset.m = m; }
     const al = b.getAttribute('aria-label'); if (al) b.title = al; else b.title = b.textContent.trim();
   }
@@ -480,8 +520,8 @@ function slideTo(inst, ray, grab = [0, 0]) {
 // during a drag only the matrices change (jumpers restretch); the full rebuild runs once on release
 let moveDirty = false;
 function fastMove() {
-  const pl = C.SC.placements(state); moveDirty = true;
-  for (const r of roots()) { const p = pl.get(r.userData.instanceId); if (p) { r.matrix.copy(C.matrixOf(p)); r.matrixWorldNeedsUpdate = true; } }
+  moveDirty = true;
+  if (modelHolder.children[0]) C.applyLocals(modelHolder.children[0], state);   // local poses only; the tree carries the children
   modelHolder.updateMatrixWorld(true); refreshOutline(); updateJumpers();
 }
 function flushMove() { if (moveDirty) { moveDirty = false; rebuild(); } }
@@ -499,7 +539,7 @@ for (const [id, dir] of [['nl', 'left'], ['nr', 'right'], ['nu', 'up'], ['nd', '
   });
 const turnSel = d => { const f = freeSel(); if (f) { f.yaw = PK.rotateYaw(f.yaw, d); rebuild(); } else setOffs(XM.turn(offs, d)); };
 wire('tm', () => turnSel(-XM.TURN_DEG)); wire('tp', () => turnSel(XM.TURN_DEG));
-wire('again', () => { if (session) { cancelAdd(); suspendMarks(); setMode('reticle'); anchor = null; setHint('Move the phone to find the floor, tap to place'); } });
+wire('again', () => { if (session) { cancelAdd(); suspendMarks(); setMode('reticle'); anchor = null; scanHint(scan.start(performance.now())); }  });
 wire('drop', dropMark); wire('undomark', undoMark);
 wire('rmmark', () => { const i = selMark >= 0 ? selMark : hovMark; if (i >= 0) removeMarkAt(i); }); wire('rmmeasure', () => { if (selMeasure >= 0) removeMeasureAt(selMeasure); });
 wire('mnew', () => { cancelPending(); flashMsg('Tap point A'); }); wire('mundo', undoMeasure); wire('mclear', clearMeasures);
@@ -509,13 +549,56 @@ wire('deselect', () => selectPart(null));
 wire('clearmarks', clearMarks);
 wire('reset', () => {
   cancelAdd(); closeLib();
-  state = C.parseState(new URLSearchParams(initialHash).get('s')) || C.defaultState();
+  state = C.SC.fromHash(initialHash).insts;
   selectedId = null; rebuild(); setOffs({ ...OFS.ZERO });
 });
-wire('exit', () => { if (session) session.end(); });
+wire('exit', () => { if (session) { userExit = true; session.end(); } });
 // More puts its items in the context row; tapping More again, or Back, returns
 wire('more', () => { if (adding) cancelAdd(); closeLib(); moreOpen = !moreOpen; });
 wire('back', () => { moreOpen = false; });
+wire('xray', () => setXray('next'));
+wire('rec', () => { if (adding) cancelAdd(); closeLib(); moreOpen = false; recOpen = true; $('ctx').scrollLeft = 0; });
+
+// ---- recording mode (#126): a clean camera. Hides the build stamp, toasts (queued silently), the context card and every control except a small
+//      translucent corner button that opens a mini bar (next option, x-ray, pause, exit). Optional auto-cycle of options A-F every 4, 6 or 8 s with a glass caption. ----
+const cycle = RC.createCycle(PR.ids());
+let cycleTimer = 0;
+const curOption = () => PR.presetOf(C.SC, state);
+function updateRecUi() {
+  document.body.classList.toggle('rec', rec.on);
+  $('recbtn').hidden = !rec.on; $('recbtn').setAttribute('aria-expanded', String(rec.bar)); $('recbtn').setAttribute('aria-label', rec.bar ? 'Hide recording tools' : 'Recording tools');
+  $('recbar').hidden = !(rec.on && rec.bar);
+  $('rbpause').hidden = !rec.chosen;
+  const cur = C && curOption(), cap = $('reccap'), txt = rec.on && rec.chosen && cur ? RC.captionText(PR.byId(cur), stackH, v => MD.fmtLen(v, units)) : '';
+  cap.hidden = !txt; if (txt && cap.textContent !== txt) cap.textContent = txt;
+}
+function startRec(secs = 0) {
+  if (rec.on || !C) return;
+  cancelAdd(); closeLib(); cancelLink(); endMove(); hideQuick(); selectPart(null); selectMark(-1); selectMeasure(-1);
+  moreOpen = false; recOpen = false; optOpen = false; if (tool !== 'select') setTool('select');
+  rec.on = true; rec.bar = false; rec.chosen = secs > 0;
+  toastStack.hold(); renderToasts(); log('recording on' + (secs ? ', auto ' + secs + ' s' : ''));
+  if (rec.chosen) {
+    const first = cycle.start(Date.now(), secs, curOption()); if (first) applyOption(first);
+    clearInterval(cycleTimer); cycleTimer = setInterval(() => { const id = cycle.tick(Date.now()); if (id) applyOption(id); }, 250);
+  }
+  refreshOutline(); applyTints(); updateCross(); readout(); setTimeout(fit, 0);
+}
+function stopRec() {
+  if (!rec.on) return;
+  rec.on = false; rec.bar = false; rec.chosen = false; cycle.stop(); clearInterval(cycleTimer); cycleTimer = 0;
+  toastStack.release(Date.now()); renderToasts(); log('recording off');
+  refreshOutline(); applyTints(); updateCross(); readout(); setTimeout(fit, 0);
+}
+function recNext() {
+  const id = cycle.on ? cycle.next(Date.now()) : RC.stepId(PR.ids(), curOption() || optLast || 'F'); applyOption(id);
+}
+wire('recbtn', () => { rec.bar = !rec.bar; });
+wire('rbnext', recNext); wire('rbxray', () => setXray('next')); wire('rbpause', () => { cycle.toggle(Date.now()); });
+wire('rbexit', stopRec);
+wire('recback', () => { recOpen = false; moreOpen = true; });
+for (const [id, n] of [['rec0', 0], ['rec4', 4], ['rec6', 6], ['rec8', 8]]) wire(id, () => startRec(n));
+addEventListener('keydown', e => { if (e.key === 'Escape' && rec.on) stopRec(); });
 // the rows follow the page theme choice (<tb-theme> sets it on the root); rows keep their own data-theme so their buttons are themed even before a choice
 {
   const sync = v => ctl.setAttribute('data-theme', v === 'light' || v === 'dark' ? v : 'auto');
@@ -554,25 +637,27 @@ function renderToasts() {
     const x = document.createElement('button'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.innerHTML = '&times;';
     x.addEventListener('click', e => { e.stopPropagation(); dismissToast(t.id); });
     x.addEventListener('pointerdown', e => e.stopPropagation());
-    el.append(tx, x); host.appendChild(el);
+    if (t.close === false) { el.classList.add('noclose'); el.append(tx); } else el.append(tx, x);
+    host.appendChild(el);
     let g = null;   // swipe sideways or tap the toast to dismiss it
     el.addEventListener('pointerdown', e => { if (e.button) return; g = { x: e.clientX, y: e.clientY, t: performance.now() }; el.classList.add('drag'); try { el.setPointerCapture(e.pointerId); } catch (_) { /* not capturable */ } });
     el.addEventListener('pointermove', e => { if (!g) return; const dx = e.clientX - g.x; el.style.transform = 'translateX(' + dx + 'px)'; el.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 200)); });
     const end = e => {
-      if (!g) return; const r = gestureOutcome(e.clientX - g.x, e.clientY - g.y, performance.now() - g.t); g = null; el.classList.remove('drag');
-      if (r === 'dismiss' && e.type === 'pointerup') dismissToast(t.id); else { el.style.transform = ''; el.style.opacity = ''; }
+      if (!g) return; const x0 = g.x, y0 = g.y; const r = gestureOutcome(e.clientX - g.x, e.clientY - g.y, performance.now() - g.t); g = null; el.classList.remove('drag');
+      if (r === 'dismiss' && e.type === 'pointerup') { const tap = Math.hypot(e.clientX - x0, e.clientY - y0) <= 8; if (t.action === 'resume' && tap) resumeAR(); dismissToast(t.id); }   // resume first: the tap is the user gesture that restarts the session else { el.style.transform = ''; el.style.opacity = ''; }
     };
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   }
   const nx = toastStack.nextExpiry();
   if (nx !== Infinity) toastTimer = setTimeout(renderToasts, Math.max(0, nx - Date.now()) + 10);
 }
-function dismissToast(id) { if (toastStack.dismiss(id)) renderToasts(); }
+function dismissToast(id) { const t = toastStack.list().find(x => x.id === id); if (toastStack.dismiss(id)) renderToasts(); if (t && t.action === 'resume' && life.state === 'paused' && !resumed) life.send('dismiss'); }
 // toast(text, warn, ms): ms 0 = a prompt that stays until toast('') clears it. Empty text clears the prompt.
-function toast(t, warn = false, ms = 3500, level) {
+function toast(t, warn = false, ms = 3500, level, opts = null) {
   if (!t) { if (toastStack.dismissKey('prompt')) renderToasts(); return; }
-  level = level || (warn ? 'warn' : 'info'); log('toast ' + level + ': ' + t);
-  if (ms === 0 && level === 'info') toastStack.add({ text: t, key: 'prompt', sticky: true }, Date.now());
+  level = level || (warn ? 'warn' : 'info'); log('toast ' + level + ': ' + t + (toastStack.held ? ' (queued, recording)' : ''));
+  if (opts) toastStack.add({ text: t, level, ...opts }, Date.now());   // keyed note: replaces the previous one with the same key
+  else if (ms === 0 && level === 'info') toastStack.add({ text: t, key: 'prompt', sticky: true }, Date.now());
   else toastStack.add({ text: t, level }, Date.now());
   renderToasts();
 }
@@ -1034,11 +1119,12 @@ function updateHeights() {
   for (const r of roots()) top[r.userData.instanceId] = localBox(r).max.y / SCN.IN - y0;
   stackH = PR.stackHeights(C.SC, state, top);
 }
+const OPTION_TOAST = { key: 'option', ms: 2200, close: false };   // option names replace each other: one at a time, short, no x
 function applyOption(id) {
   const sc = PR.applyPreset(C.SC, sceneNow(), id); if (!sc) return;
   cancelAdd(); cancelLink(); closeLib(); endMove(); hideQuick();
   pushUndo(); state = sc.insts; jumpers = sc.jumpers; selJumper = null; optLast = PR.byId(id).id; optOpen = false; stackH = { pos: null, neg: null };
-  selectPart(null); rebuild(); toast('Option ' + optLast + ': ' + PR.byId(id).name);
+  selectPart(null); rebuild(); toast('Option ' + optLast + ': ' + PR.byId(id).name, false, 0, 'info', OPTION_TOAST);
 }
 function buildOptList() {
   const ul = $('optul'), cur = PR.presetOf(C.SC, state); ul.textContent = '';
@@ -1067,8 +1153,9 @@ function place() {
   baseMat.compose(pos, new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), psi), new THREE.Vector3(1, 1, 1));
   pivot.matrix.copy(baseMat); pivot.matrixWorldNeedsUpdate = true; pivot.visible = true;
   offs = { ...offs, x: 0, z: 0 }; applyOffsets();   // keep height/turn corrections, the surface is new
-  setMode('placed'); setHint(null); reticle.visible = false;
+  setMode('placed'); scan.placed(); setHint(null); reticle.visible = false;
   scene.updateMatrixWorld(true); restoreMarks();   // marks and measurements come back at the model's new pose
+  life.send('place'); ensureModel(resumed); resumed = false;   // after a lost session the model is rebuilt from the kept state
   anchor = null; anchorFix = null;
   const rs = renderer.xr.getReferenceSpace();
   const ok = a => { anchor = a; anchorFix = null; };
@@ -1163,7 +1250,7 @@ function updateHover(frame) {
   if (hv !== hovMark) { hovMark = hv; refreshMarks(); }
   if (moving) { const mi = instOf(moving.id); if (!mi) endMove(); else if (ray && session) slideTo(mi, ray); }
   if (ray && adding && adding.kind === 'stud') aimTarget(ray);
-  beam.visible = !!beamHit && !mouse; dot.visible = !!beamHit;
+  beam.visible = !!beamHit && !mouse && !rec.on; dot.visible = !!beamHit && !rec.on;
   if (beamHit) {
     const a = PK.beamStart(ray), p = beamGeo.attributes.position, h = beamHit.point;
     p.setXYZ(0, ...a); p.setXYZ(1, h[0], h[1], h[2]); p.needsUpdate = true;
@@ -1190,6 +1277,9 @@ function tapPick(ev) {
 }
 
 function onFrame(time, frame) {
+  try { onFrameBody(time, frame); } catch (e) { log('frame error: ' + (e && e.message || e)); }   // one bad frame must not stop the loop
+}
+function onFrameBody(time, frame) {
   lastFrame = frame;
   if (!frame) { pivot.matrixWorldNeedsUpdate = true; controls.update(); updateHover(null); updateLink(); renderer.render(scene, camera); return; }
   const rs = renderer.xr.getReferenceSpace();
@@ -1197,8 +1287,12 @@ function onFrame(time, frame) {
   if (mode === 'reticle' && hitSource) {
     const hits = frame.getHitTestResults(hitSource);
     if (hits.length !== hitCount) { hitCount = hits.length; log('hit-test hits ' + hitCount); }
-    if (hits.length) { lastHit = hits[0]; reticle.visible = true; reticle.matrix.fromArray(hits[0].getPose(rs).transform.matrix); }
+    const hp = hits.length ? hits[0].getPose(rs) : null;
+    if (hp) { lastHit = hits[0]; reticle.visible = true; reticle.matrix.fromArray(hp.transform.matrix); }
     else { reticle.visible = false; lastHit = null; }
+    const was = scan.text, ft = scan.update(performance.now(), !!hp);
+    if (ft !== null) log('time to first hit ' + Math.round(ft) + ' ms');
+    if (scan.text !== was) scanHint(scan.text);
   }
   if (mode === 'placed' && anchor && frame.trackedAnchors && frame.trackedAnchors.has(anchor)) {
     const p = frame.getPose(anchor.anchorSpace, rs);
@@ -1214,56 +1308,103 @@ function onFrame(time, frame) {
 renderer.setAnimationLoop(onFrame);
 
 // ---- session ----
+// Lifecycle (xr/lifecycle.js): preview -> starting -> reticle -> placed, and paused when the browser takes the session away
+// (app switch, screen recorder panel, notification). The scene state (state, offs, jumpers, marks) is never cleared by a lost session.
+const life = LC.createLifecycle(e => log('lifecycle ' + e.from + ' -> ' + e.to + ' (' + e.ev + ')' + (e.fx.length ? ' [' + e.fx.join(',') + ']' : '')));
+let userExit = false, resumed = false;
+function showPaused() { toastStack.add({ text: LC.PAUSED_TEXT, level: 'info', key: 'paused', sticky: true, action: 'resume' }, Date.now()); renderToasts(); }
+function clearPaused() { if (toastStack.dismissKey('paused')) renderToasts(); }
+function resumeAR() { if (life.state !== 'paused') return; log('resume tapped'); resumed = true; enterAR(); }
+// the session is gone: leave AR visuals, keep every bit of scene state
+function teardownSession(byUser) {
+  if (rec.on) stopRec();   // otherwise the 'AR paused' toast stays hidden and auto-cycle keeps running
+  const wasPlaced = mode === 'placed';
+  endMove(); session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; moreOpen = false; cancelAdd(); closeLib(); removeMarkObjs(); removeMeasureObjs(); reticle.visible = false;
+  document.body.classList.remove('inar'); grid.visible = true; pivot.visible = true; controls.enabled = true;
+  pivot.matrix.identity(); pivot.matrixWorldNeedsUpdate = true; scene.updateMatrixWorld(true); restoreMarks(); scan.reset(); setHint(null); scene.environment = roomEnv; scene.remove(xrLight); fit();
+  const r = life.send(byUser ? 'exit' : 'sessionEnd');
+  log('session ended ' + (byUser ? 'by the user' : 'by the system') + (wasPlaced ? ', was placed' : '') + ', parts kept: ' + state.length);
+  if (r.fx.includes('toast-paused')) showPaused();
+}
+// the model must be in the scene whenever it is shown: rebuild from state when it is missing or stale
+async function ensureModel(force) {
+  const n = [...C.SC.locals(state).values()].filter(Boolean).length, have = roots().length;
+  if (force || have !== n) { log('rebuild from state (' + (force ? 'forced' : have + ' of ' + n + ' parts present') + ')'); await rebuild(); }
+  pivot.visible = true; inner.visible = true; modelHolder.visible = true; applyOffsets(); scene.updateMatrixWorld(true); readout();
+  log('model shown: ' + roots().length + ' parts');
+}
+let startImpl = null;   // test seam: headless runs replace the WebXR request
 async function enterAR() {
+  life.send(life.state === 'paused' ? 'resume' : 'start'); clearPaused(); userExit = false;
   try {
-    // three 0.170 calls the GPU depth reader whenever 'depth-sensing' is enabled, whatever usage was granted,
-    // and that throws every frame in cpu-optimized mode. So depth is opt-in for experiments: ?depth=1.
-    const wantDepth = new URLSearchParams(location.search).get('depth') === '1';
-    const opts = { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'light-estimation'], domOverlay: { root: overlay } };
-    if (wantDepth) {
-      opts.optionalFeatures.push('depth-sensing');
-      opts.depthSensing = { usagePreference: ['cpu-optimized'], dataFormatPreference: ['luminance-alpha', 'float32'] };
-    }
-    let s;
-    try { s = await navigator.xr.requestSession('immersive-ar', opts); }
-    catch (e) {   // a browser that rejects the depth config: retry without it
-      log('session with depth-sensing rejected (' + (e && e.message || e) + '), retrying without');
-      delete opts.depthSensing; opts.optionalFeatures = opts.optionalFeatures.filter(f => f !== 'depth-sensing');
-      s = await navigator.xr.requestSession('immersive-ar', opts);
-    }
-    if ((s.enabledFeatures || []).includes('depth-sensing') && s.depthUsage !== 'cpu-optimized') {   // three would take its GPU depth path and throw every frame
-      log('depth usage ' + s.depthUsage + ' is not cpu-optimized, restarting without depth-sensing');
-      try { await s.end(); } catch (e) { /* already ended */ }
-      delete opts.depthSensing; opts.optionalFeatures = opts.optionalFeatures.filter(f => f !== 'depth-sensing');
-      s = await navigator.xr.requestSession('immersive-ar', opts);
-    }
-    renderer.xr.setReferenceSpaceType((s.enabledFeatures || []).includes('local-floor') ? 'local-floor' : 'local');
-    try {   // sharpness: render at the device's native resolution, capped for speed
-      const nat = window.XRWebGLLayer && XRWebGLLayer.getNativeFramebufferScaleFactor ? XRWebGLLayer.getNativeFramebufferScaleFactor(s) : 1;
-      renderer.xr.setFramebufferScaleFactor(Math.min(Math.max(nat, 1), 2));
-    } catch (e) { /* keep default */ }
-    await renderer.xr.setSession(s);
-    session = s;
-    document.body.classList.add('inar'); grid.visible = false; pivot.visible = false; controls.enabled = false;
-    cancelAdd(); closeLib(); suspendMarks(); setMode('reticle'); setHint('Move the phone to find the floor, tap to place'); selectPart(null);
-    log('session started, features: ' + (s.enabledFeatures || []).join(','));
-    depthOK = (s.enabledFeatures || []).includes('depth-sensing') && s.depthUsage === 'cpu-optimized'; depthLogged = false;
-    log(depthOK ? 'depth sensing: cpu, format ' + s.depthDataFormat : 'depth sensing not available (' + ((s.enabledFeatures || []).includes('depth-sensing') ? 'usage ' + s.depthUsage : 'feature not granted') + '), skipped');
-    s.addEventListener('select', ev => {
-      if (mode === 'reticle') place();
-      else if (mode === 'placed') onSceneTap(ev);
-    });
-    s.addEventListener('end', () => {
-      endMove(); session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; moreOpen = false; cancelAdd(); closeLib(); removeMarkObjs(); removeMeasureObjs(); reticle.visible = false;
-      document.body.classList.remove('inar'); grid.visible = true; pivot.visible = true; controls.enabled = true;
-      pivot.matrix.identity(); pivot.matrixWorldNeedsUpdate = true; scene.updateMatrixWorld(true); restoreMarks(); setHint(null); log('session ended'); scene.environment = roomEnv; scene.remove(xrLight); fit();
-    });
-    const viewer = await s.requestReferenceSpace('viewer');
-    try { hitSource = await s.requestHitTestSource({ space: viewer, entityTypes: ['point', 'plane'] }); log('hit-test source: point+plane'); }
-    catch (e) { log('hit-test entityTypes rejected (' + (e && e.message || e) + '), default'); hitSource = await s.requestHitTestSource({ space: viewer }); }
-  } catch (e) { toast('Could not start AR: ' + (e && e.message || e), true, 0, 'error'); }
+    await (startImpl || startSession)();
+    if (life.state === 'starting') life.send('started');
+  } catch (e) {
+    if (life.state === 'starting') life.send('startFailed');
+    toast('Could not start AR: ' + (e && e.message || e), true, 0, 'error');
+  }
+}
+async function startSession() {
+  // three 0.170 calls the GPU depth reader whenever 'depth-sensing' is enabled, whatever usage was granted,
+  // and that throws every frame in cpu-optimized mode. So depth is opt-in for experiments: ?depth=1.
+  const wantDepth = new URLSearchParams(location.search).get('depth') === '1';
+  const opts = { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'light-estimation'], domOverlay: { root: overlay } };
+  if (wantDepth) {
+    opts.optionalFeatures.push('depth-sensing');
+    opts.depthSensing = { usagePreference: ['cpu-optimized'], dataFormatPreference: ['luminance-alpha', 'float32'] };
+  }
+  let s;
+  // listen from the first moment: the session can end while we still await below
+  const request = async o => {
+    const x = await navigator.xr.requestSession('immersive-ar', o);
+    x.addEventListener('end', () => { log('xr session end event'); if (x === s && life.state !== 'preview' && life.state !== 'paused') teardownSession(userExit); });
+    return x;
+  };
+  try { s = await request(opts); }
+  catch (e) {   // a browser that rejects the depth config: retry without it
+    log('session with depth-sensing rejected (' + (e && e.message || e) + '), retrying without');
+    delete opts.depthSensing; opts.optionalFeatures = opts.optionalFeatures.filter(f => f !== 'depth-sensing');
+    s = await request(opts);
+  }
+  if ((s.enabledFeatures || []).includes('depth-sensing') && s.depthUsage !== 'cpu-optimized') {   // three would take its GPU depth path and throw every frame
+    log('depth usage ' + s.depthUsage + ' is not cpu-optimized, restarting without depth-sensing');
+    const old = s; s = null; try { await old.end(); } catch (e) { /* already ended */ }
+    delete opts.depthSensing; opts.optionalFeatures = opts.optionalFeatures.filter(f => f !== 'depth-sensing');
+    s = await request(opts);
+  }
+  renderer.xr.setReferenceSpaceType((s.enabledFeatures || []).includes('local-floor') ? 'local-floor' : 'local');
+  try {   // sharpness: render at the device's native resolution, capped for speed
+    const nat = window.XRWebGLLayer && XRWebGLLayer.getNativeFramebufferScaleFactor ? XRWebGLLayer.getNativeFramebufferScaleFactor(s) : 1;
+    renderer.xr.setFramebufferScaleFactor(Math.min(Math.max(nat, 1), 2));
+  } catch (e) { /* keep default */ }
+  await renderer.xr.setSession(s);
+  session = s;
+  beginSessionUi(s);
+  s.addEventListener('select', ev => {
+    if (mode === 'reticle') place();
+    else if (mode === 'placed') onSceneTap(ev);
+  });
+  const viewer = await s.requestReferenceSpace('viewer');
+  try { hitSource = await s.requestHitTestSource({ space: viewer, entityTypes: ['point', 'plane'] }); log('hit-test source: point+plane'); }
+  catch (e) { log('hit-test entityTypes rejected (' + (e && e.message || e) + '), default'); hitSource = await s.requestHitTestSource({ space: viewer }); }
+}
+function beginSessionUi(s) {
+  document.body.classList.add('inar'); grid.visible = false; pivot.visible = false; controls.enabled = false;
+  cancelAdd(); closeLib(); suspendMarks(); setMode('reticle'); scanHint(scan.start(performance.now())); selectPart(null);
+  const f = (s && s.enabledFeatures) || [];
+  log('session started' + (resumed ? ' (resumed, scene state kept: ' + state.length + ' parts)' : '') + ', features: ' + f.join(','));
+  depthOK = f.includes('depth-sensing') && s.depthUsage === 'cpu-optimized'; depthLogged = false;
+  log(depthOK ? 'depth sensing: cpu, format ' + s.depthDataFormat : 'depth sensing not available, skipped');
 }
 enterBtn.addEventListener('click', enterAR);
+// page lifecycle: log everything that can take the session away; if the session vanished without an end event, treat it as lost
+for (const ev of ['pagehide', 'pageshow', 'freeze', 'resume']) addEventListener(ev, () => log('page ' + ev));
+document.addEventListener('visibilitychange', () => {
+  log('visibilitychange: ' + document.visibilityState + ', life ' + life.state + ', xr presenting ' + renderer.xr.isPresenting);
+  if (document.visibilityState === 'visible' && (life.state === 'reticle' || life.state === 'placed') && !renderer.xr.isPresenting && !startImpl) { log('session gone without an end event'); teardownSession(false); }
+});
+renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); log('webgl context lost'); });
+renderer.domElement.addEventListener('webglcontextrestored', () => { log('webgl context restored'); if (C) ensureModel(true); });
 
 function fit() {
   if (renderer.xr.isPresenting) return;
@@ -1316,7 +1457,7 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   cv.addEventListener('pointerdown', e => { if (linking && e.pointerType !== 'mouse') linkAim = { x: e.clientX, y: e.clientY, touch: true }; });
   cv.addEventListener('pointerup', ev => {
     let e = ev;
-    if (session || !down || !C) return;
+    if (session || !down || !C || rec.on) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = performance.now() - down.t, dn = down; down = null;
     e = dn;   // pick where the press landed, not where jitter let go
     if (!PK.isClick(moved, dt, ev.pointerType)) return;   // a drag is orbiting
@@ -1349,7 +1490,7 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   });
 }
 // test / debug hooks
-window.__ar = { slideTo: (id, ray) => { const r = slideTo(instOf(id), ray); flushMove(); return r; }, startMove: id => startMove(instOf(id)), endMove, moving: () => !!moving, pickAt(cx, cy) { const r = renderer.domElement.getBoundingClientRect(); scene.updateMatrixWorld(true); raycaster.setFromCamera(new THREE.Vector2((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera); raycaster.far = 10; const h = PK.pickFromHits(raycaster.intersectObjects(roots(), true)); return h && h.instanceId; }, partIds: () => roots().map(o => o.userData.instanceId), canvasRect: () => { const r = renderer.domElement.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; }, outletScreen(key) { const o = outletPoints().find(x => x.key === key); if (!o) return null; const v = modelHolder.localToWorld(new THREE.Vector3(...o.pos)).project(camera), rc = renderer.domElement.getBoundingClientRect(); return { x: rc.left + (v.x + 1) / 2 * rc.width, y: rc.top + (1 - v.y) / 2 * rc.height }; }, quick: () => quick && { kind: quick.kind, id: quick.id, key: quick.key, fit: quick.fit.map(x => x.part.id), shown: true }, look(dx, dy, dz) { const t = controls.target; camera.position.set(t.x + dx, t.y + dy, t.z + dz); controls.update(); }, target(x, y, z) { controls.target.set(x, y, z); controls.update(); }, hash: persist, startAdd, confirmAdd, cancelAdd, removeSelected, openLib, setTarget, adding: () => adding && { partId: adding.partId, kind: adding.kind, target: adding.target, outlets: adding.outlets.map(o => o.key) }, toast: () => [...toastEl.querySelectorAll('.tx')].map(e => e.textContent).join(' | '), persist, setTool, tool: () => tool, units: () => units, marks: () => marks.length, measures: () => measures.length, dropAt: dropMarkAt, measureAt, selectMark, select: selectPart, selected: () => selectedId, hovered: () => hoveredId, state: () => JSON.parse(JSON.stringify(state)),
+window.__ar = { rec: { start: startRec, stop: stopRec, on: () => rec.on, bar: () => rec.bar, cycle: () => ({ on: cycle.on, paused: cycle.paused, secs: cycle.secs }), tick: now => { const id = cycle.tick(now); if (id) applyOption(id); return id; }, option: curOption, caption: () => $('reccap').hidden ? '' : $('reccap').textContent }, xray: { mode: () => xray.mode, set: setXray }, markText: i => marks[i] && marks[i].text, worldPose(id) { const b = roots().find(o => o.userData.instanceId === id); if (!b) return null; scene.updateMatrixWorld(true); const m = new THREE.Matrix4().copy(modelHolder.matrixWorld).invert().multiply(b.matrixWorld), pos = new THREE.Vector3(), q = new THREE.Quaternion(); m.decompose(pos, q, new THREE.Vector3()); const e = new THREE.Euler().setFromQuaternion(q, 'YXZ'); return { pos: pos.toArray(), yaw: ((e.y * 180 / Math.PI) % 360 + 360) % 360 }; }, slideTo: (id, ray) => { const r = slideTo(instOf(id), ray); flushMove(); return r; }, startMove: id => startMove(instOf(id)), endMove, moving: () => !!moving, pickAt(cx, cy) { const r = renderer.domElement.getBoundingClientRect(); scene.updateMatrixWorld(true); raycaster.setFromCamera(new THREE.Vector2((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera); raycaster.far = 10; const h = PK.pickFromHits(raycaster.intersectObjects(roots(), true)); return h && h.instanceId; }, partIds: () => roots().map(o => o.userData.instanceId), canvasRect: () => { const r = renderer.domElement.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; }, outletScreen(key) { const o = outletPoints().find(x => x.key === key); if (!o) return null; const v = modelHolder.localToWorld(new THREE.Vector3(...o.pos)).project(camera), rc = renderer.domElement.getBoundingClientRect(); return { x: rc.left + (v.x + 1) / 2 * rc.width, y: rc.top + (1 - v.y) / 2 * rc.height }; }, quick: () => quick && { kind: quick.kind, id: quick.id, key: quick.key, fit: quick.fit.map(x => x.part.id), shown: true }, look(dx, dy, dz) { const t = controls.target; camera.position.set(t.x + dx, t.y + dy, t.z + dz); controls.update(); }, target(x, y, z) { controls.target.set(x, y, z); controls.update(); }, hash: persist, startAdd, confirmAdd, cancelAdd, removeSelected, openLib, setTarget, adding: () => adding && { partId: adding.partId, kind: adding.kind, target: adding.target, outlets: adding.outlets.map(o => o.key) }, toast: () => [...toastEl.querySelectorAll('.tx')].map(e => e.textContent).join(' | '), persist, setTool, tool: () => tool, units: () => units, marks: () => marks.length, measures: () => measures.length, dropAt: dropMarkAt, measureAt, selectMark, select: selectPart, selected: () => selectedId, hovered: () => hoveredId, state: () => JSON.parse(JSON.stringify(state)),
   screenOf(id) { const r = roots().find(o => o.userData.instanceId === id); if (!r) return null; const b = new THREE.Box3().setFromObject(r), c = b.getCenter(new THREE.Vector3()).project(camera), rc = renderer.domElement.getBoundingClientRect();
     return { x: rc.left + (c.x + 1) / 2 * rc.width, y: rc.top + (1 - c.y) / 2 * rc.height }; },
   aimAt(id) { const r = roots().find(o => o.userData.instanceId === id); const c = new THREE.Box3().setFromObject(r).getCenter(new THREE.Vector3()); controls.target.copy(c); controls.update(); } };
@@ -1389,3 +1530,16 @@ Object.assign(window.__ar, { jumper: { start: keys => startLink(keys), pick: pic
   const warm = () => { const ids = PR.PRESETS.flatMap(p => C.SC.fromHash(p.hash).insts.map(i => i.part)); C.preload(ids).then(r => { const n = r.filter(x => x.status === 'rejected').length; log('preload done' + (n ? ', ' + n + ' failed' : '')); }); };
   if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 3000 }); else setTimeout(warm, 500);
 })();
+
+// headless seam for the lifecycle (no WebXR in a test browser): pretend a session starts, gets placed, is lost, and resumes
+Object.assign(window.__ar, { sim: {
+  async enter() { startImpl = async () => { session = { end() { teardownSession(userExit); } }; beginSessionUi(null); }; await enterAR(); },
+  place() { reticle.visible = true; reticle.matrix.identity(); place(); },
+  lose() { teardownSession(false); },
+  resume: () => resumeAR(),
+  exit() { userExit = true; session && session.end(); },
+  life: () => life.state, parts: () => roots().length, wanted: () => [...C.SC.locals(state).values()].filter(Boolean).length,
+  wipe() { modelHolder.clear(); },   // simulate a model lost from the scene
+  pausedToast: () => toastStack.list().some(t => t.key === 'paused'),
+  tapPaused() { const el = [...toastEl.querySelectorAll('.toast')].find(e => /AR paused/.test(e.textContent)); if (!el) return false; const r = el.getBoundingClientRect(), o = { clientX: r.left + 5, clientY: r.top + 5, pointerId: 1, button: 0, bubbles: true }; el.dispatchEvent(new PointerEvent('pointerdown', o)); el.dispatchEvent(new PointerEvent('pointerup', o)); return true; },
+} });

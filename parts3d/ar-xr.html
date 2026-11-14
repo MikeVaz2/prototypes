@@ -14,13 +14,13 @@
 <script type="module" src="tb/space/space.js"></script>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-13 13:51 shoot';
+const BUILD = '2026-11-14 18:10 scan';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
   var map = { imports: { 'three': cdn + 'build/three.module.js', 'three/addons/': cdn + 'examples/jsm/',
     './xr/app.js': './xr/app.js' + v, './xr/compose.js': './xr/compose.js' + v, './xr/xrmath.js': './xr/xrmath.js' + v,
-    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './xr/toasts.js': './xr/toasts.js' + v, './xr/icons.js': './xr/icons.js' + v, './xr/jumper.js': './xr/jumper.js' + v, './xr/presets.js': './xr/presets.js' + v, './xr/cats.js': './xr/cats.js' + v, './offsets.js': './offsets.js' + v } };
+    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './xr/lifecycle.js': './xr/lifecycle.js' + v, './xr/toasts.js': './xr/toasts.js' + v, './xr/scan.js': './xr/scan.js' + v, './xr/icons.js': './xr/icons.js' + v, './xr/jumper.js': './xr/jumper.js' + v, './xr/presets.js': './xr/presets.js' + v, './xr/cats.js': './xr/cats.js' + v, './xr/rec.js': './xr/rec.js' + v, './offsets.js': './offsets.js' + v } };
   var im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify(map); document.head.appendChild(im);
   var m = document.createElement('script'); m.type = 'module'; m.src = 'xr/app.js' + v; document.head.appendChild(m);
 })();
@@ -120,6 +120,23 @@ window.__BUILD = BUILD;
   /* Options list (long-press on the Option button) inside the context row, same pattern as the library */
   #optlist { display:flex; align-items:center; gap:6px; } #optlist[hidden] { display:none; }
   #ctx.optsl > *:not(#optlist) { display:none; } #ctx.optsl #info { display:none; }
+  #recopts { display:flex; align-items:center; gap:6px; } #recopts[hidden] { display:none; } #rectitle { font-size:0.65em; color:var(--deck-muted); white-space:nowrap; }
+  #ctx.recsl > *:not(#recopts) { display:none; } #ctx.recsl #info { display:none; }
+  /* toasts that replace themselves (option names) have no x */
+  .toast.noclose { padding-right:1rem; }
+  /* recording mode: the clean camera. Only the caption, the corner button and the mini bar stay. */
+  body.rec .build, body.rec #toasts, body.rec #ctl, body.rec #menubtn, body.rec #menu, body.rec #hint, body.rec #cross, body.rec #dbg, body.rec header, body.rec .bar, body.rec #help { display:none !important; }
+  body.rec #stage { margin:0; border:0; border-radius:0; } body.rec:not(.inar) { padding-bottom:0; }
+  #reccap { position:absolute; top:calc(0.6rem + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); max-width:calc(100% - 1.5rem); padding:0.3rem 0.9rem; border-radius:1.2rem; font-size:0.85rem; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
+  body.inar #reccap, body.inar #recbar { --tb-glass-opacity:85%; }
+  #recbtn { position:fixed; right:calc(0.75rem + env(safe-area-inset-right)); bottom:calc(0.75rem + env(safe-area-inset-bottom)); z-index:25; width:3rem; height:3rem; min-height:3rem; min-width:3rem; padding:0; border-radius:50%; opacity:0.45; pointer-events:auto; touch-action:manipulation; }
+  #recbtn:after { content:""; width:0.9rem; height:0.9rem; border-radius:50%; background:var(--deck-accent, #d33); display:block; margin:auto; }
+  #recbtn[aria-expanded="true"], #recbtn:hover, #recbtn:focus-visible { opacity:0.9; }
+  #recbtn[hidden], #recbar[hidden], #reccap[hidden] { display:none; }
+  #recbar { position:fixed; left:calc(0.5rem + env(safe-area-inset-left)); right:calc(4.5rem + env(safe-area-inset-right)); bottom:calc(0.6rem + env(safe-area-inset-bottom)); z-index:24; display:flex; align-items:stretch; gap:0.5rem; padding:0.5rem; border-radius:1.5rem; pointer-events:auto; }
+  #recbar button { flex:1 1 0; min-width:0; flex-direction:row; gap:0.4em; min-height:3.5rem; padding:0.4em 0.6em; font-size:1rem; line-height:1; white-space:nowrap; touch-action:manipulation; }
+  @media (max-width:520px) { #recbar { gap:0.3rem; padding:0.4rem; } #recbar button { padding:0.4em 0.2em; font-size:0.9rem; } #recbar button svg { display:none; } }
+  #recbar button svg, #recopts button svg { flex:none; } #recbar [hidden] { display:none !important; }
   #opttitle { font-size:0.65em; color:var(--deck-muted); white-space:nowrap; }
   #optul { list-style:none; margin:0; padding:0; display:flex; align-items:center; gap:6px; } #optul li { flex:none; } #optul button.on { font-weight:700; }
   /* outside XR the page leaves room for the controls (one row in landscape, two in portrait) (--ctlh is measured) so nothing hides behind them */
@@ -166,6 +183,15 @@ window.__BUILD = BUILD;
   <div id="hint" data-theme="auto" data-surface="glass" hidden>Move the phone to find the floor, tap to place</div>
   <div id="cross" hidden></div>
   <pre id="dbg" hidden></pre>
+  <!-- recording mode (#126): only these three show while recording -->
+  <div id="reccap" data-theme="auto" data-surface="glass" hidden aria-live="off"></div>
+  <button id="recbtn" type="button" data-theme="auto" data-surface="glass" data-space-model="relative" aria-label="Recording tools" aria-expanded="false" hidden></button>
+  <div id="recbar" data-theme="auto" data-surface="glass" data-space="large" data-space-model="relative" hidden>
+    <button data-space-model="relative" id="rbnext" type="button" aria-label="Next option">Next</button>
+    <button data-space-model="relative" id="rbxray" type="button" aria-label="X-ray: tap to change">X-ray</button>
+    <button data-space-model="relative" id="rbpause" type="button" aria-label="Pause or resume the auto-cycle">Pause</button>
+    <button data-space-model="relative" id="rbexit" type="button" aria-label="Exit recording mode">Exit</button>
+  </div>
   <div id="ctl" data-theme="auto" data-space="large" data-space-model="relative">
     <div id="ctx" data-tool="select" data-space-model="relative" data-surface="glass">
       <div id="info"><img id="selthumb" alt="" hidden><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
@@ -206,6 +232,9 @@ window.__BUILD = BUILD;
       <button data-space-model="relative" id="jremove" type="button" aria-label="Remove jumper">Remove</button>
       <button data-space-model="relative" id="undoj" type="button" aria-label="Undo last jumper change">Undo</button>
       <div id="optlist" hidden aria-label="Options"><button data-space-model="relative" id="optback" type="button">Back</button><b id="opttitle">Options</b><ul id="optul"></ul></div>
+      <button data-space-model="relative" id="xray" type="button" aria-label="X-ray of the battery: Solid, Ghost, Wireframe, Hide. Tap to change">X-ray</button>
+      <button data-space-model="relative" id="rec" type="button" aria-label="Recording mode: clean camera, optional auto-cycle of the options">Record</button>
+      <div id="recopts" hidden aria-label="Recording mode"><button data-space-model="relative" id="recback" type="button">Back</button><b id="rectitle">Record</b><button data-space-model="relative" id="rec0" type="button" aria-label="Clean camera, no auto-cycle">Clean</button><button data-space-model="relative" id="rec4" type="button" aria-label="Auto-cycle options every 4 seconds">Auto 4 s</button><button data-space-model="relative" id="rec6" type="button" aria-label="Auto-cycle options every 6 seconds">Auto 6 s</button><button data-space-model="relative" id="rec8" type="button" aria-label="Auto-cycle options every 8 seconds">Auto 8 s</button></div>
       <button data-space-model="relative" id="back" type="button">Back</button>
     </div>
     <div id="bottom" data-space-model="relative" data-surface="glass">

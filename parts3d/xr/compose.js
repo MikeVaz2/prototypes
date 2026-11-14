@@ -25,12 +25,13 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
     for (const c of match(o.nodes[1])) c.position.x += d;
   }
 
+  // Real tree: root (the surface frame) -> node per instance (local pose relative to its parent) -> body (the part's meshes) + the nodes stacked on it.
+  // Turning or moving a node carries everything below it. Bodies carry the instance data (pick, tint); nodes only carry the pose.
   async function build(state) {
-    const root = new THREE.Group(), pl = SC.placements(state);
+    const root = new THREE.Group(), loc = SC.locals(state), nodes = new Map(), bodies = [];
     for (const inst of state) {
-      const p = partOf(inst.part), plc = pl.get(inst.id);
-      if (!plc) continue;
-      const mat = matrixOf(plc);
+      const p = partOf(inst.part), l = loc.get(inst.id);
+      if (!l) continue;
       const obj = (await load(p)).clone(true);
       const hide = [];
       for (const [k, o] of Object.entries(p.options || {})) {
@@ -44,12 +45,20 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
         c.material = Array.isArray(c.material) ? c.material.map(m => m.clone()) : c.material.clone();   // per instance, so tints stay on this part
       } });
       obj.userData = { instanceId: inst.id, partId: p.id, kind: kindOf(p.id, host.id, 'cover' in (p.options || {})), tint: null };
-      obj.matrixAutoUpdate = false; obj.matrix.copy(mat); obj.matrixWorldNeedsUpdate = true;
-      root.add(obj);
+      const node = new THREE.Group(); node.name = 'node:' + inst.id; node.userData.nodeId = inst.id;
+      node.matrixAutoUpdate = false; node.add(obj); nodes.set(inst.id, node); bodies.push(obj);
     }
-    root.updateMatrixWorld(true);
+    for (const [id, node] of nodes) { const l = loc.get(id), par = l.parent != null && nodes.get(l.parent); (par || root).add(node); }
+    root.userData.nodes = nodes; root.userData.bodies = bodies;
+    applyLocals(root, state);
     return root;
   }
+  // refresh every node's local matrix from the scene state (drag, move, turn): children follow through the tree
+  function applyLocals(root, state) {
+    const loc = SC.locals(state), nodes = root.userData.nodes;
+    for (const [id, node] of nodes) { const l = loc.get(id); if (l) { node.matrix.copy(matrixOf(l)); node.matrixWorldNeedsUpdate = true; } }
+    root.updateMatrixWorld(true);
+  }
 
-  return { catalog, host, partOf, SC, build, preload, matrixOf, defaultState: SC.defaultState, parseState: SC.parseState, clampNum: SC.clampNum, yawStep: SC.yawStep };
+  return { catalog, host, partOf, SC, build, applyLocals, preload, matrixOf, defaultState: SC.defaultState, parseState: SC.parseState, clampNum: SC.clampNum, yawStep: SC.yawStep };
 }
