@@ -24,6 +24,13 @@ export function extStep(cur, dir, u, min, max) {
   const v = u === 'mm' ? (Math.round(cur * MM_PER_IN / 25) + dir) * 25 / MM_PER_IN : Math.round(cur) + dir;
   return Math.min(max, Math.max(min, v));
 }
+// number option step: an option with unit 'mm' (value in mm) moves by its own step; otherwise the length rule above (value in inches)
+export function extOpt(o, cur, dir, u) {
+  if (o.unit === 'mm' || o.unit === 'm') return Math.min(o.max, Math.max(o.min, Math.round(Math.round((cur + dir * o.step) / o.step) * o.step * 1e6) / 1e6));
+  return extStep(cur, dir, u, o.min, o.max);
+}
+// number option as a label: "30 mm" for an mm option, else the inch length in the chosen units
+export const fmtOpt = (o, v, u = 'in') => o.unit === 'mm' ? v + ' mm' : o.unit === 'm' ? v.toFixed(1) + ' m' : fmtLen(v, u);
 // offsets readout, nonzero parts only: "↑1.5 in →0.5 in fwd 1 in ⟲10°" (mm: "↑25 mm")
 export function describeU(o, u = 'in') {
   if (!o.h && !o.x && !o.z && !o.yaw) return 'no offset';
@@ -43,7 +50,7 @@ export const TOOL_LABEL = { select: 'Select', mark: 'Mark', measure: 'Measure' }
 export const normTool = (s, fallback = 'select') => TOOLS.includes(s) ? s : fallback;
 export const nextTool = t => TOOLS[(TOOLS.indexOf(t) + 1) % TOOLS.length];
 export const TOOL_BUTTONS = ['drop', 'undomark', 'clearmarks', 'mnew', 'mundo', 'mclear'];
-export const ALL_IDS = [...new Set(['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
+export const ALL_IDS = [...new Set(['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'gauge2', 'gauge3', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
   'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'opt', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'undoj', 'xray', 'rec', ...TOOL_BUTTONS])];
 // buttons of the open stack for a tool. Select keeps the part controls (minus the old mark buttons); Mark and Measure show only their own actions.
 // x = extras about the selected instance: { free (placed on a surface), num (has a length option), choice (has a choice option) }
@@ -54,8 +61,9 @@ export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) 
   const rot = rotStep > 0 ? ['rotm', 'rotp'] : [], common = ['again', 'reset', 'exit'];
   if (kind === 'fuse' || kind === 'bar' || kind === 'cable') {   // library parts: on a stud, or free on a surface
     let primary, more;
-    if (x.free) { primary = ['move', 'tp', 'tm', 'hp', 'hm', 'remove', 'deselect']; more = ['nl', 'nr', 'nu', 'nd', ...(x.num ? ['extp', 'extm'] : []), ...(x.choice ? ['gauge'] : []), 'addpart', ...common]; }
-    else { primary = [...(x.num ? ['extp', 'extm'] : []), ...rot, 'remove', 'deselect']; more = [...(x.choice ? ['gauge'] : []), 'addpart', ...common]; }
+    const ch = ['gauge', 'gauge2', 'gauge3'].slice(0, Math.min(3, +x.choice || 0));   // option buttons (x.choice = how many): in the primary row, next to Length
+    if (x.free) { primary = ['move', ...(x.num ? ['extp', 'extm'] : []), ...ch, 'tp', 'tm', 'hp', 'hm', ...(x.host ? [] : ['remove']), 'deselect']; more = ['nl', 'nr', 'nu', 'nd', 'addpart', ...common]; }
+    else { primary = [...(x.num ? ['extp', 'extm'] : []), ...ch, ...rot, 'remove', 'deselect']; more = ['addpart', ...common]; }
     return { primary: [...primary, 'more'], more: ['back', ...more] };
   }
   if (kind === 'battery' && selected && x.free) {   // the host moves like any surface part (Move, turn, raise; nudges in More); its stack and jumpers follow. No Remove.
@@ -71,8 +79,8 @@ export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) 
 
 // ---- two rows (bottom row sticks, context row above it; never a third row) ----
 // bottom row: fixed contents. Undo only where something can be undone, Units live in the top-right menu.
-export function bottomFor(tool, inXR = false) {
-  return ['addpart', ...(tool === 'mark' ? ['undomark'] : tool === 'measure' ? ['mundo'] : ['opt']), 'more'];   // 'mode' is always first, added by the page
+export function bottomFor(tool, inXR = false, hasOpts = true) {
+  return ['addpart', ...(tool === 'mark' ? ['undomark'] : tool === 'measure' ? ['mundo'] : hasOpts ? ['opt'] : []), 'more'];   // 'mode' is always first, added by the page
 }
 // Control paradigm, chosen in one place. In XR the beam is the pointer, so what it is on drives the row ('highlight').
 // Outside XR (mouse or touch) the user picks first and then acts: a click / tap selects, hover changes nothing in the row ('select').

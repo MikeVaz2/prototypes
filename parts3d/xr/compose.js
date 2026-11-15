@@ -3,10 +3,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { kindOf } from './pick.js';
 import { createScene, IN, baseOf } from './scene.js';
+import { ductMesh, BENDS } from './flex.js';
 
-export async function createComposer(catalogUrl = 'parts/catalog.json', base = '') {
+export async function createComposer(catalogUrl = 'parts/catalog.json', base = '', hostSel = '') {
   const catalog = await (await fetch(base + catalogUrl)).json();
-  const SC = createScene(catalog), host = SC.host, partOf = SC.partOf;
+  const SC = createScene(catalog, hostSel), host = SC.host, partOf = SC.partOf;
   const loader = new GLTFLoader(), cache = new Map();
   const load = p => {
     if (!cache.has(p.id)) cache.set(p.id, loader.loadAsync(base + p.glb).then(g => g.scene, e => { cache.delete(p.id); const x = new Error(e && e.message || 'load failed'); x.partName = p.short || p.name || p.id; throw x; }));
@@ -14,15 +15,31 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
   };
   const preload = ids => Promise.allSettled([...new Set(ids)].map(id => { const p = partOf(baseOf(id)); return p ? load(p) : null; }));
 
-  const matrixOf = pl => { const m = new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(pl.yaw)); m.setPosition(pl.pos[0], pl.pos[1], pl.pos[2]); return m; };
+  // T(pos) Ry(yaw) [T(0,lift,0) Rz(rz)]: the bracket is the tilt of a part with a pose option (fan orientation); its children hang below this node
+  const matrixOf = pl => {
+    const m = new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(pl.yaw));
+    if (pl.tilt) m.multiply(new THREE.Matrix4().makeTranslation(0, pl.tilt.lift, 0)).multiply(new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(pl.tilt.rz)));
+    m.premultiply(new THREE.Matrix4().makeTranslation(pl.pos[0], pl.pos[1], pl.pos[2]));
+    return m;
+  };
+  // flex duct: built at runtime (ribs and bend do not stretch): black bellows outside, silver foil on the inside faces
+  function flexMeshes(inst, p) {
+    const dMm = +String(inst.opts.dia || 'd100').slice(1), m = ductMesh(dMm, inst.opts.length, BENDS[inst.opts.bend] || 0);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(m.pos, 3)); g.setIndex(new THREE.BufferAttribute(m.idx, 1)); g.computeVertexNormals();
+    const out = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x28282c, metalness: 0, roughness: 0.75, side: THREE.FrontSide })); out.name = 'duct_outer';
+    const inn = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xd2d6db, metalness: 1, roughness: 0.3, side: THREE.BackSide })); inn.name = 'duct_inner';
+    return [out, inn];
+  }
 
   function applyLength(obj, len, o) {
     if (!o.nodes || len == null) return;   // parametric only in the GLB build (copper-bar): nothing to stretch at runtime
     obj.updateMatrixWorld(true);
-    const d = (len - o.default) * IN, s = len / o.default;
+    const ax = o.axis === 'y' ? 'y' : 'x';   // stretch axis (default X; the fan adapter spigot stretches along Y); o.unit_m = metres per unit (default inch)
+    const d = (len - o.default) * (o.unit_m || IN), s = len / o.default;
     const match = pat => { const re = new RegExp('^' + pat.replace('*', '[^_]+') + '$'); const r = []; obj.traverse(c => { if (re.test(c.name)) r.push(c); }); return r; };
-    for (const c of match(o.nodes[0])) { const x0 = new THREE.Box3().setFromObject(c).min.x; c.scale.x = s; c.position.x += x0 * (1 - s); }
-    for (const c of match(o.nodes[1])) c.position.x += d;
+    for (const c of match(o.nodes[0])) { const x0 = new THREE.Box3().setFromObject(c).min[ax]; c.scale[ax] = s; c.position[ax] += x0 * (1 - s); }
+    for (const c of match(o.nodes[1])) c.position[ax] += d;
   }
 
   // Real tree: root (the surface frame) -> node per instance (local pose relative to its parent) -> body (the part's meshes) + the nodes stacked on it.
@@ -39,6 +56,7 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
         else if (o.type === 'choice') for (const [v, e] of Object.entries(o.values)) if (v !== inst.opts[k]) hide.push(...e.nodes);
       }
       for (const n of hide) { const x = obj.getObjectByName(n); if (x) x.removeFromParent(); }
+      if (p.kind === 'flexduct') { obj.clear(); obj.add(...flexMeshes(inst, p)); }
       for (const [k, o] of Object.entries(p.options || {})) if (o.type === 'number') applyLength(obj, inst.opts[k], o);
       obj.traverse(c => { if (c.isMesh) {
         c.castShadow = true; c.receiveShadow = true;

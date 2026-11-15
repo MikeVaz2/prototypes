@@ -2,12 +2,12 @@
 
 // kind of a composed part: battery (the host) | lug | busbar | nut
 export function kindOf(partId, hostId, hasCoverOption = false) {
-  if (partId === hostId) return 'battery';
+  if (partId === hostId && !/^(powerbar|copper|fan|flex|hose)/.test(partId)) return 'battery';   // a fan as the start-scene host is an ordinary library part
   if (/^lug-joint/.test(partId)) return 'cable';
   if (/^lug/.test(partId)) return 'lug';
   if (/^nut/.test(partId)) return 'nut';
   if (/^mrbf/.test(partId)) return 'fuse';
-  if (/^(powerbar|copper)/.test(partId)) return 'bar';
+  if (/^(powerbar|copper|fan|flex|hose)/.test(partId)) return 'bar';
   if (/^(butt|factory)/.test(partId)) return 'cable';
   if (/^(blueseas|busbar|bus)/.test(partId) || hasCoverOption) return 'busbar';
   return 'busbar';
@@ -41,7 +41,7 @@ export function tintFor(id, selectedId, hoveredId) {
 
 // every control button id the strip knows
 export const PLACEMENT = ['hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp', 'again', 'reset', 'mark', 'clearmarks'];
-export const ALL_CONTROLS = ['extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', ...PLACEMENT];
+export const ALL_CONTROLS = ['extm', 'extp', 'rotm', 'rotp', 'gauge', 'gauge2', 'gauge3', 'cover', ...PLACEMENT];
 // which control buttons show for the selected kind (null/undefined = nothing selected).
 // rotStep = the part's mount yaw step in degrees (0/undefined = cannot rotate)
 export function controlsFor(kind, rotStep = 0) {
@@ -51,6 +51,23 @@ export function controlsFor(kind, rotStep = 0) {
   if (kind === 'nut') return [];
   return PLACEMENT.slice();   // battery or nothing: placement fixes and Mark
 }
+// option buttons of the selected part, in order (at most 3: ids gauge, gauge2, gauge3). Library parts (bar / fuse / cable): every choice and bool option except one that
+// follows its parent (auto_from, e.g. the duct diameter). Others (lug): the first choice only, the old Gauge button.
+export function optionButtons(part, kind) {
+  const ent = Object.entries((part && part.options) || {});
+  if (kind === 'bar' || kind === 'fuse' || kind === 'cable') return ent.filter(([, o]) => (o.type === 'choice' || o.type === 'bool') && !o.auto_from).map(([k]) => k).slice(0, 3);
+  const c = ent.find(([, o]) => o.type === 'choice');
+  return c ? [c[0]] : [];
+}
+export const OPT_IDS = ['gauge', 'gauge2', 'gauge3'];
+// text of an option button: the part's own prefix (btn) plus the value label; a bool shows "Label: on|off"
+export function optLabel(spec, v) {
+  if (spec.type === 'bool') return (spec.label || '') + ': ' + (v ? 'on' : 'off');
+  const e = spec.values[v]; return (spec.btn == null ? '' : spec.btn) + (e ? e.label : String(v));
+}
+// flip an option: choice -> next value, bool -> toggled
+export const flipOption = (spec, v) => spec.type === 'bool' ? !v : nextChoice(spec.values, v);
+
 // next key of a choice option (gauge toggle), wraps around
 export function nextChoice(values, current) {
   const keys = Array.isArray(values) ? values : Object.keys(values || {});
@@ -81,7 +98,7 @@ export function shortName(partId, kind, fallback) {
   return { battery: 'Battery', busbar: 'Busbar', nut: 'Nut' }[kind] || 'Scene';
 }
 // every button of the single-button stack
-export const ALL_BUTTONS = ['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
+export const ALL_BUTTONS = ['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'gauge2', 'gauge3', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
   'again', 'reset', 'mark', 'clearmarks', 'select', 'deselect', 'exit', 'more', 'back'];
 // which buttons show in the open stack (primary: contextual actions + More) and in the More panel
 export function stackFor(kind, rotStep = 0, selected = false) {

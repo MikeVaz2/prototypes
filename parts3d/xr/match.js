@@ -27,6 +27,15 @@ export function consumes(part, opts = {}) {
 // connection enabled_when {option: value}: all must hold for this instance's options
 export const connEnabled = (conn, opts = {}) => Object.entries(conn.enabled_when || {}).every(([k, v]) => opts[k] === v);
 
+// where a connection sits (inches, in its part's frame) for this instance's options: `pos`, replaced by pos_by_option {opt: {value: [x,y,z]}},
+// then shifted by pos_per_option {opt: {axis, default, per_unit}} for a number option (adapter spigot end moves with diameter and length)
+export function connPos(conn, opts = {}) {
+  let pos = conn.pos.slice();
+  for (const [k, tbl] of Object.entries(conn.pos_by_option || {})) if (tbl[opts[k]]) pos = tbl[opts[k]].slice();
+  for (const [k, n] of Object.entries(conn.pos_per_option || {})) if (typeof opts[k] === 'number') pos[n.axis] += (opts[k] - n.default) * n.per_unit;
+  return pos;
+}
+
 // short thread name for messages: "5/16-18" -> "5/16"
 export const threadShort = t => String(t || '').split('-')[0];
 

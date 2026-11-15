@@ -1,0 +1,133 @@
+{
+ "kind": "fan",
+ "id": "fan-80mm",
+ "name": "80 mm axial fan, 80 x 80 x 25 mm, 12 V (outlet on top)",
+ "short": "80 mm fan",
+ "units": "in",
+ "catalog": {
+  "category": "Ventilation",
+  "mountKind": "surface",
+  "icon": "vent",
+  "short": "80 mm fan",
+  "swatch": "#1c1c20"
+ },
+ "params": {
+  "size_mm": 80,
+  "depth_mm": 25,
+  "hole_pitch_mm": 71.5,
+  "hole_mm": 4.3,
+  "blades": 7
+ },
+ "mounts": [
+  {
+   "id": "surface",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "fixed"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = centre of the bottom face (inlet side) on the surface; the outlet is the top face, 25 mm up"
+  }
+ ],
+ "connections": [
+  {
+   "id": "outlet",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "fan80",
+   "polarity": "any",
+   "pos": [
+    0,
+    0.9843,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "accepts": {
+    "thread": "fan80",
+    "max_items": 1,
+    "note": "the fan-to-duct adapter flange sits on the outlet face (25 mm = 0.9843 in); with the grill on the outlet the flange seats 3 mm higher (pos_by_option)"
+   },
+   "pos_by_option": {
+    "grill": {
+     "outlet": [
+      0,
+      1.1024,
+      0
+     ]
+    }
+   },
+   "align_parent": true
+  }
+ ],
+ "options": {
+  "orient": {
+   "type": "choice",
+   "default": "horizontal",
+   "label": "Orientation",
+   "btn": "",
+   "values": {
+    "horizontal": {
+     "label": "Horizontal",
+     "nodes": [],
+     "note": "lying flat, outlet up"
+    },
+    "vertical": {
+     "label": "Vertical",
+     "nodes": [],
+     "pose": {
+      "rot_z_deg": -90,
+      "lift_mm": 40
+     },
+     "note": "standing on an edge, outlet faces +X (sideways); the node frame is rotated so everything on the outlet follows"
+    }
+   },
+   "note": "pose = how the fan node is rotated/lifted; applied in xr/scene.js poseOf (locals) and xr/compose.js matrixOf"
+  },
+  "grill": {
+   "type": "choice",
+   "default": "inlet",
+   "label": "Finger guard",
+   "btn": "Grill: ",
+   "values": {
+    "inlet": {
+     "label": "inlet",
+     "nodes": [
+      "grill_inlet"
+     ],
+     "pose": {
+      "when": {
+       "orient": "horizontal"
+      },
+      "lift_mm": 3
+     },
+     "note": "3 mm proud of the inlet face; lifted 3 mm when lying flat so it rests on the surface"
+    },
+    "outlet": {
+     "label": "outlet",
+     "nodes": [
+      "grill_outlet"
+     ]
+    },
+    "none": {
+     "label": "none",
+     "nodes": []
+    }
+   }
+  }
+ },
+ "notes": "Generic 80 mm PC fan, design values: frame 80x80x25 r4, corner holes 4.3 on 71.5, 76 mm bore, hub 30 mm, 7 pitched blades, 3 struts and the airflow arrow on the outlet side."
+}

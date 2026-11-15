@@ -4,7 +4,7 @@
 export const CASE_TOP_IN = 8.6;   // battery case top above the floor, inches (heights are quoted above it)
 const B = 'odyssey-odp-agm31', H = 's=' + B + ':-:0:';
 const side = (pol, mid) => mid;
-export const PRESETS = [
+const BATTERY_PRESETS = [
   { id: 'A', short: 'Adapter', name: 'Adapter on stud',
     hash: H + '~blueseas-2340-pos:stud_pos:90:cover=1~sae-adapter-pos:' + B + '.stud_pos:0:~gx470-clamp-pos:sae-adapter-pos.post:0:' +
       '~blueseas-2340-neg:stud_neg:90:cover=1~sae-adapter-neg:' + B + '.stud_neg:0:~gx470-clamp-neg:sae-adapter-neg.post:0:' },
@@ -20,6 +20,19 @@ export const PRESETS = [
   { id: 'F', short: 'PowerBar', name: 'MRBF and PowerBar',
     hash: H + '~mrbf-5191:' + B + '.stud_pos:0:~powerbar-2104:@14,0,0:0:&j=mrbf-5191.fuse_out:powerbar-2104.s1:1/0:red:5/16:3/8' },
 ];
+// Fume extractor options: the fan with everything connected (adapter, clamp, flex duct). Hash fragments like the battery ones; opts as in the catalog.
+const F = 'fan-80mm', AD = 'fan-duct-adapter', fan = o => 's=' + F + ':-:0:' + o;
+// yaw: the duct's bend turns toward the fan frame's +X; on a vertical fan that is down, so the vertical options turn it 180 degrees (bend up)
+const chain = (dia, len, bend, yaw = 0, cl = 'hose-clamp') => '~' + AD + ':' + F + '.outlet:0:dia=' + dia + ',length=30' +
+  '~' + cl + ':' + AD + '.clamp:0:dia=' + dia + '~flex-duct:' + AD + '.spigot:' + yaw + ':dia=' + dia + ',length=' + len + ',bend=' + bend;
+export const FAN_PRESETS = [
+  { id: 'A', short: 'Straight', name: 'Horizontal fan, 75 mm duct, 1 m straight', hash: fan('orient=horizontal,grill=inlet') + chain('d75', 1, 'straight') },
+  { id: 'B', short: '90 bend', name: 'Vertical fan, 102 mm (4 in) duct, 90 degree bend, 1.5 m', hash: fan('orient=vertical,grill=inlet') + chain('d102', 1.5, 'b90', 180) },
+  { id: 'C', short: '45 bend', name: 'Vertical fan, 75 mm duct, 45 degree bend, 0.8 m', hash: fan('orient=vertical,grill=inlet') + chain('d75', 0.8, 'b45', 180) },
+];
+// the active list follows the start scene: battery options by default, fan options when the fan is the host (setHost is called once, when the scene is created)
+export let PRESETS = BATTERY_PRESETS;
+export const setHost = S => { PRESETS = S && !S.isDefaultHost ? FAN_PRESETS : BATTERY_PRESETS; };
 export const ids = () => PRESETS.map(p => p.id);
 export const byId = id => PRESETS.find(p => p.id === String(id).toUpperCase()) || null;
 export const nextId = id => { const i = ids().indexOf(id); return ids()[(i + 1) % ids().length]; };
@@ -33,6 +46,7 @@ export function relPlace(hostAt, hostYaw, rel, yaw = 0) {
 // scene = { insts, offs, marks, measures, jumpers }. S = createScene(catalog). -> new scene, or null for an unknown id.
 // Replaces only what the preset owns (parts stacked on the battery studs); keeps parts placed elsewhere and jumpers whose two ends still exist.
 export function applyPreset(S, scene, id) {
+  if (!S.isDefaultHost) return applyFanPreset(S, scene, id);
   const p = byId(id); if (!p) return null;
   const parsed = S.fromHash(p.hash);
   const host = scene.insts.find(i => i.part === S.host.id) || parsed.insts.find(i => i.part === S.host.id);
@@ -56,8 +70,20 @@ export function applyPreset(S, scene, id) {
   }
   return { ...scene, insts, jumpers };
 }
+// fan scene: the fan keeps its pose (at, yaw), takes the preset's fan options, and everything else is replaced by the preset's chain. Marks and offsets stay.
+function applyFanPreset(S, scene, id) {
+  const p = FAN_PRESETS.find(x => x.id === String(id).toUpperCase()); if (!p) return null;
+  const parsed = S.fromHash(p.hash), ph = parsed.insts.find(i => i.part === S.host.id), old = scene.insts.find(i => i.part === S.host.id) || ph;
+  const host = { ...old, opts: { ...old.opts, ...ph.opts } };
+  return { ...scene, insts: [host, ...parsed.insts.filter(i => i.part !== S.host.id)], jumpers: [] };
+}
 // which preset the instances equal (parts and their mounts, ignoring the host pose), or null
 export function presetOf(S, insts) {
+  if (!S.isDefaultHost) {   // fan scene: the fan's options and the chain on it, ignoring where the fan stands
+    const key = list => list.map(i => S.serializeState([i.part === S.host.id ? { ...i, at: null, yaw: 0 } : i])).sort().join('~');
+    const mine = key(insts), hit = FAN_PRESETS.find(p => key(S.fromHash(p.hash).insts) === mine);
+    return hit ? hit.id : null;
+  }
   const key = list => S.serializeState(list.filter(i => i.part !== S.host.id && sideOf(S, list, i.id) != null)).split('~').sort().join('~');
   const mine = key(insts);
   const hit = PRESETS.find(p => key(S.fromHash(p.hash).insts) === mine);
@@ -85,6 +111,8 @@ export function stackHeights(S, insts, topIn) {
   return out;
 }
 export function tooltip(id, heights, fmt) {
-  const p = byId(id), f = v => v == null ? '–' : fmt(v);
+  const p = byId(id);
+  if (PRESETS === FAN_PRESETS) return p ? 'Option ' + p.id + ': ' + p.name : 'Custom fume extractor setup';
+  const f = v => v == null ? '–' : fmt(v);
   return (p ? 'Option ' + p.id + ': ' + p.name : 'Custom') + ' · + ' + f(heights.pos) + ' · − ' + f(heights.neg);
 }

@@ -1,0 +1,113 @@
+{
+ "kind": "hoseclamp",
+ "id": "hose-clamp",
+ "name": "Worm-drive hose clamp, stainless band 12 mm wide with screw housing (diameter follows the adapter)",
+ "short": "Clamp",
+ "units": "in",
+ "catalog": {
+  "category": "Ventilation",
+  "mountKind": "stud",
+  "icon": "vent",
+  "short": "Clamp",
+  "swatch": "#b9bec4"
+ },
+ "params": {
+  "band_mm": 12,
+  "band_thickness_mm": 0.8
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "clamp",
+    "consumes_in": 0
+   },
+   "accepts": [
+    "clamp"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 45,
+   "note": "origin = band centre on the duct axis; yaw turns the screw housing around the duct in 45 degree steps"
+  }
+ ],
+ "connections": [],
+ "options": {
+  "dia": {
+   "type": "choice",
+   "default": "d100",
+   "label": "Clamp diameter",
+   "btn": "Ø ",
+   "auto_from": "parent",
+   "values": {
+    "d100": {
+     "label": "100 mm",
+     "nodes": [
+      "clamp_d100"
+     ]
+    },
+    "d75": {
+     "label": "75 mm",
+     "nodes": [
+      "clamp_d75"
+     ]
+    },
+    "d102": {
+     "label": "102 mm (4 in)",
+     "nodes": [
+      "clamp_d102"
+     ]
+    },
+    "d80": {
+     "label": "80 mm",
+     "nodes": [
+      "clamp_d80"
+     ]
+    },
+    "d90": {
+     "label": "90 mm",
+     "nodes": [
+      "clamp_d90"
+     ]
+    },
+    "d110": {
+     "label": "110 mm",
+     "nodes": [
+      "clamp_d110"
+     ]
+    },
+    "d60": {
+     "label": "60 mm",
+     "nodes": [
+      "clamp_d60"
+     ]
+    },
+    "d65": {
+     "label": "65 mm",
+     "nodes": [
+      "clamp_d65"
+     ]
+    },
+    "d70": {
+     "label": "70 mm",
+     "nodes": [
+      "clamp_d70"
+     ]
+    }
+   },
+   "note": "sized to the duct (spigot OD + 6.6 mm of rib); follows the adapter automatically"
+  }
+ },
+ "notes": "GLB holds clamp_d<D> nodes for every diameter in the adapter list."
+}

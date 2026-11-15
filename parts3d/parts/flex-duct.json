@@ -1,0 +1,126 @@
+{
+ "kind": "flexduct",
+ "id": "flex-duct",
+ "name": "Flexible duct: black bellows outside, silver foil inside (diameter follows the adapter, length 0.3 to 5 m, straight / 45 / 90 degree bend)",
+ "short": "Flex duct",
+ "units": "in",
+ "catalog": {
+  "category": "Ventilation",
+  "mountKind": "stud",
+  "icon": "vent",
+  "short": "Flex duct",
+  "swatch": "#1d1d20"
+ },
+ "params": {
+  "pitch_mm": 7,
+  "rib_mm": 4,
+  "overlap_mm": 26
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "duct",
+    "consumes_in": 0
+   },
+   "accepts": [
+    "duct"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 90,
+   "note": "origin = the adapter spigot end; the duct starts 26 mm below it (slid over the spigot); yaw turns the bend direction about the adapter axis in 90 degree steps"
+  }
+ ],
+ "connections": [],
+ "options": {
+  "dia": {
+   "type": "choice",
+   "default": "d100",
+   "label": "Duct diameter",
+   "btn": "Ø ",
+   "auto_from": "parent",
+   "values": {
+    "d100": {
+     "label": "100 mm",
+     "nodes": []
+    },
+    "d75": {
+     "label": "75 mm",
+     "nodes": []
+    },
+    "d102": {
+     "label": "102 mm (4 in)",
+     "nodes": []
+    },
+    "d80": {
+     "label": "80 mm",
+     "nodes": []
+    },
+    "d90": {
+     "label": "90 mm",
+     "nodes": []
+    },
+    "d110": {
+     "label": "110 mm",
+     "nodes": []
+    },
+    "d60": {
+     "label": "60 mm",
+     "nodes": []
+    },
+    "d65": {
+     "label": "65 mm",
+     "nodes": []
+    },
+    "d70": {
+     "label": "70 mm",
+     "nodes": []
+    }
+   },
+   "note": "follows the adapter diameter"
+  },
+  "length": {
+   "type": "number",
+   "default": 1.0,
+   "min": 0.3,
+   "max": 5,
+   "step": 0.1,
+   "unit": "m",
+   "label": "Duct length",
+   "note": "metres along the centre line; built at runtime (xr/flex.js), not stretched"
+  },
+  "bend": {
+   "type": "choice",
+   "default": "straight",
+   "label": "Bend",
+   "btn": "Bend: ",
+   "values": {
+    "straight": {
+     "label": "straight",
+     "nodes": []
+    },
+    "b45": {
+     "label": "45°",
+     "nodes": []
+    },
+    "b90": {
+     "label": "90°",
+     "nodes": []
+    }
+   }
+  }
+ },
+ "notes": "The GLB is only the thumbnail/fallback (90 degree bend, 0.5 m); the app builds the real mesh in xr/flex.js (ribs, bend, black outside + silver foil inside)."
+}

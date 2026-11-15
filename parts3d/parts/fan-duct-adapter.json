@@ -1,0 +1,329 @@
+{
+ "kind": "fanduct",
+ "id": "fan-duct-adapter",
+ "name": "Fan-to-duct adapter: 80 mm fan flange to round spigot (variable diameter and length)",
+ "short": "Fan adapter",
+ "units": "in",
+ "catalog": {
+  "category": "Ventilation",
+  "mountKind": "stud",
+  "icon": "vent",
+  "short": "Fan adapter",
+  "swatch": "#33383f"
+ },
+ "params": {
+  "length": 30,
+  "flange_mm": 80,
+  "flange_thickness_mm": 4,
+  "corner_radius_mm": 4,
+  "hole_mm": 4.3,
+  "hole_pitch_mm": 71.5,
+  "opening_mm": 76,
+  "wall_mm": 2,
+  "lip_mm": 2
+ },
+ "param_ranges": {
+  "spigot_od_mm": [
+   60,
+   110
+  ],
+  "spigot_length_mm": [
+   15,
+   80
+  ],
+  "length_step_mm": 5
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "fan80",
+    "consumes_in": 0
+   },
+   "accepts": [
+    "fan80"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 0,
+   "note": "origin = centre of the flange bottom face; sits on the fan outlet face, flange holes line up with the fan holes (71.5 mm); yaw in 90 degree steps; no yaw buttons: the square flange is symmetric under 90 degrees and the spigot is round, so a twist changes nothing visible"
+  }
+ ],
+ "connections": [
+  {
+   "id": "spigot",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "duct",
+   "polarity": "any",
+   "pos": [
+    0,
+    2.3071,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "pos_by_option": {
+    "dia": {
+     "d100": [
+      0,
+      2.3071,
+      0
+     ],
+     "d75": [
+      0,
+      1.9449,
+      0
+     ],
+     "d102": [
+      0,
+      2.3386,
+      0
+     ],
+     "d80": [
+      0,
+      1.9921,
+      0
+     ],
+     "d90": [
+      0,
+      2.1496,
+      0
+     ],
+     "d110": [
+      0,
+      2.4646,
+      0
+     ],
+     "d60": [
+      0,
+      2.1811,
+      0
+     ],
+     "d65": [
+      0,
+      2.1024,
+      0
+     ],
+     "d70": [
+      0,
+      2.0236,
+      0
+     ]
+    }
+   },
+   "pos_per_option": {
+    "length": {
+     "axis": 1,
+     "default": 30,
+     "per_unit": 0.03937
+    }
+   },
+   "pass_options": {
+    "dia": "dia"
+   },
+   "accepts": {
+    "thread": "duct",
+    "max_items": 1,
+    "note": "flex duct slides over the spigot end; origin of the duct = the spigot end, moves with diameter and length"
+   },
+   "align_parent": true
+  },
+  {
+   "id": "clamp",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "clamp",
+   "polarity": "any",
+   "pos": [
+    0,
+    1.6378,
+    0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "pos_by_option": {
+    "dia": {
+     "d100": [
+      0,
+      1.6378,
+      0
+     ],
+     "d75": [
+      0,
+      1.2756,
+      0
+     ],
+     "d102": [
+      0,
+      1.6693,
+      0
+     ],
+     "d80": [
+      0,
+      1.3228,
+      0
+     ],
+     "d90": [
+      0,
+      1.4803,
+      0
+     ],
+     "d110": [
+      0,
+      1.7953,
+      0
+     ],
+     "d60": [
+      0,
+      1.5118,
+      0
+     ],
+     "d65": [
+      0,
+      1.4331,
+      0
+     ],
+     "d70": [
+      0,
+      1.3543,
+      0
+     ]
+    }
+   },
+   "pos_per_option": {
+    "length": {
+     "axis": 1,
+     "default": 30,
+     "per_unit": 0.03937
+    }
+   },
+   "pass_options": {
+    "dia": "dia"
+   },
+   "accepts": {
+    "thread": "clamp",
+    "max_items": 1,
+    "note": "hose clamp band centre, 17 mm behind the spigot end (just behind the lip)"
+   },
+   "align_parent": true
+  }
+ ],
+ "options": {
+  "dia": {
+   "type": "choice",
+   "default": "d100",
+   "label": "Spigot diameter",
+   "values": {
+    "d100": {
+     "label": "100 mm",
+     "nodes": [
+      "trans_d100",
+      "tube_d100",
+      "lip_d100"
+     ]
+    },
+    "d75": {
+     "label": "75 mm",
+     "nodes": [
+      "trans_d75",
+      "tube_d75",
+      "lip_d75"
+     ]
+    },
+    "d102": {
+     "label": "102 mm (4 in)",
+     "nodes": [
+      "trans_d102",
+      "tube_d102",
+      "lip_d102"
+     ]
+    },
+    "d80": {
+     "label": "80 mm",
+     "nodes": [
+      "trans_d80",
+      "tube_d80",
+      "lip_d80"
+     ]
+    },
+    "d90": {
+     "label": "90 mm",
+     "nodes": [
+      "trans_d90",
+      "tube_d90",
+      "lip_d90"
+     ]
+    },
+    "d110": {
+     "label": "110 mm",
+     "nodes": [
+      "trans_d110",
+      "tube_d110",
+      "lip_d110"
+     ]
+    },
+    "d60": {
+     "label": "60 mm",
+     "nodes": [
+      "trans_d60",
+      "tube_d60",
+      "lip_d60"
+     ]
+    },
+    "d65": {
+     "label": "65 mm",
+     "nodes": [
+      "trans_d65",
+      "tube_d65",
+      "lip_d65"
+     ]
+    },
+    "d70": {
+     "label": "70 mm",
+     "nodes": [
+      "trans_d70",
+      "tube_d70",
+      "lip_d70"
+     ]
+    }
+   },
+   "note": "spigot outer diameter; all sizes are separate nodes in the GLB (trans_d<D>, tube_d<D>, lip_d<D>); cycle order 100, 75, 102 (4 in), 80, 90, 110, 60, 65, 70",
+   "btn": "Ø "
+  },
+  "length": {
+   "type": "number",
+   "default": 30,
+   "min": 15,
+   "max": 80,
+   "step": 5,
+   "unit": "mm",
+   "unit_m": 0.001,
+   "axis": "y",
+   "label": "Spigot length",
+   "nodes": [
+    "tube_*",
+    "lip_*"
+   ],
+   "note": "runtime: tube_* is stretched along Y from its base, lip_* moves with the end; the GLB is built at 30 mm. Bake one size: python make_part.py parts\\fan-duct-adapter.json out.glb dia=75 length=50"
+  }
+ },
+ "notes": "Parametric, no datasheet: design values. Flange 80x80x4 r4, 4 x 4.3 holes on 71.5, opening 76. Transition 2 mm wall, height 15 + 0.4 x |D-76| mm (flares past the flange when D > 80). Spigot 2 mm wall, raised lip 3 mm tall x 2 mm proud with its top 5 mm below the end (hose clamp stop)."
+}

@@ -24,7 +24,9 @@ const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
 const overlay = $('overlay'), ctl = $('ctl'), ctx = $('ctx'), bottom = $('bottom'), status = $('status'), enterBtn = $('enter'), hint = $('hint');
 const PREVIEW = !!q.get('arpreview');
-const DEBUG = q.get('debug') === '1';
+const DEBUG_KEY = 'ar-xr-debug';
+let DEBUG = q.get('debug') === '1';   // mutable: ?debug=1 forces it on; otherwise the menu toggle (localStorage)
+if (!DEBUG) { try { DEBUG = localStorage.getItem(DEBUG_KEY) === '1'; } catch (e) { /* storage blocked */ } }
 const BUILD = window.__BUILD || 'dev';
 $('build0').textContent = $('build1').textContent = 'build ' + BUILD;
 
@@ -33,9 +35,18 @@ const logLines = [];
 function log(m) {
   const t = new Date().toTimeString().slice(0, 8);
   console.log('[ar-xr]', m);
-  if (!DEBUG) return;
-  logLines.push(t + ' ' + m); if (logLines.length > 20) logLines.shift();
-  $('dbg').hidden = false; $('dbg').textContent = logLines.join('\n');
+  logLines.push(t + ' ' + m); if (logLines.length > 20) logLines.shift();   // always buffered, so errors before switching on still show
+  renderLog();
+}
+function renderLog() {
+  $('dbg').hidden = !DEBUG;
+  if (DEBUG) $('dbg').textContent = logLines.join('\n');
+}
+function syncDebugButton() { $('dbgbtn').querySelector('small').textContent = DEBUG ? 'On' : 'Off'; $('dbgbtn').setAttribute('aria-label', 'Debug: ' + (DEBUG ? 'on' : 'off') + '. Tap to change'); }
+function setDebug(on) {
+  DEBUG = !!on; syncDebugButton();
+  if (!q.get('debug')) { try { localStorage.setItem(DEBUG_KEY, DEBUG ? '1' : '0'); } catch (e) { /* storage blocked */ } }
+  renderLog(); if (DEBUG) log('debug on, build ' + BUILD + ', hash #' + location.hash.slice(1));
 }
 addEventListener('error', e => log('ERROR ' + (e.message || e.error)));
 addEventListener('unhandledrejection', e => log('REJECTION ' + (e.reason && e.reason.message || e.reason)));
@@ -45,6 +56,8 @@ if (DEBUG && q.get('eruda') === '1') {   // lazy: only when asked for
   sc.onerror = () => log('eruda failed to load'); document.head.appendChild(sc);
 }
 log('build ' + BUILD);
+$('dbgbtn').addEventListener('click', () => setDebug(!DEBUG));
+syncDebugButton(); renderLog();
 
 // ---- renderer / scene ----
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -316,6 +329,7 @@ const kindOfId = id => { const i = instOf(id), p = i && C.partOf(i.part); return
 const nameOfId = id => { const i = instOf(id), p = i && C.partOf(i.part); return !p ? '' : (p.short || p.name); };
 const numKey = p => Object.keys(p.options || {}).find(k => p.options[k].type === 'number');
 const choiceKey = p => Object.keys(p.options || {}).find(k => p.options[k].type === 'choice');
+const optKeys = (p, kind) => PK.optionButtons(p, kind);   // option buttons of a part: gauge, gauge2, gauge3
 
 async function rebuild() {
   if (busy) { again = true; return; }
@@ -423,8 +437,8 @@ function readout() {
   let t = 'Nothing selected';
   if (!inst && selMark >= 0) t = 'Selected: mark M' + (selMark + 1); else if (!inst && selMeasure >= 0) t = 'Selected: measurement ' + (selMeasure + 1);
   if (inst) {
-    const nk = numKey(p), ck = choiceKey(p);
-    t = 'Selected: ' + nameOfId(inst.id) + (nk ? ' ' + MD.fmtLen(inst.opts[nk], units) : '') + (ck ? ' ' + p.options[ck].values[inst.opts[ck]].label : '') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
+    const nk = numKey(p);
+    t = 'Selected: ' + nameOfId(inst.id) + (nk ? ' ' + MD.fmtOpt(p.options[nk], inst.opts[nk], units) : '') + optKeys(p, kind).map(k => ' ' + PK.optLabel(p.options[k], inst.opts[k])).join('') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
   } else if (hoveredId) t = 'Aim: ' + nameOfId(hoveredId);
   if (!inst && !hoveredId && selMark < 0 && selMeasure < 0 && !selJumper) t = PR.tooltip(PR.presetOf(C.SC, state), stackH, v => MD.fmtLen(v, units));
   if (selJumper) { const j = jumpers.find(x => x.id === selJumper), L = j && jumperLen(j); if (L) t = JMP.jumperText(j, MD.fmtLen(L.cut, units)); }
@@ -438,13 +452,13 @@ function readout() {
   const chip = $('mode'); chip.dataset.tool = tool; chip.querySelector('b').textContent = MD.TOOL_LABEL[tool]; chip.setAttribute('aria-label', 'Mode: ' + MD.TOOL_LABEL[tool] + '. Tap to change');
   const step = inst ? C.yawStep(inst.part) : 0;
   const inXR = document.body.classList.contains('inar'), libOpen = !libEl.hidden;
-  const ex = inst ? { free: !!inst.at || inst.part === C.host.id, num: !!numKey(p), choice: !!choiceKey(p) } : {};
+  const ex = inst ? { free: !!inst.at || inst.part === C.host.id, host: inst.part === C.host.id, num: !!numKey(p), choice: optKeys(p, kind).length } : {};
   const tg = inXR ? null : selTarget();
   const quickView = inXR && quick && { kind: quick.kind, isSel: quick.kind === 'part' && quick.id === selectedId, point: !!quick.point, fit: quick.fit.length };
   const jf = jfromKeys(inXR, quick, tg);
   const acts = libOpen || optOpen || recOpen ? [] : MD.ctxFor({ xrayUi: true, linking: !!linking, jumper: !!selJumper, jfrom: !!(jf && jf.length), jundo: jundo.length > 0, markSel: !selectedId && (selMark >= 0 || (inXR && hovMark >= 0)), measSel: !selectedId && selMeasure >= 0, tool, kind, rotStep: step, selected: !!selectedId, x: ex, more: moreOpen, inXR, quick: quickView, target: tg && { kind: tg.kind, point: !!tg.point },
     adding: adding ? { stud: adding.kind === 'stud', outlets: adding.outlets.length } : null });
-  const low = MD.bottomFor(tool, inXR);
+  const low = MD.bottomFor(tool, inXR, true);   // Options: battery terminals, or the fume extractor setups
   for (const id of MD.ALL_IDS) $(id).hidden = !acts.includes(id) && !low.includes(id);
   for (const id of acts) ctx.appendChild($(id));   // keep the layout order of the list
   bottom.appendChild($('mode')); for (const id of low) bottom.appendChild($(id));
@@ -453,13 +467,14 @@ function readout() {
   $('more').setAttribute('aria-pressed', moreOpen && !adding);
   const cur = inXR ? quick : tg; $('qadd').disabled = !(cur && (cur.fit.length || (cur.free && cur.free.length)));   // enabled when the part has free outlets even if no library part fits yet (click says so)
   $('rotm').setAttribute('aria-label', 'Rotate right ' + step + ' degrees'); $('rotp').setAttribute('aria-label', 'Rotate left ' + step + ' degrees');
-  if (inst && choiceKey(p)) { const ck = choiceKey(p), o = p.options[ck]; $('gauge').dataset.v = o.values[inst.opts[ck]].label; }
+  if (inst) PK.OPT_IDS.forEach((id, n) => { const k = optKeys(p, kind)[n]; if (k) $(id).dataset.v = PK.optLabel(p.options[k], inst.opts[k]); });
   { const j = jumpers.find(x => x.id === selJumper); if (j) { $('jgauge').dataset.v = j.gauge + ' AWG'; $('jcolor').dataset.v = j.color === 'red' ? 'Red' : 'Black'; } }
-  { const cur = PR.presetOf(C.SC, state), ob = $('opt'), nm = cur ? cur : optLast ? optLast + '*' : null; ob.dataset.v = nm ? 'Option ' + nm + ' \u25b8' : 'Options \u25b8'; ob.setAttribute('aria-label', cur ? 'Terminal option ' + cur + ': ' + PR.byId(cur).name + '. Tap for the next, hold for the list' : 'Terminal options. Tap for the next, hold for the list'); }
+  { const cur = PR.presetOf(C.SC, state), ob = $('opt'), nm = cur ? cur : optLast ? optLast + '*' : null; ob.dataset.v = nm ? 'Option ' + nm + ' \u25b8' : 'Options \u25b8'; ob.setAttribute('aria-label', cur ? 'Option ' + cur + ': ' + PR.byId(cur).name + '. Tap for the next, hold for the list' : 'Options. Tap for the next, hold for the list'); }
   $('confirm').setAttribute('aria-label', adding && adding.kind === 'stud' ? 'Place on the ring' : 'Place here');
   $('cover').setAttribute('aria-pressed', !!(inst && inst.opts.cover)); $('move').setAttribute('aria-pressed', !!moving);
   const st = MD.stepsFor(units), lab = (id, big, small, aria) => { $(id).setAttribute('aria-label', aria); };
-  lab('extp', '+' + st.extLabel, st.extUnit, 'Extension plus ' + (units === 'mm' ? '25 mm' : '1 inch')); lab('extm', '&minus;' + st.extLabel, st.extUnit, 'Extension minus ' + (units === 'mm' ? '25 mm' : '1 inch'));
+  { const no = inst && numKey(p) ? p.options[numKey(p)] : null, mmo = no && no.unit === 'mm', ex = mmo ? no.step + ' mm' : units === 'mm' ? '25 mm' : '1 inch', nm = mmo ? no.label : 'Extension';   // a number option in mm (fan adapter spigot length) steps by its own size
+    lab('extp', '+' + st.extLabel, st.extUnit, nm + ' plus ' + ex); lab('extm', '&minus;' + st.extLabel, st.extUnit, nm + ' minus ' + ex); }
   lab('hp', '&uarr;', st.heightLabel, 'Raise ' + st.heightLabel); lab('hm', '&darr;', st.heightLabel, 'Lower ' + st.heightLabel);
   for (const [id, ch, w] of [['nl', '&larr;', 'left'], ['nr', '&rarr;', 'right'], ['nu', '&#9650;', 'away'], ['nd', '&#9660;', 'toward me']]) lab(id, ch, st.nudgeLabel, 'Nudge ' + w + ' ' + st.nudgeLabel);
   compactButtons();
@@ -470,7 +485,7 @@ function readout() {
 function compactButtons() {
   for (const id of Object.keys(IC.BUTTONS)) {
     const b = $(id); if (!b) continue;
-    const txt = id === 'mode' ? MD.TOOL_LABEL[tool] : id === 'gauge' ? (b.dataset.v || 'Gauge') : id === 'jgauge' ? (b.dataset.v || 'Gauge') : id === 'jcolor' ? (b.dataset.v || 'Color') : id === 'opt' ? (b.dataset.v || 'Option') : id === 'xray' || id === 'rbxray' ? 'X-ray ' + RC.XRAY_SHORT[xray.mode] : id === 'rbpause' ? (cycle.paused ? 'Resume' : 'Pause') : null;
+    const txt = id === 'mode' ? MD.TOOL_LABEL[tool] : id === 'gauge' || id === 'gauge2' || id === 'gauge3' ? (b.dataset.v || 'Option') : id === 'jgauge' ? (b.dataset.v || 'Gauge') : id === 'jcolor' ? (b.dataset.v || 'Color') : id === 'opt' ? (b.dataset.v || 'Option') : id === 'xray' || id === 'rbxray' ? 'X-ray ' + RC.XRAY_SHORT[xray.mode] : id === 'rbpause' ? (cycle.paused ? 'Resume' : 'Pause') : null;
     const m = IC.markup(id, txt); if (m && b.dataset.m !== m) { b.innerHTML = m; b.dataset.m = m; }
     const al = b.getAttribute('aria-label'); if (al) b.title = al; else b.title = b.textContent.trim();
   }
@@ -493,12 +508,15 @@ const setOffs = o => { offs = o; applyOffsets(); };
 function lugExt(d) {
   const li = selInst(); if (!li) return;
   const p = C.partOf(li.part), k = numKey(p); if (!k) return;
-  li.opts[k] = MD.extStep(li.opts[k], d, units, p.options[k].min, p.options[k].max); rebuild();
+  li.opts[k] = MD.extOpt(p.options[k], li.opts[k], d, units); rebuild();
 }
 wire('extm', () => lugExt(-1)); wire('extp', () => lugExt(1));   // direction only; the step size comes from the units
 const rotSel = dir => { const li = selInst(); if (li) { li.yaw = PK.rotateYaw(li.yaw, dir * (C.yawStep(li.part) || 0)); rebuild(); } };
 wire('rotm', () => rotSel(-1)); wire('rotp', () => rotSel(1));
-wire('gauge', () => { const li = selInst(), p = li && C.partOf(li.part), k = p && choiceKey(p); if (k) { li.opts[k] = PK.nextChoice(p.options[k].values, li.opts[k]); rebuild(); } });
+PK.OPT_IDS.forEach((id, n) => wire(id, () => {   // option buttons: tap flips the option (choice: next value, bool: toggle); parts that follow it (duct, clamp) take the new value
+  const li = selInst(), p = li && C.partOf(li.part), k = p && optKeys(p, kindOfId(li.id))[n];
+  if (k) { li.opts[k] = PK.flipOption(p.options[k], li.opts[k]); C.SC.syncOpts(state); rebuild(); }
+}));
 wire('cover', () => { const li = selInst(); if (li && 'cover' in li.opts) { li.opts.cover = !li.opts.cover; rebuild(); } });
 // a selected part placed on a surface (inst.at) moves by itself; otherwise these move the whole model
 const freeSel = () => { const i = selInst(); return i && (i.at || i.part === C.host.id) ? i : null; };   // surface parts and the battery itself (at = null means the origin)
@@ -549,7 +567,7 @@ wire('deselect', () => selectPart(null));
 wire('clearmarks', clearMarks);
 wire('reset', () => {
   cancelAdd(); closeLib();
-  state = C.SC.fromHash(initialHash).insts;
+  state = startScene().insts;
   selectedId = null; rebuild(); setOffs({ ...OFS.ZERO });
 });
 wire('exit', () => { if (session) { userExit = true; session.end(); } });
@@ -561,7 +579,7 @@ wire('rec', () => { if (adding) cancelAdd(); closeLib(); moreOpen = false; recOp
 
 // ---- recording mode (#126): a clean camera. Hides the build stamp, toasts (queued silently), the context card and every control except a small
 //      translucent corner button that opens a mini bar (next option, x-ray, pause, exit). Optional auto-cycle of options A-F every 4, 6 or 8 s with a glass caption. ----
-const cycle = RC.createCycle(PR.ids());
+let cycle = RC.createCycle(PR.ids());   // re-created once the start scene is known (battery or fan options)
 let cycleTimer = 0;
 const curOption = () => PR.presetOf(C.SC, state);
 function updateRecUi() {
@@ -672,6 +690,15 @@ function toast(t, warn = false, ms = 3500, level, opts = null) {
   const th = () => { const v = document.documentElement.getAttribute('data-theme'); for (const el of [btn, panel]) el.setAttribute('data-theme', v === 'light' || v === 'dark' ? v : 'auto'); };
   th(); document.addEventListener('tb-theme-change', th);
 }
+// menu: Scene switch (Battery <-> Fume extractor). Reloads with #host=... so the start scene is rebuilt from scratch.
+const FUME_HOST = 'fan-80mm';
+function syncSceneButton() { const fume = !C.SC.isDefaultHost; $('scenebtn').querySelector('small').textContent = fume ? 'Fume extractor' : 'Battery'; $('scenebtn').setAttribute('aria-label', 'Scene: ' + (fume ? 'Fume extractor' : 'Battery') + '. Tap to switch'); }
+$('scenebtn').addEventListener('click', () => {
+  const sp = new URLSearchParams(location.search); sp.delete('host'); sp.delete('scene');
+  const search = sp.toString() ? '?' + sp : '', url = location.pathname + search + (C.SC.isDefaultHost ? '#host=' + FUME_HOST : '');
+  try { history.replaceState(null, '', url); } catch (e) { location.href = url; return; }
+  location.reload();
+});
 let libKeys = null;   // part id -> outlet keys it fits, while the library is filtered to a highlighted outlet / part
 let libFit = null, libCat = null, libPick = false;   // fit list (or null = all), category filter (null = All), category picker open
 const catSaved = () => { try { return sessionStorage.getItem(CT.CAT_KEY) || null; } catch (_) { return null; } };
@@ -1497,6 +1524,12 @@ window.__ar = { rec: { start: startRec, stop: stopRec, on: () => rec.on, bar: ()
 
 Object.assign(window.__ar, { jumper: { start: keys => startLink(keys), pick: pickLink, list: () => JSON.parse(JSON.stringify(jumpers)), sel: () => selJumper, select: selectJumper, linking: () => !!linking, cancel: cancelLink, setEnd: jumperSetEnd, len: id => { const j = jumpers.find(x => x.id === id); return j && jumperLen(j); }, undo: () => $('undoj').click(), markScreen: key => { const m = linkPts().find(p => p.userData.key === key); if (!m) return null; const v = m.getWorldPosition(new THREE.Vector3()).project(camera), rc = renderer.domElement.getBoundingClientRect(); return { x: rc.left + (v.x + 1) / 2 * rc.width, y: rc.top + (1 - v.y) / 2 * rc.height }; } }, option: applyOption, heights: () => stackH });
 
+// the scene a page starts (and Reset returns) to: the hash, or without one the battery's default stack / the fume extractor option A fully assembled
+function startScene() {
+  const sc = C.SC.fromHash(initialHash);
+  if (!sc.valid && !C.SC.isDefaultHost) { const a = PR.applyPreset(C.SC, sc, 'A'); if (a) { optLast = 'A'; return a; } }
+  return sc;
+}
 // ---- start ----
 (async function init() {
   if (q.has('help')) $('help').hidden = false;
@@ -1504,10 +1537,12 @@ Object.assign(window.__ar, { jumper: { start: keys => startLink(keys), pick: pic
     document.body.classList.add('arpreview');
   }
   fit();
-  try { C = await createComposer('parts/catalog.json'); }
+  try { C = await createComposer('parts/catalog.json', '', SCN.hostSelFrom(location.search, location.hash)); }
   catch (e) { status.textContent = 'Could not load parts'; toast('Could not load parts: ' + e.message, true, 0, 'error'); return; }
-  initialHash = location.hash.slice(1);
-  const sc0 = C.SC.fromHash(initialHash);
+  PR.setHost(C.SC); cycle = RC.createCycle(PR.ids());
+  initialHash = location.hash.slice(1); syncSceneButton();
+  log('scene hash #' + initialHash);
+  const sc0 = startScene();
   let sc = sc0; const oq = new URLSearchParams(initialHash).get('opt');
   if (oq && PR.byId(oq)) { sc = PR.applyPreset(C.SC, sc0, oq); optLast = PR.byId(oq).id; }   // #opt=A..F
   state = sc.insts; offs = sc.offs; storedMarks = sc.marks; storedMeasures = sc.measures; jumpers = sc.jumpers || [];
@@ -1527,7 +1562,7 @@ Object.assign(window.__ar, { jumper: { start: keys => startLink(keys), pick: pic
   else if (q.get('open')) { if (q.get('open') === 'more') moreOpen = true; readout(); }
   window.__ready = true;
   // warm the GLB cache for options A-F while idle (before Enter AR), so switching in AR is instant
-  const warm = () => { const ids = PR.PRESETS.flatMap(p => C.SC.fromHash(p.hash).insts.map(i => i.part)); C.preload(ids).then(r => { const n = r.filter(x => x.status === 'rejected').length; log('preload done' + (n ? ', ' + n + ' failed' : '')); }); };
+  const warm = () => { const ids = !C.SC.isDefaultHost ? C.catalog.parts.filter(p => p.category === 'Ventilation' || p.catalog && p.catalog.category === 'Ventilation').map(p => p.id) : PR.PRESETS.flatMap(p => C.SC.fromHash(p.hash).insts.map(i => i.part)); C.preload(ids).then(r => { const n = r.filter(x => x.status === 'rejected').length; log('preload done' + (n ? ', ' + n + ' failed' : '')); }); };
   if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 3000 }); else setTimeout(warm, 500);
 })();
 

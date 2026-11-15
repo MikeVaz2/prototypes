@@ -1,5 +1,5 @@
 // Part library categories: order, icons and the filter cycle. Pure, no DOM.
-export const CAT_ORDER = ['Battery', 'Terminals', 'Lugs', 'Bus bars', 'Fuses', 'Cables', 'Hardware'];
+export const CAT_ORDER = ['Battery', 'Terminals', 'Lugs', 'Bus bars', 'Fuses', 'Cables', 'Hardware', 'Ventilation'];
 export const CAT_KEY = 'parts3d.libcat';
 // 24x24 stroke paths for the small inline icons (currentColor)
 export const CAT_ICONS = {
@@ -11,6 +11,7 @@ export const CAT_ICONS = {
   Fuses: 'M3 12h4M17 12h4M7 8h10v8H7zM9 12h6',
   Cables: 'M3 17c6 0 4-10 9-10h9',
   Hardware: 'M12 3l7 4v10l-7 4-7-4V7zM12 9a3 3 0 100 6 3 3 0 000-6z',
+  Ventilation: 'M12 12m-2 0a2 2 0 104 0 2 2 0 10-4 0M12 10C12 5 16 4 16 7c0 2-2 3-4 3M14 12c5 0 6 4 3 4-2 0-3-2-3-4M12 14c0 5-4 6-4 3 0-2 2-3 4-3M10 12c-5 0-6-4-3-4 2 0 3 2 3 4',
   other: 'M5 12h.01M12 12h.01M19 12h.01',
 };
 export const catIcon = c => '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + (CAT_ICONS[c] || CAT_ICONS.other) + '"/></svg>';
