@@ -19,6 +19,7 @@ import * as JMP from './jumper.js';
 import * as PR from './presets.js';
 import * as LC from './lifecycle.js';
 import * as RC from './rec.js';
+import * as SOL from './solar.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -327,9 +328,14 @@ const instOf = id => state.find(i => i.id === id) || null;
 const selInst = () => instOf(selectedId);
 const kindOfId = id => { const i = instOf(id), p = i && C.partOf(i.part); return p ? PK.kindOf(p.id, C.host.id, 'cover' in (p.options || {})) : null; };
 const nameOfId = id => { const i = instOf(id), p = i && C.partOf(i.part); return !p ? '' : (p.short || p.name); };
-const numKey = p => Object.keys(p.options || {}).find(k => p.options[k].type === 'number');
+const numKeys = p => Object.keys(p.options || {}).filter(k => p.options[k].type === 'number');
+const numSel = new Map();   // instance id -> the number option the +/- buttons edit (parts with several: panel width / length / slide, rack spacing ...)
+const numKey = (p, id) => { const ks = numKeys(p), s = numSel.get(id); return ks.includes(s) ? s : ks[0]; };
+const NUM = '#num';   // pseudo option button: "Edit: <name> <value>", taps through the number options
 const choiceKey = p => Object.keys(p.options || {}).find(k => p.options[k].type === 'choice');
-const optKeys = (p, kind) => PK.optionButtons(p, kind);   // option buttons of a part: gauge, gauge2, gauge3
+const optKeys = (p, kind) => { const k = PK.optionButtons(p, kind); return numKeys(p).length > 1 ? [NUM, ...k].slice(0, 3) : k; };   // option buttons of a part: gauge, gauge2, gauge3
+const optText = (p, inst, k) => k === NUM ? 'Edit: ' + (p.options[numKey(p, inst.id)].short || p.options[numKey(p, inst.id)].label) + ' ' + MD.fmtOpt(p.options[numKey(p, inst.id)], inst.opts[numKey(p, inst.id)], units) : PK.optLabel(p.options[k], inst.opts[k]);
+const numText = (p, inst) => numKeys(p).map(k => (numKeys(p).length > 1 ? (p.options[k].short || p.options[k].label) + ' ' : '') + MD.fmtOpt(p.options[k], inst.opts[k], units)).join(' ');
 
 async function rebuild() {
   if (busy) { again = true; return; }
@@ -429,6 +435,15 @@ function applyOffsets() {
   inner.position.set(...t.pos); inner.rotation.y = t.yawRad;
   readout(); persistSoon();
 }
+// solar extras of the selected part: panel numbers and whether its holes sit over the bars, the station's parallel check, a cable's polarity
+function solarNote(inst, p) {
+  if (p.electrical && p.electrical.imp) {
+    const rk = state.find(i => i.part === C.host.id), hc = rk && SOL.holesCheck(inst, rk, C.partOf);
+    return SOL.panelText(p, inst.opts) + (hc && !hc.ok ? ' · ' + hc.text : '');
+  }
+  if (p.electrical && p.electrical.vmax) { const ck = SOL.stationCheck(state, jumpers, C.partOf); return ck ? ck.text : ''; }
+  return '';
+}
 function readout() {
   if (!C) return;
   const inst = selInst(), p = inst && C.partOf(inst.part), kind = inst ? kindOfId(inst.id) : null;
@@ -437,11 +452,11 @@ function readout() {
   let t = 'Nothing selected';
   if (!inst && selMark >= 0) t = 'Selected: mark M' + (selMark + 1); else if (!inst && selMeasure >= 0) t = 'Selected: measurement ' + (selMeasure + 1);
   if (inst) {
-    const nk = numKey(p);
-    t = 'Selected: ' + nameOfId(inst.id) + (nk ? ' ' + MD.fmtOpt(p.options[nk], inst.opts[nk], units) : '') + optKeys(p, kind).map(k => ' ' + PK.optLabel(p.options[k], inst.opts[k])).join('') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
+    t = 'Selected: ' + nameOfId(inst.id) + (numKeys(p).length ? ' ' + numText(p, inst) : '') + optKeys(p, kind).filter(k => k !== NUM).map(k => ' ' + PK.optLabel(p.options[k], inst.opts[k])).join('') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
+    const sx = solarNote(inst, p); if (sx) t += ' · ' + sx;
   } else if (hoveredId) t = 'Aim: ' + nameOfId(hoveredId);
-  if (!inst && !hoveredId && selMark < 0 && selMeasure < 0 && !selJumper) t = PR.tooltip(PR.presetOf(C.SC, state), stackH, v => MD.fmtLen(v, units));
-  if (selJumper) { const j = jumpers.find(x => x.id === selJumper), L = j && jumperLen(j); if (L) t = JMP.jumperText(j, MD.fmtLen(L.cut, units)); }
+  if (!inst && !hoveredId && selMark < 0 && selMeasure < 0 && !selJumper) { t = PR.tooltip(PR.presetOf(C.SC, state), stackH, v => MD.fmtLen(v, units)); const ck = SOL.stationCheck(state, jumpers, C.partOf); if (ck && !C.SC.isDefaultHost) t += ' · ' + ck.text; }
+  if (selJumper) { const j = jumpers.find(x => x.id === selJumper), L = j && jumperLen(j); if (L) t = JMP.jumperText(j, JMP.isMc4(j) ? L.metres.toFixed(1) + ' m' : MD.fmtLen(L.cut, units)); }
   if (linking) t = 'Cable: ' + (linking.from ? 'pick the second stud' : 'pick the first stud');
   if (selOutlet && !inst) t = 'Outlet: ' + outletName(selOutlet);
   if (adding) t = 'Add ' + (C.partOf(adding.partId).short || adding.partId) + (adding.kind === 'stud' ? ': ' + (adding.target ? outletName(adding.target) : 'no target') : ': aim at a surface');
@@ -452,7 +467,7 @@ function readout() {
   const chip = $('mode'); chip.dataset.tool = tool; chip.querySelector('b').textContent = MD.TOOL_LABEL[tool]; chip.setAttribute('aria-label', 'Mode: ' + MD.TOOL_LABEL[tool] + '. Tap to change');
   const step = inst ? C.yawStep(inst.part) : 0;
   const inXR = document.body.classList.contains('inar'), libOpen = !libEl.hidden;
-  const ex = inst ? { free: !!inst.at || inst.part === C.host.id, host: inst.part === C.host.id, num: !!numKey(p), choice: optKeys(p, kind).length } : {};
+  const ex = inst ? { free: !!inst.at || inst.part === C.host.id, host: inst.part === C.host.id, num: numKeys(p).length > 0, choice: optKeys(p, kind).length } : {};
   const tg = inXR ? null : selTarget();
   const quickView = inXR && quick && { kind: quick.kind, isSel: quick.kind === 'part' && quick.id === selectedId, point: !!quick.point, fit: quick.fit.length };
   const jf = jfromKeys(inXR, quick, tg);
@@ -467,13 +482,13 @@ function readout() {
   $('more').setAttribute('aria-pressed', moreOpen && !adding);
   const cur = inXR ? quick : tg; $('qadd').disabled = !(cur && (cur.fit.length || (cur.free && cur.free.length)));   // enabled when the part has free outlets even if no library part fits yet (click says so)
   $('rotm').setAttribute('aria-label', 'Rotate right ' + step + ' degrees'); $('rotp').setAttribute('aria-label', 'Rotate left ' + step + ' degrees');
-  if (inst) PK.OPT_IDS.forEach((id, n) => { const k = optKeys(p, kind)[n]; if (k) $(id).dataset.v = PK.optLabel(p.options[k], inst.opts[k]); });
+  if (inst) PK.OPT_IDS.forEach((id, n) => { const k = optKeys(p, kind)[n]; if (k) $(id).dataset.v = optText(p, inst, k); });
   { const j = jumpers.find(x => x.id === selJumper); if (j) { $('jgauge').dataset.v = j.gauge + ' AWG'; $('jcolor').dataset.v = j.color === 'red' ? 'Red' : 'Black'; } }
   { const cur = PR.presetOf(C.SC, state), ob = $('opt'), nm = cur ? cur : optLast ? optLast + '*' : null; ob.dataset.v = nm ? 'Option ' + nm + ' \u25b8' : 'Options \u25b8'; ob.setAttribute('aria-label', cur ? 'Option ' + cur + ': ' + PR.byId(cur).name + '. Tap for the next, hold for the list' : 'Options. Tap for the next, hold for the list'); }
   $('confirm').setAttribute('aria-label', adding && adding.kind === 'stud' ? 'Place on the ring' : 'Place here');
   $('cover').setAttribute('aria-pressed', !!(inst && inst.opts.cover)); $('move').setAttribute('aria-pressed', !!moving);
   const st = MD.stepsFor(units), lab = (id, big, small, aria) => { $(id).setAttribute('aria-label', aria); };
-  { const no = inst && numKey(p) ? p.options[numKey(p)] : null, mmo = no && no.unit === 'mm', ex = mmo ? no.step + ' mm' : units === 'mm' ? '25 mm' : '1 inch', nm = mmo ? no.label : 'Extension';   // a number option in mm (fan adapter spigot length) steps by its own size
+  { const no = inst && numKeys(p).length ? p.options[numKey(p, inst.id)] : null, mmo = no && (no.unit === 'mm' || no.unit === 'cm' || no.unit === 'm'), ex = mmo ? no.step + ' ' + no.unit : units === 'mm' ? '25 mm' : '1 inch', nm = mmo ? no.label : 'Extension';   // a number option in mm (fan adapter spigot length) steps by its own size
     lab('extp', '+' + st.extLabel, st.extUnit, nm + ' plus ' + ex); lab('extm', '&minus;' + st.extLabel, st.extUnit, nm + ' minus ' + ex); }
   lab('hp', '&uarr;', st.heightLabel, 'Raise ' + st.heightLabel); lab('hm', '&darr;', st.heightLabel, 'Lower ' + st.heightLabel);
   for (const [id, ch, w] of [['nl', '&larr;', 'left'], ['nr', '&rarr;', 'right'], ['nu', '&#9650;', 'away'], ['nd', '&#9660;', 'toward me']]) lab(id, ch, st.nudgeLabel, 'Nudge ' + w + ' ' + st.nudgeLabel);
@@ -507,7 +522,7 @@ const wire = (id, fn) => $(id).addEventListener('click', () => { fn(); readout()
 const setOffs = o => { offs = o; applyOffsets(); };
 function lugExt(d) {
   const li = selInst(); if (!li) return;
-  const p = C.partOf(li.part), k = numKey(p); if (!k) return;
+  const p = C.partOf(li.part), k = numKey(p, li.id); if (!k) return;
   li.opts[k] = MD.extOpt(p.options[k], li.opts[k], d, units); rebuild();
 }
 wire('extm', () => lugExt(-1)); wire('extp', () => lugExt(1));   // direction only; the step size comes from the units
@@ -515,6 +530,7 @@ const rotSel = dir => { const li = selInst(); if (li) { li.yaw = PK.rotateYaw(li
 wire('rotm', () => rotSel(-1)); wire('rotp', () => rotSel(1));
 PK.OPT_IDS.forEach((id, n) => wire(id, () => {   // option buttons: tap flips the option (choice: next value, bool: toggle); parts that follow it (duct, clamp) take the new value
   const li = selInst(), p = li && C.partOf(li.part), k = p && optKeys(p, kindOfId(li.id))[n];
+  if (k === NUM) { const ks = numKeys(p); numSel.set(li.id, ks[(ks.indexOf(numKey(p, li.id)) + 1) % ks.length]); return; }
   if (k) { li.opts[k] = PK.flipOption(p.options[k], li.opts[k]); C.SC.syncOpts(state); rebuild(); }
 }));
 wire('cover', () => { const li = selInst(); if (li && 'cover' in li.opts) { li.opts.cover = !li.opts.cover; rebuild(); } });
@@ -691,11 +707,12 @@ function toast(t, warn = false, ms = 3500, level, opts = null) {
   th(); document.addEventListener('tb-theme-change', th);
 }
 // menu: Scene switch (Battery <-> Fume extractor). Reloads with #host=... so the start scene is rebuilt from scratch.
-const FUME_HOST = 'fan-80mm';
-function syncSceneButton() { const fume = !C.SC.isDefaultHost; $('scenebtn').querySelector('small').textContent = fume ? 'Fume extractor' : 'Battery'; $('scenebtn').setAttribute('aria-label', 'Scene: ' + (fume ? 'Fume extractor' : 'Battery') + '. Tap to switch'); }
+const SCENES = [['', 'Battery'], ['fan-80mm', 'Fume extractor'], ['roof-rack', 'Solar roof']];   // host id (empty = the default battery), menu label; a tap goes to the next
+const sceneIdx = () => Math.max(0, SCENES.findIndex(s => s[0] === (C.SC.isDefaultHost ? '' : C.SC.host.id)));
+function syncSceneButton() { const nm = SCENES[sceneIdx()][1]; $('scenebtn').querySelector('small').textContent = nm; $('scenebtn').setAttribute('aria-label', 'Scene: ' + nm + '. Tap to switch'); }
 $('scenebtn').addEventListener('click', () => {
   const sp = new URLSearchParams(location.search); sp.delete('host'); sp.delete('scene');
-  const search = sp.toString() ? '?' + sp : '', url = location.pathname + search + (C.SC.isDefaultHost ? '#host=' + FUME_HOST : '');
+  const search = sp.toString() ? '?' + sp : '', next = SCENES[(sceneIdx() + 1) % SCENES.length][0], url = location.pathname + search + (next ? '#host=' + next : '');
   try { history.replaceState(null, '', url); } catch (e) { location.href = url; return; }
   location.reload();
 });
@@ -999,7 +1016,21 @@ function lugObject(seat, dir, end, gauge, mat) {
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(rb, rb, bl, 20).rotateZ(Math.PI / 2), mat); barrel.position.set(reach - bl / 2, LUG_T / 2, 0);
   g.add(ring, tongue, barrel); g.position.set(seat[0], seat[1], seat[2]); g.rotation.y = Math.atan2(-dir[1], dir[0]); return g;
 }
+// MC4 cable: a plug at each end (18 x 60 mm) and a 6 mm cable that sags a little between them; red + cables ride a little above black - ones where they run side by side. Inches.
+function mc4Object(j, L) {
+  const g = new THREE.Group(), cable = new THREE.MeshStandardMaterial({ color: CABLE_COL[j.color], roughness: 0.6 }), body = new THREE.MeshStandardMaterial({ color: 0x1a1a1d, roughness: 0.5 }), band = new THREE.MeshStandardMaterial({ color: j.color === 'red' ? 0xd32020 : 0x2a4fd0, roughness: 0.5 });
+  const lane = j.color === 'red' ? 0.25 : -0.25, a = [L.a[0], L.a[1] + lane, L.a[2]], b = [L.b[0], L.b[1] + lane, L.b[2]], len = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]), sag = Math.min(len * 0.06, 8);
+  const pt = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - sag * 4 * t * (1 - t), a[2] + (b[2] - a[2]) * t], N = 14, r = JMP.OD_IN[j.gauge] / 2;
+  for (let i = 0; i < N; i++) g.add(cylBetween(pt(i / N), pt((i + 1) / N), r, cable));
+  for (const [p0, p1] of [[pt(0), pt(0.02)], [pt(1), pt(0.98)]]) {
+    const d = new THREE.Vector3(...p1).sub(new THREE.Vector3(...p0)).normalize(), e = new THREE.Vector3(...p0).addScaledVector(d, 2.36);
+    g.add(cylBetween(p0, e.toArray(), 0.35, body)); const m = new THREE.Vector3(...p0).addScaledVector(d, 1.2), m2 = new THREE.Vector3(...p0).addScaledVector(d, 1.5); g.add(cylBetween(m.toArray(), m2.toArray(), 0.38, band));
+  }
+  g.scale.setScalar(SCN.IN); g.userData.jumperId = j.id; g.traverse(m => { m.userData.jumperId = j.id; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  return g;
+}
 function jumperObject(j, L) {
+  if (JMP.isMc4(j)) return mc4Object(j, L);
   const g = new THREE.Group(), cable = new THREE.MeshStandardMaterial({ color: CABLE_COL[j.color], roughness: 0.6 }), tin = new THREE.MeshStandardMaterial({ color: TIN, metalness: 0.8, roughness: 0.35 });
   const lift = p => [p[0], p[1] + LUG_T / 2, p[2]], hdir = (p, q) => { const x = q[0] - p[0], z = q[2] - p[2], n = Math.hypot(x, z); return n < 1e-9 ? [1, 0] : [x / n, z / n]; };
   g.add(lugObject(L.a, hdir(L.a, L.b), j.endA, j.gauge, tin), lugObject(L.b, hdir(L.b, L.a), j.endB, j.gauge, tin), cylBetween(lift(L.pa), lift(L.pb), JMP.OD_IN[j.gauge] / 2, cable));
@@ -1032,7 +1063,7 @@ function selectJumper(id) {
 }
 function pushUndo() { jundo.push(jumpers.map(j => ({ ...j }))); if (jundo.length > 30) jundo.shift(); }
 function jEdit(fn) { const j = jumpers.find(x => x.id === selJumper); if (!j) return; pushUndo(); fn(j); updateJumpers(); persistSoon(); }
-wire('jgauge', () => jEdit(j => { j.gauge = JMP.nextOf(JMP.GAUGES, j.gauge); }));
+wire('jgauge', () => jEdit(j => { j.gauge = JMP.nextOf(JMP.gaugesFor(j), j.gauge); }));
 wire('jcolor', () => jEdit(j => { j.color = JMP.nextOf(JMP.COLORS, j.color); }));
 wire('jremove', () => { if (!selJumper) return; pushUndo(); jumpers = jumpers.filter(x => x.id !== selJumper); selJumper = null; updateJumpers(); persistSoon(); toast('Removed jumper'); });
 wire('undoj', () => { const prev = jundo.pop(); if (!prev) return; jumpers = prev; selJumper = null; updateJumpers(); persistSoon(); toast('Undid the last jumper change'); });
@@ -1562,7 +1593,7 @@ function startScene() {
   else if (q.get('open')) { if (q.get('open') === 'more') moreOpen = true; readout(); }
   window.__ready = true;
   // warm the GLB cache for options A-F while idle (before Enter AR), so switching in AR is instant
-  const warm = () => { const ids = !C.SC.isDefaultHost ? C.catalog.parts.filter(p => p.category === 'Ventilation' || p.catalog && p.catalog.category === 'Ventilation').map(p => p.id) : PR.PRESETS.flatMap(p => C.SC.fromHash(p.hash).insts.map(i => i.part)); C.preload(ids).then(r => { const n = r.filter(x => x.status === 'rejected').length; log('preload done' + (n ? ', ' + n + ' failed' : '')); }); };
+  const warm = () => { const ids = !C.SC.isDefaultHost ? C.catalog.parts.filter(p => p.category === C.host.category).map(p => p.id) : PR.PRESETS.flatMap(p => C.SC.fromHash(p.hash).insts.map(i => i.part)); C.preload(ids).then(r => { const n = r.filter(x => x.status === 'rejected').length; log('preload done' + (n ? ', ' + n + ' failed' : '')); }); };
   if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 3000 }); else setTimeout(warm, 500);
 })();
 

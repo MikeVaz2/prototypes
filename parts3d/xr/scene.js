@@ -21,7 +21,7 @@ export const baseOf = id => String(id).replace(/_\d+$/, '');
 
 // Start scene: which surface part is the host (the model's root). Default = catalog.host (the battery).
 // sel = part id or alias (#host=fan-80mm, ?scene=fume). Unknown / not a surface part -> the default host.
-export const HOST_ALIASES = { battery: null, fume: 'fan-80mm', fan: 'fan-80mm' };
+export const HOST_ALIASES = { battery: null, fume: 'fan-80mm', fan: 'fan-80mm', solar: 'roof-rack', roof: 'roof-rack' };
 export function resolveHostId(catalog, sel) {
   const s = String(sel == null ? '' : sel).trim().toLowerCase();
   if (!s) return catalog.host;
@@ -38,8 +38,9 @@ export function hostSelFrom(search, hash) {
 // How a part's node is turned and lifted by its options (fan orientation, grill): choice values may carry `pose` {rot_z_deg, lift_mm, when: {opt: value}} (one or a list).
 // -> { rz: degrees about the part's own Z, lift: metres } | null. Node matrix = T(pos) Ry(yaw) T(0,lift,0) Rz(rz); everything stacked on the part is a child of that node.
 export function poseOf(p, opts = {}) {
-  let rz = 0, lift = 0;
+  let rz = 0, lift = 0, dx = 0;
   for (const [k, o] of Object.entries(p.options || {})) {
+    if (o.type === 'number' && o.slide && typeof opts[k] === 'number') { dx += opts[k] * (o.slide.unit_m || 0.01); continue; }   // Slide: moves the part along its own X
     const e = o.type === 'choice' && o.values[opts[k]];
     if (!e || !e.pose) continue;
     for (const q of [].concat(e.pose)) {
@@ -47,7 +48,7 @@ export function poseOf(p, opts = {}) {
       rz += q.rot_z_deg || 0; lift += (q.lift_mm || 0) / 1000;
     }
   }
-  return rz || lift ? { rz, lift } : null;
+  return rz || lift || dx ? { rz, lift, dx } : null;
 }
 // 3x3 rotations, row-major, same convention as three.js (makeRotationY / makeRotationZ)
 const RY = d => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
@@ -230,7 +231,7 @@ export function createScene(catalog, hostSel) {
       if (l) {
         const pp = l.parent == null ? { pos: [0, 0, 0], yaw: 0, R: I3 } : go(l.parent);
         if (pp) {
-          const t = l.tilt, Rl = t ? mul3(RY(l.yaw), RZ(t.rz)) : RY(l.yaw), tl = t ? add3(l.pos, mv3(RY(l.yaw), [0, t.lift, 0])) : l.pos;
+          const t = l.tilt, Rl = t ? mul3(RY(l.yaw), RZ(t.rz)) : RY(l.yaw), tl = t ? add3(l.pos, mv3(RY(l.yaw), [t.dx || 0, t.lift, 0])) : l.pos;
           r = { pos: add3(pp.pos, mv3(pp.R, tl)), yaw: pp.yaw + l.yaw, R: mul3(pp.R, Rl) };
         }
       }
@@ -281,7 +282,8 @@ export function createScene(catalog, hostSel) {
     // (a connection with align_parent, like the fan outlet, keeps yaw 0 relative: the part is aligned with its parent whatever the parent's pose)
     const pr = parentOf([...insts, inst], inst), pw = pr && placements([...insts, inst]).get(pr.parent.id);
     const oc = connOf(insts, key);
-    if (pw && !(oc && oc.conn && oc.conn.align_parent)) inst = { ...inst, yaw: r1(norm(inst.yaw - pw.yaw)) };
+    if (oc && oc.conn && oc.conn.child_yaw_deg !== undefined) inst = { ...inst, yaw: oc.conn.child_yaw_deg };   // a seat that turns what sits on it (rack slots for a turned panel)
+    else if (pw && !(oc && oc.conn && oc.conn.align_parent)) inst = { ...inst, yaw: r1(norm(inst.yaw - pw.yaw)) };
     const all = [...insts, inst]; syncOpts(all);
     return { ok: true, inst, insts: all };
   }

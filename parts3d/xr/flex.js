@@ -37,3 +37,11 @@ export function ductMesh(dMm, L, bendDeg) {
   }
   return { pos, idx, end: f(L) };
 }
+
+// Stretch of a number option (rack bar spacing, panel width): the node operations for a value. -> [{ prefix, scale } | { prefix, move }] (metres, along the option's axis)
+export function stretchOps(o, value) {
+  const st = o.stretch || {}, unit = o.unit_m || 0.0254, d = (value - o.default) * unit, ops = [];
+  for (const [prefix, base] of st.scale || []) ops.push({ prefix, scale: (base + d) / base });
+  for (const [prefix, coef, ref] of st.moves || []) { const dd = (value - (ref === undefined ? o.default : ref)) * unit; if (dd * coef) ops.push({ prefix, move: dd * coef }); }
+  return ops;
+}

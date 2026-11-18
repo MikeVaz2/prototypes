@@ -1,0 +1,71 @@
+{
+ "kind": "mc4fuse",
+ "id": "mc4-fuse-neg",
+ "name": "MC4 inline fuse holder 10 A (-), 22 x 128 mm",
+ "short": "Fuse 10 A -",
+ "units": "in",
+ "polarity": "-",
+ "through": true,
+ "catalog": {
+  "category": "Solar",
+  "mountKind": "stud",
+  "icon": "solar",
+  "short": "Fuse 10 A -",
+  "swatch": "#2a4fd0"
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "mc4-",
+    "consumes_in": 0,
+    "polarity": "-"
+   },
+   "accepts": [
+    "mc4-"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 0,
+   "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+  }
+ ],
+ "connections": [
+  {
+   "id": "out",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "mc4-",
+   "polarity": "-",
+   "pos": [
+    0,
+    0,
+    5.0394
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "align_parent": true,
+   "accepts": {
+    "thread": "mc4-",
+    "max_items": 1,
+    "note": "output"
+   }
+  }
+ ],
+ "options": {},
+ "label": "10 A"
+}

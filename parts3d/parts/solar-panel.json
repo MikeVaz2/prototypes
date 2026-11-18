@@ -1,0 +1,239 @@
+{
+ "kind": "solarpanel",
+ "id": "solar-panel",
+ "name": "Flexible solar panel Yinleader CSSF-100W-CPC, 690 x 855 x 1.5 mm, 100 W",
+ "short": "Solar panel",
+ "units": "in",
+ "catalog": {
+  "category": "Solar",
+  "mountKind": "stud",
+  "icon": "solar",
+  "short": "Solar panel",
+  "swatch": "#14224a"
+ },
+ "electrical": {
+  "w": 100,
+  "vmp": 19,
+  "imp": 5.26,
+  "voc": 22.42,
+  "isc": 5.79,
+  "width_mm": 690,
+  "length_mm": 855,
+  "note": "label values; other sizes scale W, Imp, Isc with the area (Voc and Vmp stay)"
+ },
+ "holes": {
+  "per_long_side": 3,
+  "dia_mm": 10,
+  "in_from_edge_mm": 15,
+  "in_from_end_mm": 25,
+  "approximate": true,
+  "note": "metal grommets, 3 on each long side (6 total); positions APPROXIMATE, measure the real panel. A panel is bolted through a row of holes (end, middle, end) onto each of 3 bars at the hole pitch, about 402 mm for the default size"
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "rackslot",
+    "consumes_in": 0
+   },
+   "accepts": [
+    "rackslot"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 0,
+   "note": "origin = centre of the bottom face; lies on the rack bars; yaw in 90 degree steps"
+  }
+ ],
+ "connections": [
+  {
+   "id": "lead_pos",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "mc4+",
+   "polarity": "+",
+   "pos": [
+    0.7874,
+    -0.2953,
+    25.4921
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "align_parent": true,
+   "accepts": {
+    "thread": "mc4+",
+    "max_items": 1,
+    "note": "MC4 plug tip of the panel + lead"
+   },
+   "pos_per_option": {
+    "length": {
+     "axis": 2,
+     "default": 855,
+     "per_unit": 0.019685
+    }
+   }
+  },
+  {
+   "id": "lead_neg",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "mc4-",
+   "polarity": "-",
+   "pos": [
+    -0.7874,
+    -0.2953,
+    25.4921
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "align_parent": true,
+   "accepts": {
+    "thread": "mc4-",
+    "max_items": 1,
+    "note": "MC4 plug tip of the panel - lead"
+   },
+   "pos_per_option": {
+    "length": {
+     "axis": 2,
+     "default": 855,
+     "per_unit": 0.019685
+    }
+   }
+  }
+ ],
+ "options": {
+  "width": {
+   "type": "number",
+   "default": 690,
+   "min": 400,
+   "max": 1200,
+   "step": 10,
+   "unit": "mm",
+   "unit_m": 0.001,
+   "axis": "x",
+   "label": "Panel width",
+   "short": "W",
+   "stretch": {
+    "axis": "x",
+    "scale": [
+     [
+      "pn_",
+      0.69
+     ]
+    ],
+    "moves": [
+     [
+      "pg_xn",
+      -0.5
+     ],
+     [
+      "pg_xp",
+      0.5
+     ],
+     [
+      "pgb_xn",
+      -0.5
+     ],
+     [
+      "pgb_xp",
+      0.5
+     ]
+    ]
+   }
+  },
+  "length": {
+   "type": "number",
+   "default": 855,
+   "min": 400,
+   "max": 1200,
+   "step": 5,
+   "unit": "mm",
+   "unit_m": 0.001,
+   "axis": "z",
+   "label": "Panel length",
+   "short": "L",
+   "stretch": {
+    "axis": "z",
+    "scale": [
+     [
+      "pn_",
+      0.855
+     ]
+    ],
+    "moves": [
+     [
+      "pj_",
+      0.5
+     ],
+     [
+      "pg_xn_a",
+      -0.5
+     ],
+     [
+      "pg_xn_b",
+      0.5
+     ],
+     [
+      "pg_xp_a",
+      -0.5
+     ],
+     [
+      "pg_xp_b",
+      0.5
+     ],
+     [
+      "pgb_xn_a",
+      -0.5
+     ],
+     [
+      "pgb_xn_b",
+      0.5
+     ],
+     [
+      "pgb_xp_a",
+      -0.5
+     ],
+     [
+      "pgb_xp_b",
+      0.5
+     ]
+    ]
+   },
+   "note": "the junction box and leads sit at the +Z end and follow it"
+  },
+  "slide": {
+   "type": "number",
+   "default": 0,
+   "min": -40,
+   "max": 40,
+   "step": 5,
+   "unit": "cm",
+   "unit_m": 0.01,
+   "label": "Slide",
+   "short": "Slide",
+   "slide": {
+    "axis": "x",
+    "unit_m": 0.01
+   },
+   "note": "moves the panel along its width axis (across the bars)"
+  }
+ },
+ "notes": "1.5 mm thick, 1.2 kg. Black backsheet, 4 x 6 dark blue cells with 3 busbars each, thin white border; junction box 90 x 60 x 15 mm on the back with two 220 mm leads ending in MC4 plugs. The + lead is male and the - lead female as briefed (verify on the real panel)."
+}

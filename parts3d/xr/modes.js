@@ -26,11 +26,11 @@ export function extStep(cur, dir, u, min, max) {
 }
 // number option step: an option with unit 'mm' (value in mm) moves by its own step; otherwise the length rule above (value in inches)
 export function extOpt(o, cur, dir, u) {
-  if (o.unit === 'mm' || o.unit === 'm') return Math.min(o.max, Math.max(o.min, Math.round(Math.round((cur + dir * o.step) / o.step) * o.step * 1e6) / 1e6));
+  if (o.unit === 'mm' || o.unit === 'm' || o.unit === 'cm') return Math.min(o.max, Math.max(o.min, Math.round(Math.round((cur + dir * o.step) / o.step) * o.step * 1e6) / 1e6));
   return extStep(cur, dir, u, o.min, o.max);
 }
 // number option as a label: "30 mm" for an mm option, else the inch length in the chosen units
-export const fmtOpt = (o, v, u = 'in') => o.unit === 'mm' ? v + ' mm' : o.unit === 'm' ? v.toFixed(1) + ' m' : fmtLen(v, u);
+export const fmtOpt = (o, v, u = 'in') => o.unit === 'mm' ? v + ' mm' : o.unit === 'cm' ? v + ' cm' : o.unit === 'm' ? v.toFixed(1) + ' m' : fmtLen(v, u);
 // offsets readout, nonzero parts only: "↑1.5 in →0.5 in fwd 1 in ⟲10°" (mm: "↑25 mm")
 export function describeU(o, u = 'in') {
   if (!o.h && !o.x && !o.z && !o.yaw) return 'no offset';

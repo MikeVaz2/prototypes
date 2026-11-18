@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { kindOf } from './pick.js';
 import { createScene, IN, baseOf } from './scene.js';
-import { ductMesh, BENDS } from './flex.js';
+import { ductMesh, BENDS, stretchOps } from './flex.js';
 
 export async function createComposer(catalogUrl = 'parts/catalog.json', base = '', hostSel = '') {
   const catalog = await (await fetch(base + catalogUrl)).json();
@@ -18,7 +18,7 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
   // T(pos) Ry(yaw) [T(0,lift,0) Rz(rz)]: the bracket is the tilt of a part with a pose option (fan orientation); its children hang below this node
   const matrixOf = pl => {
     const m = new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(pl.yaw));
-    if (pl.tilt) m.multiply(new THREE.Matrix4().makeTranslation(0, pl.tilt.lift, 0)).multiply(new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(pl.tilt.rz)));
+    if (pl.tilt) m.multiply(new THREE.Matrix4().makeTranslation(pl.tilt.dx || 0, pl.tilt.lift, 0)).multiply(new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(pl.tilt.rz)));
     m.premultiply(new THREE.Matrix4().makeTranslation(pl.pos[0], pl.pos[1], pl.pos[2]));
     return m;
   };
@@ -32,7 +32,16 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
     return [out, inn];
   }
 
+  // stretch spec (rack bars, panel size): { axis, scale: [[nodePrefix, baseMetres]], moves: [[nodePrefix, coef, refValue?]] }. Nodes are scaled about their own origin
+  // (the geometry is centred there) by (base + d) / base, or moved by d * coef, with d = (value - default) * unit_m (moves may use their own reference value).
+  // Pure arithmetic in stretchOps (xr/flex.js), so tests can check it.
+  function applyStretch(obj, len, o) {
+    const ax = o.stretch.axis || o.axis || 'x', ops = stretchOps(o, len), all = [];
+    obj.traverse(c => { if (c.name) all.push(c); });
+    for (const op of ops) for (const c of all) if (c.name.startsWith(op.prefix)) { if (op.scale !== undefined) c.scale[ax] = op.scale; else c.position[ax] += op.move; }
+  }
   function applyLength(obj, len, o) {
+    if (o.stretch && len != null) return applyStretch(obj, len, o);
     if (!o.nodes || len == null) return;   // parametric only in the GLB build (copper-bar): nothing to stretch at runtime
     obj.updateMatrixWorld(true);
     const ax = o.axis === 'y' ? 'y' : 'x';   // stretch axis (default X; the fan adapter spigot stretches along Y); o.unit_m = metres per unit (default inch)

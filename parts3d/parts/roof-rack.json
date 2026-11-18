@@ -1,0 +1,1320 @@
+{
+ "kind": "roofrack",
+ "id": "roof-rack",
+ "name": "Roof rack on the GX470 roof: DIY bars on the factory rails (default), Rago plate cross members, or a platform rack",
+ "short": "Roof rack",
+ "units": "in",
+ "catalog": {
+  "category": "Solar",
+  "mountKind": "surface",
+  "icon": "solar",
+  "short": "Roof rack",
+  "swatch": "#2b2b30"
+ },
+ "approximate": true,
+ "mounts": [
+  {
+   "id": "surface",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "fixed"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = centre of the rack on the roof surface; X along the car, Z across, rails on 35 mm stanchions. The real car is the surface; only the rack is modelled."
+  }
+ ],
+ "connections": [
+  {
+   "id": "m0",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "rackslot",
+   "polarity": "any",
+   "pos": [
+    0.0,
+    3.937,
+    0.0
+   ],
+   "pos_by_option": {
+    "rack": {
+     "diy": [
+      0.0,
+      3.937,
+      0.0
+     ],
+     "rago": [
+      0.0,
+      2.3622,
+      0.0
+     ],
+     "platform": [
+      0.0,
+      2.3622,
+      0.0
+     ]
+    }
+   },
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "align_parent": true,
+   "child_yaw_deg": 90,
+   "accepts": {
+    "thread": "rackslot",
+    "max_items": 1,
+    "note": "panel seat, one panel, centred (3 bars at the hole pitch). The panel lies on the bars; Slide moves it along."
+   }
+  },
+  {
+   "id": "a1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "rackslot",
+   "polarity": "any",
+   "pos": [
+    0.0,
+    3.937,
+    -13.7795
+   ],
+   "pos_by_option": {
+    "rack": {
+     "diy": [
+      0.0,
+      3.937,
+      -13.7795
+     ],
+     "rago": [
+      0.0,
+      2.3622,
+      -13.7795
+     ],
+     "platform": [
+      0.0,
+      2.3622,
+      -13.7795
+     ]
+    }
+   },
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "align_parent": true,
+   "child_yaw_deg": 90,
+   "accepts": {
+    "thread": "rackslot",
+    "max_items": 1,
+    "note": "panel seat, side by side, one side. The panel lies on the bars; Slide moves it along."
+   }
+  },
+  {
+   "id": "a2",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "rackslot",
+   "polarity": "any",
+   "pos": [
+    0.0,
+    3.937,
+    13.7795
+   ],
+   "pos_by_option": {
+    "rack": {
+     "diy": [
+      0.0,
+      3.937,
+      13.7795
+     ],
+     "rago": [
+      0.0,
+      2.3622,
+      13.7795
+     ],
+     "platform": [
+      0.0,
+      2.3622,
+      13.7795
+     ]
+    }
+   },
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "align_parent": true,
+   "child_yaw_deg": 90,
+   "accepts": {
+    "thread": "rackslot",
+    "max_items": 1,
+    "note": "panel seat, side by side, other side. The panel lies on the bars; Slide moves it along."
+   }
+  },
+  {
+   "id": "b1",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "rackslot",
+   "polarity": "any",
+   "pos": [
+    -23.622,
+    3.937,
+    -13.7795
+   ],
+   "pos_by_option": {
+    "rack": {
+     "diy": [
+      -23.622,
+      3.937,
+      -13.7795
+     ],
+     "rago": [
+      -23.622,
+      2.3622,
+      -13.7795
+     ],
+     "platform": [
+      -23.622,
+      2.3622,
+      -13.7795
+     ]
+    }
+   },
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "align_parent": true,
+   "child_yaw_deg": 90,
+   "accepts": {
+    "thread": "rackslot",
+    "max_items": 1,
+    "note": "panel seat, 2x2, front, one side. The panel lies on the bars; Slide moves it along."
+   }
+  },
+  {
+   "id": "b2",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "rackslot",
+   "polarity": "any",
+   "pos": [
+    -23.622,
+    3.937,
+    13.7795
+   ],
+   "pos_by_option": {
+    "rack": {
+     "diy": [
+      -23.622,
+      3.937,
+      13.7795
+     ],
+     "rago": [
+      -23.622,
+      2.3622,
+      13.7795
+     ],
+     "platform": [
+      -23.622,
+      2.3622,
+      13.7795
+     ]
+    }
+   },
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "align_parent": true,
+   "child_yaw_deg": 90,
+   "accepts": {
+    "thread": "rackslot",
+    "max_items": 1,
+    "note": "panel seat, 2x2, front, other side. The panel lies on the bars; Slide moves it along."
+   }
+  },
+  {
+   "id": "b3",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "rackslot",
+   "polarity": "any",
+   "pos": [
+    23.622,
+    3.937,
+    -13.7795
+   ],
+   "pos_by_option": {
+    "rack": {
+     "diy": [
+      23.622,
+      3.937,
+      -13.7795
+     ],
+     "rago": [
+      23.622,
+      2.3622,
+      -13.7795
+     ],
+     "platform": [
+      23.622,
+      2.3622,
+      -13.7795
+     ]
+    }
+   },
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "align_parent": true,
+   "child_yaw_deg": 90,
+   "accepts": {
+    "thread": "rackslot",
+    "max_items": 1,
+    "note": "panel seat, 2x2, rear, one side. The panel lies on the bars; Slide moves it along."
+   }
+  },
+  {
+   "id": "b4",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "rackslot",
+   "polarity": "any",
+   "pos": [
+    23.622,
+    3.937,
+    13.7795
+   ],
+   "pos_by_option": {
+    "rack": {
+     "diy": [
+      23.622,
+      3.937,
+      13.7795
+     ],
+     "rago": [
+      23.622,
+      2.3622,
+      13.7795
+     ],
+     "platform": [
+      23.622,
+      2.3622,
+      13.7795
+     ]
+    }
+   },
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "align_parent": true,
+   "child_yaw_deg": 90,
+   "accepts": {
+    "thread": "rackslot",
+    "max_items": 1,
+    "note": "panel seat, 2x2, rear, other side. The panel lies on the bars; Slide moves it along."
+   }
+  }
+ ],
+ "options": {
+  "rack": {
+   "type": "choice",
+   "default": "diy",
+   "label": "Rack type",
+   "btn": "Rack: ",
+   "values": {
+    "diy": {
+     "label": "DIY bars",
+     "nodes": [
+      "railn_d",
+      "posta_n_d",
+      "postb_n_d",
+      "railp_d",
+      "posta_p_d",
+      "postb_p_d",
+      "bt_2_1",
+      "bq_2_1",
+      "bs_2_1",
+      "brkn_2_1",
+      "brkp_2_1",
+      "bt_2_2",
+      "bq_2_2",
+      "bs_2_2",
+      "brkn_2_2",
+      "brkp_2_2",
+      "bt_3_1",
+      "bq_3_1",
+      "bs_3_1",
+      "brkn_3_1",
+      "brkp_3_1",
+      "bt_3_2",
+      "bq_3_2",
+      "bs_3_2",
+      "brkn_3_2",
+      "brkp_3_2",
+      "bt_3_3",
+      "bq_3_3",
+      "bs_3_3",
+      "brkn_3_3",
+      "brkp_3_3",
+      "bt_4_1",
+      "bq_4_1",
+      "bs_4_1",
+      "brkn_4_1",
+      "brkp_4_1",
+      "bt_4_2",
+      "bq_4_2",
+      "bs_4_2",
+      "brkn_4_2",
+      "brkp_4_2",
+      "bt_4_3",
+      "bq_4_3",
+      "bs_4_3",
+      "brkn_4_3",
+      "brkp_4_3",
+      "bt_4_4",
+      "bq_4_4",
+      "bs_4_4",
+      "brkn_4_4",
+      "brkp_4_4",
+      "bt_5_1",
+      "bq_5_1",
+      "bs_5_1",
+      "brkn_5_1",
+      "brkp_5_1",
+      "bt_5_2",
+      "bq_5_2",
+      "bs_5_2",
+      "brkn_5_2",
+      "brkp_5_2",
+      "bt_5_3",
+      "bq_5_3",
+      "bs_5_3",
+      "brkn_5_3",
+      "brkp_5_3",
+      "bt_5_4",
+      "bq_5_4",
+      "bs_5_4",
+      "brkn_5_4",
+      "brkp_5_4",
+      "bt_5_5",
+      "bq_5_5",
+      "bs_5_5",
+      "brkn_5_5",
+      "brkp_5_5",
+      "bt_6_1",
+      "bq_6_1",
+      "bs_6_1",
+      "brkn_6_1",
+      "brkp_6_1",
+      "bt_6_2",
+      "bq_6_2",
+      "bs_6_2",
+      "brkn_6_2",
+      "brkp_6_2",
+      "bt_6_3",
+      "bq_6_3",
+      "bs_6_3",
+      "brkn_6_3",
+      "brkp_6_3",
+      "bt_6_4",
+      "bq_6_4",
+      "bs_6_4",
+      "brkn_6_4",
+      "brkp_6_4",
+      "bt_6_5",
+      "bq_6_5",
+      "bs_6_5",
+      "brkn_6_5",
+      "brkp_6_5",
+      "bt_6_6",
+      "bq_6_6",
+      "bs_6_6",
+      "brkn_6_6",
+      "brkp_6_6"
+     ],
+     "note": "factory rails + aluminium or steel bars cut to the rail spacing, fixed with L-brackets / U-bolts, +30 mm overhang each side"
+    },
+    "rago": {
+     "label": "Rago members",
+     "nodes": [
+      "railn_r",
+      "posta_n_r",
+      "postb_n_r",
+      "railp_r",
+      "posta_p_r",
+      "postb_p_r",
+      "bm_2_1",
+      "bm_2_2",
+      "bm_3_1",
+      "bm_3_2",
+      "bm_3_3",
+      "bm_4_1",
+      "bm_4_2",
+      "bm_4_3",
+      "bm_4_4",
+      "bm_5_1",
+      "bm_5_2",
+      "bm_5_3",
+      "bm_5_4",
+      "bm_5_5",
+      "bm_6_1",
+      "bm_6_2",
+      "bm_6_3",
+      "bm_6_4",
+      "bm_6_5",
+      "bm_6_6"
+     ],
+     "note": "Rago Fabrication GX470 R0209LGXMFSS or similar: flat plate steel cross members, hammer-black, bolted between the factory rails"
+    },
+    "platform": {
+     "label": "Platform",
+     "nodes": [
+      "plrn",
+      "plrp",
+      "pfb_1",
+      "pfb_2",
+      "pfb_3",
+      "pfb_4",
+      "pfb_5",
+      "pfb_6",
+      "pfb_7",
+      "pfb_8",
+      "pfb_9",
+      "pfoot_00",
+      "pfoot_01",
+      "pfoot_10",
+      "pfoot_11"
+     ],
+     "note": "Pofenze or similar platform rack, about 2200 x 1180 x 60 mm, 9 crossbars; sizes APPROXIMATE"
+    }
+   }
+  },
+  "profile": {
+   "type": "choice",
+   "default": "tslot",
+   "label": "Bar profile (DIY)",
+   "btn": "Bar: ",
+   "values": {
+    "tslot": {
+     "label": "T-slot 40x40",
+     "nodes": [
+      "bt_2_1",
+      "bt_2_2",
+      "bt_3_1",
+      "bt_3_2",
+      "bt_3_3",
+      "bt_4_1",
+      "bt_4_2",
+      "bt_4_3",
+      "bt_4_4",
+      "bt_5_1",
+      "bt_5_2",
+      "bt_5_3",
+      "bt_5_4",
+      "bt_5_5",
+      "bt_6_1",
+      "bt_6_2",
+      "bt_6_3",
+      "bt_6_4",
+      "bt_6_5",
+      "bt_6_6"
+     ]
+    },
+    "tube": {
+     "label": "Square tube 1.5 in",
+     "nodes": [
+      "bq_2_1",
+      "bq_2_2",
+      "bq_3_1",
+      "bq_3_2",
+      "bq_3_3",
+      "bq_4_1",
+      "bq_4_2",
+      "bq_4_3",
+      "bq_4_4",
+      "bq_5_1",
+      "bq_5_2",
+      "bq_5_3",
+      "bq_5_4",
+      "bq_5_5",
+      "bq_6_1",
+      "bq_6_2",
+      "bq_6_3",
+      "bq_6_4",
+      "bq_6_5",
+      "bq_6_6"
+     ]
+    },
+    "strut": {
+     "label": "Strut channel 1-5/8 in",
+     "nodes": [
+      "bs_2_1",
+      "bs_2_2",
+      "bs_3_1",
+      "bs_3_2",
+      "bs_3_3",
+      "bs_4_1",
+      "bs_4_2",
+      "bs_4_3",
+      "bs_4_4",
+      "bs_5_1",
+      "bs_5_2",
+      "bs_5_3",
+      "bs_5_4",
+      "bs_5_5",
+      "bs_6_1",
+      "bs_6_2",
+      "bs_6_3",
+      "bs_6_4",
+      "bs_6_5",
+      "bs_6_6"
+     ]
+    }
+   }
+  },
+  "bars": {
+   "type": "choice",
+   "default": "3",
+   "label": "Bars",
+   "btn": "Bars: ",
+   "values": {
+    "2": {
+     "label": "2",
+     "nodes": [
+      "bt_2_1",
+      "bq_2_1",
+      "bs_2_1",
+      "brkn_2_1",
+      "brkp_2_1",
+      "bm_2_1",
+      "bt_2_2",
+      "bq_2_2",
+      "bs_2_2",
+      "brkn_2_2",
+      "brkp_2_2",
+      "bm_2_2"
+     ]
+    },
+    "3": {
+     "label": "3",
+     "nodes": [
+      "bt_3_1",
+      "bq_3_1",
+      "bs_3_1",
+      "brkn_3_1",
+      "brkp_3_1",
+      "bm_3_1",
+      "bt_3_2",
+      "bq_3_2",
+      "bs_3_2",
+      "brkn_3_2",
+      "brkp_3_2",
+      "bm_3_2",
+      "bt_3_3",
+      "bq_3_3",
+      "bs_3_3",
+      "brkn_3_3",
+      "brkp_3_3",
+      "bm_3_3"
+     ]
+    },
+    "4": {
+     "label": "4",
+     "nodes": [
+      "bt_4_1",
+      "bq_4_1",
+      "bs_4_1",
+      "brkn_4_1",
+      "brkp_4_1",
+      "bm_4_1",
+      "bt_4_2",
+      "bq_4_2",
+      "bs_4_2",
+      "brkn_4_2",
+      "brkp_4_2",
+      "bm_4_2",
+      "bt_4_3",
+      "bq_4_3",
+      "bs_4_3",
+      "brkn_4_3",
+      "brkp_4_3",
+      "bm_4_3",
+      "bt_4_4",
+      "bq_4_4",
+      "bs_4_4",
+      "brkn_4_4",
+      "brkp_4_4",
+      "bm_4_4"
+     ]
+    },
+    "5": {
+     "label": "5",
+     "nodes": [
+      "bt_5_1",
+      "bq_5_1",
+      "bs_5_1",
+      "brkn_5_1",
+      "brkp_5_1",
+      "bm_5_1",
+      "bt_5_2",
+      "bq_5_2",
+      "bs_5_2",
+      "brkn_5_2",
+      "brkp_5_2",
+      "bm_5_2",
+      "bt_5_3",
+      "bq_5_3",
+      "bs_5_3",
+      "brkn_5_3",
+      "brkp_5_3",
+      "bm_5_3",
+      "bt_5_4",
+      "bq_5_4",
+      "bs_5_4",
+      "brkn_5_4",
+      "brkp_5_4",
+      "bm_5_4",
+      "bt_5_5",
+      "bq_5_5",
+      "bs_5_5",
+      "brkn_5_5",
+      "brkp_5_5",
+      "bm_5_5"
+     ]
+    },
+    "6": {
+     "label": "6",
+     "nodes": [
+      "bt_6_1",
+      "bq_6_1",
+      "bs_6_1",
+      "brkn_6_1",
+      "brkp_6_1",
+      "bm_6_1",
+      "bt_6_2",
+      "bq_6_2",
+      "bs_6_2",
+      "brkn_6_2",
+      "brkp_6_2",
+      "bm_6_2",
+      "bt_6_3",
+      "bq_6_3",
+      "bs_6_3",
+      "brkn_6_3",
+      "brkp_6_3",
+      "bm_6_3",
+      "bt_6_4",
+      "bq_6_4",
+      "bs_6_4",
+      "brkn_6_4",
+      "brkp_6_4",
+      "bm_6_4",
+      "bt_6_5",
+      "bq_6_5",
+      "bs_6_5",
+      "brkn_6_5",
+      "brkp_6_5",
+      "bm_6_5",
+      "bt_6_6",
+      "bq_6_6",
+      "bs_6_6",
+      "brkn_6_6",
+      "brkp_6_6",
+      "bm_6_6"
+     ]
+    }
+   },
+   "note": "2 to 6 cross bars / members (platform: always 9). DIY default 3 (one panel uses 3 bars)"
+  },
+  "gap": {
+   "type": "number",
+   "default": 400,
+   "min": 200,
+   "max": 700,
+   "step": 5,
+   "unit": "mm",
+   "unit_m": 0.001,
+   "axis": "x",
+   "label": "Bar spacing",
+   "short": "Spacing",
+   "stretch": {
+    "axis": "x",
+    "moves": [
+     [
+      "bt_2_1",
+      -0.5
+     ],
+     [
+      "bq_2_1",
+      -0.5
+     ],
+     [
+      "bs_2_1",
+      -0.5
+     ],
+     [
+      "brkn_2_1",
+      -0.5
+     ],
+     [
+      "brkp_2_1",
+      -0.5
+     ],
+     [
+      "bm_2_1",
+      -0.5,
+      300
+     ],
+     [
+      "bt_2_2",
+      0.5
+     ],
+     [
+      "bq_2_2",
+      0.5
+     ],
+     [
+      "bs_2_2",
+      0.5
+     ],
+     [
+      "brkn_2_2",
+      0.5
+     ],
+     [
+      "brkp_2_2",
+      0.5
+     ],
+     [
+      "bm_2_2",
+      0.5,
+      300
+     ],
+     [
+      "bt_3_1",
+      -1.0
+     ],
+     [
+      "bq_3_1",
+      -1.0
+     ],
+     [
+      "bs_3_1",
+      -1.0
+     ],
+     [
+      "brkn_3_1",
+      -1.0
+     ],
+     [
+      "brkp_3_1",
+      -1.0
+     ],
+     [
+      "bm_3_1",
+      -1.0,
+      300
+     ],
+     [
+      "bt_3_3",
+      1.0
+     ],
+     [
+      "bq_3_3",
+      1.0
+     ],
+     [
+      "bs_3_3",
+      1.0
+     ],
+     [
+      "brkn_3_3",
+      1.0
+     ],
+     [
+      "brkp_3_3",
+      1.0
+     ],
+     [
+      "bm_3_3",
+      1.0,
+      300
+     ],
+     [
+      "bt_4_1",
+      -1.5
+     ],
+     [
+      "bq_4_1",
+      -1.5
+     ],
+     [
+      "bs_4_1",
+      -1.5
+     ],
+     [
+      "brkn_4_1",
+      -1.5
+     ],
+     [
+      "brkp_4_1",
+      -1.5
+     ],
+     [
+      "bm_4_1",
+      -1.5,
+      300
+     ],
+     [
+      "bt_4_2",
+      -0.5
+     ],
+     [
+      "bq_4_2",
+      -0.5
+     ],
+     [
+      "bs_4_2",
+      -0.5
+     ],
+     [
+      "brkn_4_2",
+      -0.5
+     ],
+     [
+      "brkp_4_2",
+      -0.5
+     ],
+     [
+      "bm_4_2",
+      -0.5,
+      300
+     ],
+     [
+      "bt_4_3",
+      0.5
+     ],
+     [
+      "bq_4_3",
+      0.5
+     ],
+     [
+      "bs_4_3",
+      0.5
+     ],
+     [
+      "brkn_4_3",
+      0.5
+     ],
+     [
+      "brkp_4_3",
+      0.5
+     ],
+     [
+      "bm_4_3",
+      0.5,
+      300
+     ],
+     [
+      "bt_4_4",
+      1.5
+     ],
+     [
+      "bq_4_4",
+      1.5
+     ],
+     [
+      "bs_4_4",
+      1.5
+     ],
+     [
+      "brkn_4_4",
+      1.5
+     ],
+     [
+      "brkp_4_4",
+      1.5
+     ],
+     [
+      "bm_4_4",
+      1.5,
+      300
+     ],
+     [
+      "bt_5_1",
+      -2.0
+     ],
+     [
+      "bq_5_1",
+      -2.0
+     ],
+     [
+      "bs_5_1",
+      -2.0
+     ],
+     [
+      "brkn_5_1",
+      -2.0
+     ],
+     [
+      "brkp_5_1",
+      -2.0
+     ],
+     [
+      "bm_5_1",
+      -2.0,
+      300
+     ],
+     [
+      "bt_5_2",
+      -1.0
+     ],
+     [
+      "bq_5_2",
+      -1.0
+     ],
+     [
+      "bs_5_2",
+      -1.0
+     ],
+     [
+      "brkn_5_2",
+      -1.0
+     ],
+     [
+      "brkp_5_2",
+      -1.0
+     ],
+     [
+      "bm_5_2",
+      -1.0,
+      300
+     ],
+     [
+      "bt_5_4",
+      1.0
+     ],
+     [
+      "bq_5_4",
+      1.0
+     ],
+     [
+      "bs_5_4",
+      1.0
+     ],
+     [
+      "brkn_5_4",
+      1.0
+     ],
+     [
+      "brkp_5_4",
+      1.0
+     ],
+     [
+      "bm_5_4",
+      1.0,
+      300
+     ],
+     [
+      "bt_5_5",
+      2.0
+     ],
+     [
+      "bq_5_5",
+      2.0
+     ],
+     [
+      "bs_5_5",
+      2.0
+     ],
+     [
+      "brkn_5_5",
+      2.0
+     ],
+     [
+      "brkp_5_5",
+      2.0
+     ],
+     [
+      "bm_5_5",
+      2.0,
+      300
+     ],
+     [
+      "bt_6_1",
+      -2.5
+     ],
+     [
+      "bq_6_1",
+      -2.5
+     ],
+     [
+      "bs_6_1",
+      -2.5
+     ],
+     [
+      "brkn_6_1",
+      -2.5
+     ],
+     [
+      "brkp_6_1",
+      -2.5
+     ],
+     [
+      "bm_6_1",
+      -2.5,
+      300
+     ],
+     [
+      "bt_6_2",
+      -1.5
+     ],
+     [
+      "bq_6_2",
+      -1.5
+     ],
+     [
+      "bs_6_2",
+      -1.5
+     ],
+     [
+      "brkn_6_2",
+      -1.5
+     ],
+     [
+      "brkp_6_2",
+      -1.5
+     ],
+     [
+      "bm_6_2",
+      -1.5,
+      300
+     ],
+     [
+      "bt_6_3",
+      -0.5
+     ],
+     [
+      "bq_6_3",
+      -0.5
+     ],
+     [
+      "bs_6_3",
+      -0.5
+     ],
+     [
+      "brkn_6_3",
+      -0.5
+     ],
+     [
+      "brkp_6_3",
+      -0.5
+     ],
+     [
+      "bm_6_3",
+      -0.5,
+      300
+     ],
+     [
+      "bt_6_4",
+      0.5
+     ],
+     [
+      "bq_6_4",
+      0.5
+     ],
+     [
+      "bs_6_4",
+      0.5
+     ],
+     [
+      "brkn_6_4",
+      0.5
+     ],
+     [
+      "brkp_6_4",
+      0.5
+     ],
+     [
+      "bm_6_4",
+      0.5,
+      300
+     ],
+     [
+      "bt_6_5",
+      1.5
+     ],
+     [
+      "bq_6_5",
+      1.5
+     ],
+     [
+      "bs_6_5",
+      1.5
+     ],
+     [
+      "brkn_6_5",
+      1.5
+     ],
+     [
+      "brkp_6_5",
+      1.5
+     ],
+     [
+      "bm_6_5",
+      1.5,
+      300
+     ],
+     [
+      "bt_6_6",
+      2.5
+     ],
+     [
+      "bq_6_6",
+      2.5
+     ],
+     [
+      "bs_6_6",
+      2.5
+     ],
+     [
+      "brkn_6_6",
+      2.5
+     ],
+     [
+      "brkp_6_6",
+      2.5
+     ],
+     [
+      "bm_6_6",
+      2.5,
+      300
+     ]
+    ]
+   },
+   "note": "centre to centre along the car. default 400 mm = the panel hole pitch (about 402 mm). Rago members are baked at 300 mm and follow the same option"
+  },
+  "rail_sp": {
+   "type": "number",
+   "default": 110,
+   "min": 80,
+   "max": 140,
+   "step": 5,
+   "unit": "cm",
+   "unit_m": 0.01,
+   "axis": "z",
+   "label": "Rail spacing",
+   "short": "Rails",
+   "stretch": {
+    "axis": "z",
+    "scale": [
+     [
+      "bt_",
+      1.16
+     ],
+     [
+      "bq_",
+      1.16
+     ],
+     [
+      "bs_",
+      1.16
+     ],
+     [
+      "bm_",
+      1.075
+     ]
+    ],
+    "moves": [
+     [
+      "railn",
+      -0.5
+     ],
+     [
+      "railp",
+      0.5
+     ],
+     [
+      "posta_n",
+      -0.5
+     ],
+     [
+      "posta_p",
+      0.5
+     ],
+     [
+      "postb_n",
+      -0.5
+     ],
+     [
+      "postb_p",
+      0.5
+     ],
+     [
+      "brkn",
+      -0.5
+     ],
+     [
+      "brkp",
+      0.5
+     ]
+    ]
+   },
+   "note": "centre distance of the two factory rails; bars follow (bar length = rail spacing + 6 cm)"
+  },
+  "rail_len": {
+   "type": "number",
+   "default": 150,
+   "min": 100,
+   "max": 200,
+   "step": 10,
+   "unit": "cm",
+   "unit_m": 0.01,
+   "axis": "x",
+   "label": "Rail length",
+   "short": "Length",
+   "stretch": {
+    "axis": "x",
+    "scale": [
+     [
+      "rail",
+      1.5
+     ]
+    ],
+    "moves": [
+     [
+      "posta_",
+      -0.5
+     ],
+     [
+      "postb_",
+      0.5
+     ]
+    ]
+   },
+   "note": "factory rail length (about 150 cm typical)"
+  }
+ },
+ "notes": "ESTIMATES, no published drawings: rail section 25 mm, 35 mm stanchions, rail top 60 mm above the roof. DIY bars T-slot 40x40 (silver), square tube 38 mm (silver), strut channel 41x41 (galvanized, opening facing up, back slots not modelled). Rago members about 100 mm wide, 5 mm plate, 25 mm flanges, slots along the centre. Panels sit on slots s0, s1, s2 (upright) and q1 to q4 (turned 90, for 2x2)."
+}

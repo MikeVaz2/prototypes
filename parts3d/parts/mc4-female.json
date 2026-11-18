@@ -1,0 +1,71 @@
+{
+ "kind": "mc4plug",
+ "id": "mc4-female",
+ "name": "MC4 female plug (+), crimped on a cable, real size 18 x 60 mm",
+ "short": "MC4 female",
+ "units": "in",
+ "polarity": "+",
+ "through": true,
+ "catalog": {
+  "category": "Solar",
+  "mountKind": "stud",
+  "icon": "solar",
+  "short": "MC4 female",
+  "swatch": "#c81414"
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "mc4+",
+    "consumes_in": 0,
+    "polarity": "+"
+   },
+   "accepts": [
+    "mc4+"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 0,
+   "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+  }
+ ],
+ "connections": [
+  {
+   "id": "out",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "mc4+",
+   "polarity": "+",
+   "pos": [
+    0,
+    0,
+    3.937
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "align_parent": true,
+   "accepts": {
+    "thread": "mc4+",
+    "max_items": 1,
+    "note": "cable end"
+   }
+  }
+ ],
+ "options": {},
+ "gender": "female"
+}

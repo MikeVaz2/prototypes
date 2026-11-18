@@ -3345,6 +3345,2177 @@
    "thumb": "parts/thumbs/flex-duct.png"
   },
   {
+   "id": "roof-rack",
+   "name": "Roof rack on the GX470 roof: DIY bars on the factory rails (default), Rago plate cross members, or a platform rack",
+   "glb": "roof-rack.glb",
+   "default": false,
+   "thumb_color": "#2b2b30",
+   "kind": "roofrack",
+   "mounts": [
+    {
+     "id": "surface",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "fixed"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "origin = centre of the rack on the roof surface; X along the car, Z across, rails on 35 mm stanchions. The real car is the surface; only the rack is modelled."
+    }
+   ],
+   "options": {
+    "rack": {
+     "type": "choice",
+     "default": "diy",
+     "label": "Rack type",
+     "btn": "Rack: ",
+     "values": {
+      "diy": {
+       "label": "DIY bars",
+       "nodes": [
+        "railn_d",
+        "posta_n_d",
+        "postb_n_d",
+        "railp_d",
+        "posta_p_d",
+        "postb_p_d",
+        "bt_2_1",
+        "bq_2_1",
+        "bs_2_1",
+        "brkn_2_1",
+        "brkp_2_1",
+        "bt_2_2",
+        "bq_2_2",
+        "bs_2_2",
+        "brkn_2_2",
+        "brkp_2_2",
+        "bt_3_1",
+        "bq_3_1",
+        "bs_3_1",
+        "brkn_3_1",
+        "brkp_3_1",
+        "bt_3_2",
+        "bq_3_2",
+        "bs_3_2",
+        "brkn_3_2",
+        "brkp_3_2",
+        "bt_3_3",
+        "bq_3_3",
+        "bs_3_3",
+        "brkn_3_3",
+        "brkp_3_3",
+        "bt_4_1",
+        "bq_4_1",
+        "bs_4_1",
+        "brkn_4_1",
+        "brkp_4_1",
+        "bt_4_2",
+        "bq_4_2",
+        "bs_4_2",
+        "brkn_4_2",
+        "brkp_4_2",
+        "bt_4_3",
+        "bq_4_3",
+        "bs_4_3",
+        "brkn_4_3",
+        "brkp_4_3",
+        "bt_4_4",
+        "bq_4_4",
+        "bs_4_4",
+        "brkn_4_4",
+        "brkp_4_4",
+        "bt_5_1",
+        "bq_5_1",
+        "bs_5_1",
+        "brkn_5_1",
+        "brkp_5_1",
+        "bt_5_2",
+        "bq_5_2",
+        "bs_5_2",
+        "brkn_5_2",
+        "brkp_5_2",
+        "bt_5_3",
+        "bq_5_3",
+        "bs_5_3",
+        "brkn_5_3",
+        "brkp_5_3",
+        "bt_5_4",
+        "bq_5_4",
+        "bs_5_4",
+        "brkn_5_4",
+        "brkp_5_4",
+        "bt_5_5",
+        "bq_5_5",
+        "bs_5_5",
+        "brkn_5_5",
+        "brkp_5_5",
+        "bt_6_1",
+        "bq_6_1",
+        "bs_6_1",
+        "brkn_6_1",
+        "brkp_6_1",
+        "bt_6_2",
+        "bq_6_2",
+        "bs_6_2",
+        "brkn_6_2",
+        "brkp_6_2",
+        "bt_6_3",
+        "bq_6_3",
+        "bs_6_3",
+        "brkn_6_3",
+        "brkp_6_3",
+        "bt_6_4",
+        "bq_6_4",
+        "bs_6_4",
+        "brkn_6_4",
+        "brkp_6_4",
+        "bt_6_5",
+        "bq_6_5",
+        "bs_6_5",
+        "brkn_6_5",
+        "brkp_6_5",
+        "bt_6_6",
+        "bq_6_6",
+        "bs_6_6",
+        "brkn_6_6",
+        "brkp_6_6"
+       ],
+       "note": "factory rails + aluminium or steel bars cut to the rail spacing, fixed with L-brackets / U-bolts, +30 mm overhang each side"
+      },
+      "rago": {
+       "label": "Rago members",
+       "nodes": [
+        "railn_r",
+        "posta_n_r",
+        "postb_n_r",
+        "railp_r",
+        "posta_p_r",
+        "postb_p_r",
+        "bm_2_1",
+        "bm_2_2",
+        "bm_3_1",
+        "bm_3_2",
+        "bm_3_3",
+        "bm_4_1",
+        "bm_4_2",
+        "bm_4_3",
+        "bm_4_4",
+        "bm_5_1",
+        "bm_5_2",
+        "bm_5_3",
+        "bm_5_4",
+        "bm_5_5",
+        "bm_6_1",
+        "bm_6_2",
+        "bm_6_3",
+        "bm_6_4",
+        "bm_6_5",
+        "bm_6_6"
+       ],
+       "note": "Rago Fabrication GX470 R0209LGXMFSS or similar: flat plate steel cross members, hammer-black, bolted between the factory rails"
+      },
+      "platform": {
+       "label": "Platform",
+       "nodes": [
+        "plrn",
+        "plrp",
+        "pfb_1",
+        "pfb_2",
+        "pfb_3",
+        "pfb_4",
+        "pfb_5",
+        "pfb_6",
+        "pfb_7",
+        "pfb_8",
+        "pfb_9",
+        "pfoot_00",
+        "pfoot_01",
+        "pfoot_10",
+        "pfoot_11"
+       ],
+       "note": "Pofenze or similar platform rack, about 2200 x 1180 x 60 mm, 9 crossbars; sizes APPROXIMATE"
+      }
+     }
+    },
+    "profile": {
+     "type": "choice",
+     "default": "tslot",
+     "label": "Bar profile (DIY)",
+     "btn": "Bar: ",
+     "values": {
+      "tslot": {
+       "label": "T-slot 40x40",
+       "nodes": [
+        "bt_2_1",
+        "bt_2_2",
+        "bt_3_1",
+        "bt_3_2",
+        "bt_3_3",
+        "bt_4_1",
+        "bt_4_2",
+        "bt_4_3",
+        "bt_4_4",
+        "bt_5_1",
+        "bt_5_2",
+        "bt_5_3",
+        "bt_5_4",
+        "bt_5_5",
+        "bt_6_1",
+        "bt_6_2",
+        "bt_6_3",
+        "bt_6_4",
+        "bt_6_5",
+        "bt_6_6"
+       ]
+      },
+      "tube": {
+       "label": "Square tube 1.5 in",
+       "nodes": [
+        "bq_2_1",
+        "bq_2_2",
+        "bq_3_1",
+        "bq_3_2",
+        "bq_3_3",
+        "bq_4_1",
+        "bq_4_2",
+        "bq_4_3",
+        "bq_4_4",
+        "bq_5_1",
+        "bq_5_2",
+        "bq_5_3",
+        "bq_5_4",
+        "bq_5_5",
+        "bq_6_1",
+        "bq_6_2",
+        "bq_6_3",
+        "bq_6_4",
+        "bq_6_5",
+        "bq_6_6"
+       ]
+      },
+      "strut": {
+       "label": "Strut channel 1-5/8 in",
+       "nodes": [
+        "bs_2_1",
+        "bs_2_2",
+        "bs_3_1",
+        "bs_3_2",
+        "bs_3_3",
+        "bs_4_1",
+        "bs_4_2",
+        "bs_4_3",
+        "bs_4_4",
+        "bs_5_1",
+        "bs_5_2",
+        "bs_5_3",
+        "bs_5_4",
+        "bs_5_5",
+        "bs_6_1",
+        "bs_6_2",
+        "bs_6_3",
+        "bs_6_4",
+        "bs_6_5",
+        "bs_6_6"
+       ]
+      }
+     }
+    },
+    "bars": {
+     "type": "choice",
+     "default": "3",
+     "label": "Bars",
+     "btn": "Bars: ",
+     "values": {
+      "2": {
+       "label": "2",
+       "nodes": [
+        "bt_2_1",
+        "bq_2_1",
+        "bs_2_1",
+        "brkn_2_1",
+        "brkp_2_1",
+        "bm_2_1",
+        "bt_2_2",
+        "bq_2_2",
+        "bs_2_2",
+        "brkn_2_2",
+        "brkp_2_2",
+        "bm_2_2"
+       ]
+      },
+      "3": {
+       "label": "3",
+       "nodes": [
+        "bt_3_1",
+        "bq_3_1",
+        "bs_3_1",
+        "brkn_3_1",
+        "brkp_3_1",
+        "bm_3_1",
+        "bt_3_2",
+        "bq_3_2",
+        "bs_3_2",
+        "brkn_3_2",
+        "brkp_3_2",
+        "bm_3_2",
+        "bt_3_3",
+        "bq_3_3",
+        "bs_3_3",
+        "brkn_3_3",
+        "brkp_3_3",
+        "bm_3_3"
+       ]
+      },
+      "4": {
+       "label": "4",
+       "nodes": [
+        "bt_4_1",
+        "bq_4_1",
+        "bs_4_1",
+        "brkn_4_1",
+        "brkp_4_1",
+        "bm_4_1",
+        "bt_4_2",
+        "bq_4_2",
+        "bs_4_2",
+        "brkn_4_2",
+        "brkp_4_2",
+        "bm_4_2",
+        "bt_4_3",
+        "bq_4_3",
+        "bs_4_3",
+        "brkn_4_3",
+        "brkp_4_3",
+        "bm_4_3",
+        "bt_4_4",
+        "bq_4_4",
+        "bs_4_4",
+        "brkn_4_4",
+        "brkp_4_4",
+        "bm_4_4"
+       ]
+      },
+      "5": {
+       "label": "5",
+       "nodes": [
+        "bt_5_1",
+        "bq_5_1",
+        "bs_5_1",
+        "brkn_5_1",
+        "brkp_5_1",
+        "bm_5_1",
+        "bt_5_2",
+        "bq_5_2",
+        "bs_5_2",
+        "brkn_5_2",
+        "brkp_5_2",
+        "bm_5_2",
+        "bt_5_3",
+        "bq_5_3",
+        "bs_5_3",
+        "brkn_5_3",
+        "brkp_5_3",
+        "bm_5_3",
+        "bt_5_4",
+        "bq_5_4",
+        "bs_5_4",
+        "brkn_5_4",
+        "brkp_5_4",
+        "bm_5_4",
+        "bt_5_5",
+        "bq_5_5",
+        "bs_5_5",
+        "brkn_5_5",
+        "brkp_5_5",
+        "bm_5_5"
+       ]
+      },
+      "6": {
+       "label": "6",
+       "nodes": [
+        "bt_6_1",
+        "bq_6_1",
+        "bs_6_1",
+        "brkn_6_1",
+        "brkp_6_1",
+        "bm_6_1",
+        "bt_6_2",
+        "bq_6_2",
+        "bs_6_2",
+        "brkn_6_2",
+        "brkp_6_2",
+        "bm_6_2",
+        "bt_6_3",
+        "bq_6_3",
+        "bs_6_3",
+        "brkn_6_3",
+        "brkp_6_3",
+        "bm_6_3",
+        "bt_6_4",
+        "bq_6_4",
+        "bs_6_4",
+        "brkn_6_4",
+        "brkp_6_4",
+        "bm_6_4",
+        "bt_6_5",
+        "bq_6_5",
+        "bs_6_5",
+        "brkn_6_5",
+        "brkp_6_5",
+        "bm_6_5",
+        "bt_6_6",
+        "bq_6_6",
+        "bs_6_6",
+        "brkn_6_6",
+        "brkp_6_6",
+        "bm_6_6"
+       ]
+      }
+     },
+     "note": "2 to 6 cross bars / members (platform: always 9). DIY default 3 (one panel uses 3 bars)"
+    },
+    "gap": {
+     "type": "number",
+     "default": 400,
+     "min": 200,
+     "max": 700,
+     "step": 5,
+     "unit": "mm",
+     "unit_m": 0.001,
+     "axis": "x",
+     "label": "Bar spacing",
+     "short": "Spacing",
+     "stretch": {
+      "axis": "x",
+      "moves": [
+       [
+        "bt_2_1",
+        -0.5
+       ],
+       [
+        "bq_2_1",
+        -0.5
+       ],
+       [
+        "bs_2_1",
+        -0.5
+       ],
+       [
+        "brkn_2_1",
+        -0.5
+       ],
+       [
+        "brkp_2_1",
+        -0.5
+       ],
+       [
+        "bm_2_1",
+        -0.5,
+        300
+       ],
+       [
+        "bt_2_2",
+        0.5
+       ],
+       [
+        "bq_2_2",
+        0.5
+       ],
+       [
+        "bs_2_2",
+        0.5
+       ],
+       [
+        "brkn_2_2",
+        0.5
+       ],
+       [
+        "brkp_2_2",
+        0.5
+       ],
+       [
+        "bm_2_2",
+        0.5,
+        300
+       ],
+       [
+        "bt_3_1",
+        -1.0
+       ],
+       [
+        "bq_3_1",
+        -1.0
+       ],
+       [
+        "bs_3_1",
+        -1.0
+       ],
+       [
+        "brkn_3_1",
+        -1.0
+       ],
+       [
+        "brkp_3_1",
+        -1.0
+       ],
+       [
+        "bm_3_1",
+        -1.0,
+        300
+       ],
+       [
+        "bt_3_3",
+        1.0
+       ],
+       [
+        "bq_3_3",
+        1.0
+       ],
+       [
+        "bs_3_3",
+        1.0
+       ],
+       [
+        "brkn_3_3",
+        1.0
+       ],
+       [
+        "brkp_3_3",
+        1.0
+       ],
+       [
+        "bm_3_3",
+        1.0,
+        300
+       ],
+       [
+        "bt_4_1",
+        -1.5
+       ],
+       [
+        "bq_4_1",
+        -1.5
+       ],
+       [
+        "bs_4_1",
+        -1.5
+       ],
+       [
+        "brkn_4_1",
+        -1.5
+       ],
+       [
+        "brkp_4_1",
+        -1.5
+       ],
+       [
+        "bm_4_1",
+        -1.5,
+        300
+       ],
+       [
+        "bt_4_2",
+        -0.5
+       ],
+       [
+        "bq_4_2",
+        -0.5
+       ],
+       [
+        "bs_4_2",
+        -0.5
+       ],
+       [
+        "brkn_4_2",
+        -0.5
+       ],
+       [
+        "brkp_4_2",
+        -0.5
+       ],
+       [
+        "bm_4_2",
+        -0.5,
+        300
+       ],
+       [
+        "bt_4_3",
+        0.5
+       ],
+       [
+        "bq_4_3",
+        0.5
+       ],
+       [
+        "bs_4_3",
+        0.5
+       ],
+       [
+        "brkn_4_3",
+        0.5
+       ],
+       [
+        "brkp_4_3",
+        0.5
+       ],
+       [
+        "bm_4_3",
+        0.5,
+        300
+       ],
+       [
+        "bt_4_4",
+        1.5
+       ],
+       [
+        "bq_4_4",
+        1.5
+       ],
+       [
+        "bs_4_4",
+        1.5
+       ],
+       [
+        "brkn_4_4",
+        1.5
+       ],
+       [
+        "brkp_4_4",
+        1.5
+       ],
+       [
+        "bm_4_4",
+        1.5,
+        300
+       ],
+       [
+        "bt_5_1",
+        -2.0
+       ],
+       [
+        "bq_5_1",
+        -2.0
+       ],
+       [
+        "bs_5_1",
+        -2.0
+       ],
+       [
+        "brkn_5_1",
+        -2.0
+       ],
+       [
+        "brkp_5_1",
+        -2.0
+       ],
+       [
+        "bm_5_1",
+        -2.0,
+        300
+       ],
+       [
+        "bt_5_2",
+        -1.0
+       ],
+       [
+        "bq_5_2",
+        -1.0
+       ],
+       [
+        "bs_5_2",
+        -1.0
+       ],
+       [
+        "brkn_5_2",
+        -1.0
+       ],
+       [
+        "brkp_5_2",
+        -1.0
+       ],
+       [
+        "bm_5_2",
+        -1.0,
+        300
+       ],
+       [
+        "bt_5_4",
+        1.0
+       ],
+       [
+        "bq_5_4",
+        1.0
+       ],
+       [
+        "bs_5_4",
+        1.0
+       ],
+       [
+        "brkn_5_4",
+        1.0
+       ],
+       [
+        "brkp_5_4",
+        1.0
+       ],
+       [
+        "bm_5_4",
+        1.0,
+        300
+       ],
+       [
+        "bt_5_5",
+        2.0
+       ],
+       [
+        "bq_5_5",
+        2.0
+       ],
+       [
+        "bs_5_5",
+        2.0
+       ],
+       [
+        "brkn_5_5",
+        2.0
+       ],
+       [
+        "brkp_5_5",
+        2.0
+       ],
+       [
+        "bm_5_5",
+        2.0,
+        300
+       ],
+       [
+        "bt_6_1",
+        -2.5
+       ],
+       [
+        "bq_6_1",
+        -2.5
+       ],
+       [
+        "bs_6_1",
+        -2.5
+       ],
+       [
+        "brkn_6_1",
+        -2.5
+       ],
+       [
+        "brkp_6_1",
+        -2.5
+       ],
+       [
+        "bm_6_1",
+        -2.5,
+        300
+       ],
+       [
+        "bt_6_2",
+        -1.5
+       ],
+       [
+        "bq_6_2",
+        -1.5
+       ],
+       [
+        "bs_6_2",
+        -1.5
+       ],
+       [
+        "brkn_6_2",
+        -1.5
+       ],
+       [
+        "brkp_6_2",
+        -1.5
+       ],
+       [
+        "bm_6_2",
+        -1.5,
+        300
+       ],
+       [
+        "bt_6_3",
+        -0.5
+       ],
+       [
+        "bq_6_3",
+        -0.5
+       ],
+       [
+        "bs_6_3",
+        -0.5
+       ],
+       [
+        "brkn_6_3",
+        -0.5
+       ],
+       [
+        "brkp_6_3",
+        -0.5
+       ],
+       [
+        "bm_6_3",
+        -0.5,
+        300
+       ],
+       [
+        "bt_6_4",
+        0.5
+       ],
+       [
+        "bq_6_4",
+        0.5
+       ],
+       [
+        "bs_6_4",
+        0.5
+       ],
+       [
+        "brkn_6_4",
+        0.5
+       ],
+       [
+        "brkp_6_4",
+        0.5
+       ],
+       [
+        "bm_6_4",
+        0.5,
+        300
+       ],
+       [
+        "bt_6_5",
+        1.5
+       ],
+       [
+        "bq_6_5",
+        1.5
+       ],
+       [
+        "bs_6_5",
+        1.5
+       ],
+       [
+        "brkn_6_5",
+        1.5
+       ],
+       [
+        "brkp_6_5",
+        1.5
+       ],
+       [
+        "bm_6_5",
+        1.5,
+        300
+       ],
+       [
+        "bt_6_6",
+        2.5
+       ],
+       [
+        "bq_6_6",
+        2.5
+       ],
+       [
+        "bs_6_6",
+        2.5
+       ],
+       [
+        "brkn_6_6",
+        2.5
+       ],
+       [
+        "brkp_6_6",
+        2.5
+       ],
+       [
+        "bm_6_6",
+        2.5,
+        300
+       ]
+      ]
+     },
+     "note": "centre to centre along the car. default 400 mm = the panel hole pitch (about 402 mm). Rago members are baked at 300 mm and follow the same option"
+    },
+    "rail_sp": {
+     "type": "number",
+     "default": 110,
+     "min": 80,
+     "max": 140,
+     "step": 5,
+     "unit": "cm",
+     "unit_m": 0.01,
+     "axis": "z",
+     "label": "Rail spacing",
+     "short": "Rails",
+     "stretch": {
+      "axis": "z",
+      "scale": [
+       [
+        "bt_",
+        1.16
+       ],
+       [
+        "bq_",
+        1.16
+       ],
+       [
+        "bs_",
+        1.16
+       ],
+       [
+        "bm_",
+        1.075
+       ]
+      ],
+      "moves": [
+       [
+        "railn",
+        -0.5
+       ],
+       [
+        "railp",
+        0.5
+       ],
+       [
+        "posta_n",
+        -0.5
+       ],
+       [
+        "posta_p",
+        0.5
+       ],
+       [
+        "postb_n",
+        -0.5
+       ],
+       [
+        "postb_p",
+        0.5
+       ],
+       [
+        "brkn",
+        -0.5
+       ],
+       [
+        "brkp",
+        0.5
+       ]
+      ]
+     },
+     "note": "centre distance of the two factory rails; bars follow (bar length = rail spacing + 6 cm)"
+    },
+    "rail_len": {
+     "type": "number",
+     "default": 150,
+     "min": 100,
+     "max": 200,
+     "step": 10,
+     "unit": "cm",
+     "unit_m": 0.01,
+     "axis": "x",
+     "label": "Rail length",
+     "short": "Length",
+     "stretch": {
+      "axis": "x",
+      "scale": [
+       [
+        "rail",
+        1.5
+       ]
+      ],
+      "moves": [
+       [
+        "posta_",
+        -0.5
+       ],
+       [
+        "postb_",
+        0.5
+       ]
+      ]
+     },
+     "note": "factory rail length (about 150 cm typical)"
+    }
+   },
+   "category": "Solar",
+   "mountKind": "surface",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "m0",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "rackslot",
+     "polarity": "any",
+     "pos": [
+      0.0,
+      3.937,
+      0.0
+     ],
+     "pos_by_option": {
+      "rack": {
+       "diy": [
+        0.0,
+        3.937,
+        0.0
+       ],
+       "rago": [
+        0.0,
+        2.3622,
+        0.0
+       ],
+       "platform": [
+        0.0,
+        2.3622,
+        0.0
+       ]
+      }
+     },
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "align_parent": true,
+     "child_yaw_deg": 90,
+     "accepts": {
+      "thread": "rackslot",
+      "max_items": 1,
+      "note": "panel seat, one panel, centred (3 bars at the hole pitch). The panel lies on the bars; Slide moves it along."
+     }
+    },
+    {
+     "id": "a1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "rackslot",
+     "polarity": "any",
+     "pos": [
+      0.0,
+      3.937,
+      -13.7795
+     ],
+     "pos_by_option": {
+      "rack": {
+       "diy": [
+        0.0,
+        3.937,
+        -13.7795
+       ],
+       "rago": [
+        0.0,
+        2.3622,
+        -13.7795
+       ],
+       "platform": [
+        0.0,
+        2.3622,
+        -13.7795
+       ]
+      }
+     },
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "align_parent": true,
+     "child_yaw_deg": 90,
+     "accepts": {
+      "thread": "rackslot",
+      "max_items": 1,
+      "note": "panel seat, side by side, one side. The panel lies on the bars; Slide moves it along."
+     }
+    },
+    {
+     "id": "a2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "rackslot",
+     "polarity": "any",
+     "pos": [
+      0.0,
+      3.937,
+      13.7795
+     ],
+     "pos_by_option": {
+      "rack": {
+       "diy": [
+        0.0,
+        3.937,
+        13.7795
+       ],
+       "rago": [
+        0.0,
+        2.3622,
+        13.7795
+       ],
+       "platform": [
+        0.0,
+        2.3622,
+        13.7795
+       ]
+      }
+     },
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "align_parent": true,
+     "child_yaw_deg": 90,
+     "accepts": {
+      "thread": "rackslot",
+      "max_items": 1,
+      "note": "panel seat, side by side, other side. The panel lies on the bars; Slide moves it along."
+     }
+    },
+    {
+     "id": "b1",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "rackslot",
+     "polarity": "any",
+     "pos": [
+      -23.622,
+      3.937,
+      -13.7795
+     ],
+     "pos_by_option": {
+      "rack": {
+       "diy": [
+        -23.622,
+        3.937,
+        -13.7795
+       ],
+       "rago": [
+        -23.622,
+        2.3622,
+        -13.7795
+       ],
+       "platform": [
+        -23.622,
+        2.3622,
+        -13.7795
+       ]
+      }
+     },
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "align_parent": true,
+     "child_yaw_deg": 90,
+     "accepts": {
+      "thread": "rackslot",
+      "max_items": 1,
+      "note": "panel seat, 2x2, front, one side. The panel lies on the bars; Slide moves it along."
+     }
+    },
+    {
+     "id": "b2",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "rackslot",
+     "polarity": "any",
+     "pos": [
+      -23.622,
+      3.937,
+      13.7795
+     ],
+     "pos_by_option": {
+      "rack": {
+       "diy": [
+        -23.622,
+        3.937,
+        13.7795
+       ],
+       "rago": [
+        -23.622,
+        2.3622,
+        13.7795
+       ],
+       "platform": [
+        -23.622,
+        2.3622,
+        13.7795
+       ]
+      }
+     },
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "align_parent": true,
+     "child_yaw_deg": 90,
+     "accepts": {
+      "thread": "rackslot",
+      "max_items": 1,
+      "note": "panel seat, 2x2, front, other side. The panel lies on the bars; Slide moves it along."
+     }
+    },
+    {
+     "id": "b3",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "rackslot",
+     "polarity": "any",
+     "pos": [
+      23.622,
+      3.937,
+      -13.7795
+     ],
+     "pos_by_option": {
+      "rack": {
+       "diy": [
+        23.622,
+        3.937,
+        -13.7795
+       ],
+       "rago": [
+        23.622,
+        2.3622,
+        -13.7795
+       ],
+       "platform": [
+        23.622,
+        2.3622,
+        -13.7795
+       ]
+      }
+     },
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "align_parent": true,
+     "child_yaw_deg": 90,
+     "accepts": {
+      "thread": "rackslot",
+      "max_items": 1,
+      "note": "panel seat, 2x2, rear, one side. The panel lies on the bars; Slide moves it along."
+     }
+    },
+    {
+     "id": "b4",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "rackslot",
+     "polarity": "any",
+     "pos": [
+      23.622,
+      3.937,
+      13.7795
+     ],
+     "pos_by_option": {
+      "rack": {
+       "diy": [
+        23.622,
+        3.937,
+        13.7795
+       ],
+       "rago": [
+        23.622,
+        2.3622,
+        13.7795
+       ],
+       "platform": [
+        23.622,
+        2.3622,
+        13.7795
+       ]
+      }
+     },
+     "axis": [
+      0,
+      1,
+      0
+     ],
+     "align_parent": true,
+     "child_yaw_deg": 90,
+     "accepts": {
+      "thread": "rackslot",
+      "max_items": 1,
+      "note": "panel seat, 2x2, rear, other side. The panel lies on the bars; Slide moves it along."
+     }
+    }
+   ],
+   "compatible": {
+    "surface": []
+   },
+   "approximate": true,
+   "short": "Roof rack",
+   "thumb": "parts/thumbs/roof-rack.png"
+  },
+  {
+   "id": "solar-panel",
+   "name": "Flexible solar panel Yinleader CSSF-100W-CPC, 690 x 855 x 1.5 mm, 100 W",
+   "glb": "solar-panel.glb",
+   "default": false,
+   "thumb_color": "#14224a",
+   "kind": "solarpanel",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "rackslot",
+      "consumes_in": 0
+     },
+     "accepts": [
+      "rackslot"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 0,
+     "note": "origin = centre of the bottom face; lies on the rack bars; yaw in 90 degree steps"
+    }
+   ],
+   "options": {
+    "width": {
+     "type": "number",
+     "default": 690,
+     "min": 400,
+     "max": 1200,
+     "step": 10,
+     "unit": "mm",
+     "unit_m": 0.001,
+     "axis": "x",
+     "label": "Panel width",
+     "short": "W",
+     "stretch": {
+      "axis": "x",
+      "scale": [
+       [
+        "pn_",
+        0.69
+       ]
+      ],
+      "moves": [
+       [
+        "pg_xn",
+        -0.5
+       ],
+       [
+        "pg_xp",
+        0.5
+       ],
+       [
+        "pgb_xn",
+        -0.5
+       ],
+       [
+        "pgb_xp",
+        0.5
+       ]
+      ]
+     }
+    },
+    "length": {
+     "type": "number",
+     "default": 855,
+     "min": 400,
+     "max": 1200,
+     "step": 5,
+     "unit": "mm",
+     "unit_m": 0.001,
+     "axis": "z",
+     "label": "Panel length",
+     "short": "L",
+     "stretch": {
+      "axis": "z",
+      "scale": [
+       [
+        "pn_",
+        0.855
+       ]
+      ],
+      "moves": [
+       [
+        "pj_",
+        0.5
+       ],
+       [
+        "pg_xn_a",
+        -0.5
+       ],
+       [
+        "pg_xn_b",
+        0.5
+       ],
+       [
+        "pg_xp_a",
+        -0.5
+       ],
+       [
+        "pg_xp_b",
+        0.5
+       ],
+       [
+        "pgb_xn_a",
+        -0.5
+       ],
+       [
+        "pgb_xn_b",
+        0.5
+       ],
+       [
+        "pgb_xp_a",
+        -0.5
+       ],
+       [
+        "pgb_xp_b",
+        0.5
+       ]
+      ]
+     },
+     "note": "the junction box and leads sit at the +Z end and follow it"
+    },
+    "slide": {
+     "type": "number",
+     "default": 0,
+     "min": -40,
+     "max": 40,
+     "step": 5,
+     "unit": "cm",
+     "unit_m": 0.01,
+     "label": "Slide",
+     "short": "Slide",
+     "slide": {
+      "axis": "x",
+      "unit_m": 0.01
+     },
+     "note": "moves the panel along its width axis (across the bars)"
+    }
+   },
+   "category": "Solar",
+   "mountKind": "stud",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "lead_pos",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4+",
+     "polarity": "+",
+     "pos": [
+      0.7874,
+      -0.2953,
+      25.4921
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4+",
+      "max_items": 1,
+      "note": "MC4 plug tip of the panel + lead"
+     },
+     "pos_per_option": {
+      "length": {
+       "axis": 2,
+       "default": 855,
+       "per_unit": 0.019685
+      }
+     }
+    },
+    {
+     "id": "lead_neg",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4-",
+     "polarity": "-",
+     "pos": [
+      -0.7874,
+      -0.2953,
+      25.4921
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4-",
+      "max_items": 1,
+      "note": "MC4 plug tip of the panel - lead"
+     },
+     "pos_per_option": {
+      "length": {
+       "axis": 2,
+       "default": 855,
+       "per_unit": 0.019685
+      }
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "roof-rack.m0",
+     "roof-rack.a1",
+     "roof-rack.a2",
+     "roof-rack.b1",
+     "roof-rack.b2",
+     "roof-rack.b3",
+     "roof-rack.b4"
+    ]
+   },
+   "electrical": {
+    "w": 100,
+    "vmp": 19,
+    "imp": 5.26,
+    "voc": 22.42,
+    "isc": 5.79,
+    "width_mm": 690,
+    "length_mm": 855,
+    "note": "label values; other sizes scale W, Imp, Isc with the area (Voc and Vmp stay)"
+   },
+   "holes": {
+    "per_long_side": 3,
+    "dia_mm": 10,
+    "in_from_edge_mm": 15,
+    "in_from_end_mm": 25,
+    "approximate": true,
+    "note": "metal grommets, 3 on each long side (6 total); positions APPROXIMATE, measure the real panel. A panel is bolted through a row of holes (end, middle, end) onto each of 3 bars at the hole pitch, about 402 mm for the default size"
+   },
+   "short": "Solar panel",
+   "thumb": "parts/thumbs/solar-panel.png"
+  },
+  {
+   "id": "bluetti-ac70",
+   "name": "Bluetti AC70 power station, about 314 x 209 x 236 mm (APPROXIMATE)",
+   "glb": "bluetti-ac70.glb",
+   "default": false,
+   "thumb_color": "#6b7078",
+   "kind": "station",
+   "mounts": [
+    {
+     "id": "surface",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "fixed"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "origin = centre of the bottom face; stands on the ground beside the car"
+    }
+   ],
+   "options": {},
+   "category": "Solar",
+   "mountKind": "surface",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "pv_pos",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4+",
+     "polarity": "+",
+     "pos": [
+      -4.6457,
+      1.5748,
+      4.626
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4+",
+      "max_items": 1,
+      "note": "solar input +, 12-45 V, 10 A max (verify)"
+     },
+     "label": "solar in, 12-45 V, 10 A max (verify)"
+    },
+    {
+     "id": "pv_neg",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4-",
+     "polarity": "-",
+     "pos": [
+      -3.1496,
+      1.5748,
+      4.626
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4-",
+      "max_items": 1,
+      "note": "solar input -, 12-45 V, 10 A max (verify)"
+     },
+     "label": "solar in, 12-45 V, 10 A max (verify)"
+    }
+   ],
+   "compatible": {
+    "surface": []
+   },
+   "electrical": {
+    "vmin": 12,
+    "vmax": 45,
+    "imax": 10,
+    "verify": true,
+    "note": "from memory of the AC70 spec, NOT verified: check the label. The real input is one DC port; modelled as an MC4 + / - pair (an MC4 to DC adapter is assumed)."
+   },
+   "approximate": true,
+   "short": "Bluetti AC70",
+   "thumb": "parts/thumbs/bluetti-ac70.png"
+  },
+  {
+   "id": "mc4-female",
+   "name": "MC4 female plug (+), crimped on a cable, real size 18 x 60 mm",
+   "glb": "mc4-female.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "mc4plug",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "mc4+",
+      "consumes_in": 0,
+      "polarity": "+"
+     },
+     "accepts": [
+      "mc4+"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 0,
+     "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+    }
+   ],
+   "options": {},
+   "category": "Solar",
+   "mountKind": "stud",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "out",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4+",
+     "polarity": "+",
+     "pos": [
+      0,
+      0,
+      3.937
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4+",
+      "max_items": 1,
+      "note": "cable end"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "solar-panel.lead_pos",
+     "bluetti-ac70.pv_pos",
+     "mc4-y-pos.in_b",
+     "mc4-y-pos.out",
+     "mc4-fuse-pos.out"
+    ]
+   },
+   "through": true,
+   "short": "MC4 female",
+   "thumb": "parts/thumbs/mc4-female.png"
+  },
+  {
+   "id": "mc4-male",
+   "name": "MC4 male plug (-), crimped on a cable, real size 18 x 60 mm",
+   "glb": "mc4-male.glb",
+   "default": false,
+   "thumb_color": "#2a4fd0",
+   "kind": "mc4plug",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "mc4-",
+      "consumes_in": 0,
+      "polarity": "-"
+     },
+     "accepts": [
+      "mc4-"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 0,
+     "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+    }
+   ],
+   "options": {},
+   "category": "Solar",
+   "mountKind": "stud",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "out",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4-",
+     "polarity": "-",
+     "pos": [
+      0,
+      0,
+      3.937
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4-",
+      "max_items": 1,
+      "note": "cable end"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "solar-panel.lead_neg",
+     "bluetti-ac70.pv_neg",
+     "mc4-y-neg.in_b",
+     "mc4-y-neg.out",
+     "mc4-fuse-neg.out"
+    ]
+   },
+   "through": true,
+   "short": "MC4 male",
+   "thumb": "parts/thumbs/mc4-male.png"
+  },
+  {
+   "id": "mc4-y-pos",
+   "name": "MC4 Y-branch 2-to-1 (+): two inputs, one output",
+   "glb": "mc4-y-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "mc4y",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "mc4+",
+      "consumes_in": 0,
+      "polarity": "+"
+     },
+     "accepts": [
+      "mc4+"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 0,
+     "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+    }
+   ],
+   "options": {},
+   "category": "Solar",
+   "mountKind": "stud",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "in_b",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4+",
+     "polarity": "+",
+     "pos": [
+      2.3622,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4+",
+      "max_items": 1,
+      "note": "second input: link the second panel lead here with a cable"
+     }
+    },
+    {
+     "id": "out",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4+",
+     "polarity": "+",
+     "pos": [
+      1.1811,
+      0,
+      5.5118
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4+",
+      "max_items": 1,
+      "note": "output"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "solar-panel.lead_pos",
+     "bluetti-ac70.pv_pos",
+     "mc4-female.out",
+     "mc4-fuse-pos.out"
+    ]
+   },
+   "through": true,
+   "short": "Y-branch +",
+   "thumb": "parts/thumbs/mc4-y-pos.png"
+  },
+  {
+   "id": "mc4-y-neg",
+   "name": "MC4 Y-branch 2-to-1 (-): two inputs, one output",
+   "glb": "mc4-y-neg.glb",
+   "default": false,
+   "thumb_color": "#2a4fd0",
+   "kind": "mc4y",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "mc4-",
+      "consumes_in": 0,
+      "polarity": "-"
+     },
+     "accepts": [
+      "mc4-"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 0,
+     "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+    }
+   ],
+   "options": {},
+   "category": "Solar",
+   "mountKind": "stud",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "in_b",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4-",
+     "polarity": "-",
+     "pos": [
+      -2.3622,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4-",
+      "max_items": 1,
+      "note": "second input: link the second panel lead here with a cable"
+     }
+    },
+    {
+     "id": "out",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4-",
+     "polarity": "-",
+     "pos": [
+      -1.1811,
+      0,
+      5.5118
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4-",
+      "max_items": 1,
+      "note": "output"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "solar-panel.lead_neg",
+     "bluetti-ac70.pv_neg",
+     "mc4-male.out",
+     "mc4-fuse-neg.out"
+    ]
+   },
+   "through": true,
+   "short": "Y-branch -",
+   "thumb": "parts/thumbs/mc4-y-neg.png"
+  },
+  {
+   "id": "mc4-fuse-pos",
+   "name": "MC4 inline fuse holder 10 A (+), 22 x 128 mm",
+   "glb": "mc4-fuse-pos.glb",
+   "default": false,
+   "thumb_color": "#c81414",
+   "kind": "mc4fuse",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "mc4+",
+      "consumes_in": 0,
+      "polarity": "+"
+     },
+     "accepts": [
+      "mc4+"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 0,
+     "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+    }
+   ],
+   "options": {},
+   "category": "Solar",
+   "mountKind": "stud",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "out",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4+",
+     "polarity": "+",
+     "pos": [
+      0,
+      0,
+      5.0394
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4+",
+      "max_items": 1,
+      "note": "output"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "solar-panel.lead_pos",
+     "bluetti-ac70.pv_pos",
+     "mc4-female.out",
+     "mc4-y-pos.in_b",
+     "mc4-y-pos.out"
+    ]
+   },
+   "through": true,
+   "short": "Fuse 10 A +",
+   "thumb": "parts/thumbs/mc4-fuse-pos.png"
+  },
+  {
+   "id": "mc4-fuse-neg",
+   "name": "MC4 inline fuse holder 10 A (-), 22 x 128 mm",
+   "glb": "mc4-fuse-neg.glb",
+   "default": false,
+   "thumb_color": "#2a4fd0",
+   "kind": "mc4fuse",
+   "mounts": [
+    {
+     "id": "ring",
+     "type": "ring",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "needs": {
+      "kind": "stud",
+      "thread": "mc4-",
+      "consumes_in": 0,
+      "polarity": "-"
+     },
+     "accepts": [
+      "mc4-"
+     ],
+     "default_yaw_deg": 0,
+     "yaw_step_deg": 0,
+     "note": "origin = the mating face of the input plug; the body runs along +Z, away from the part it plugs into"
+    }
+   ],
+   "options": {},
+   "category": "Solar",
+   "mountKind": "stud",
+   "icon": "solar",
+   "connections": [
+    {
+     "id": "out",
+     "kind": "stud",
+     "form": "stud",
+     "thread": "mc4-",
+     "polarity": "-",
+     "pos": [
+      0,
+      0,
+      5.0394
+     ],
+     "axis": [
+      0,
+      0,
+      1
+     ],
+     "align_parent": true,
+     "accepts": {
+      "thread": "mc4-",
+      "max_items": 1,
+      "note": "output"
+     }
+    }
+   ],
+   "compatible": {
+    "ring": [
+     "solar-panel.lead_neg",
+     "bluetti-ac70.pv_neg",
+     "mc4-male.out",
+     "mc4-y-neg.in_b",
+     "mc4-y-neg.out"
+    ]
+   },
+   "through": true,
+   "short": "Fuse 10 A -",
+   "thumb": "parts/thumbs/mc4-fuse-neg.png"
+  },
+  {
    "id": "sae-adapter-pos",
    "name": "SAE post adapter for 3/8-16 stud (positive)",
    "glb": "sae-adapter-pos.glb",

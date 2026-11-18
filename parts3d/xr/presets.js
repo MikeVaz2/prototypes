@@ -30,9 +30,36 @@ export const FAN_PRESETS = [
   { id: 'B', short: '90 bend', name: 'Vertical fan, 102 mm (4 in) duct, 90 degree bend, 1.5 m', hash: fan('orient=vertical,grill=inlet') + chain('d102', 1.5, 'b90', 180) },
   { id: 'C', short: '45 bend', name: 'Vertical fan, 75 mm duct, 45 degree bend, 0.8 m', hash: fan('orient=vertical,grill=inlet') + chain('d75', 0.8, 'b45', 180) },
 ];
-// the active list follows the start scene: battery options by default, fan options when the fan is the host (setHost is called once, when the scene is created)
+// Solar roof options (2026-11-18): the DIY rack with panels, MC4 Y-branches, fuses and cables to the Bluetti AC70 on the ground beside the car.
+// Ground parts are '@x,y,z' inches in the rack frame (y = 0 is the roof, the ground is about 185 cm below).
+const R = 'roof-rack', SP = 'solar-panel', Y = 'mc4-y-', FU = 'mc4-fuse-', ST = 'bluetti-ac70';
+const rack = o => 's=' + R + ':-:0:rack=diy,profile=tslot,' + o;
+const sfx = n => n > 1 ? '_' + n : '';
+const panel = (n, slot) => '~' + SP + sfx(n) + ':' + R + '.' + slot + ':90:width=690,length=855,slide=0';
+const onOut = (pid, n, parent) => '~' + pid + sfx(n) + ':' + parent + ':0:';
+const station = (xc, yc, zc) => '~' + ST + ':@' + [xc, yc, zc].map(c => Math.round(c / 2.54 * 100) / 100).join(',') + ':0:';
+const wire = (a, b, col) => a + ':' + b + ':12:' + col + ':mc4:mc4';
+const STATION_AT = [190, -185, 280];   // cm in the rack frame: beside the car, on the ground (the roof is y = 0)
+const P = n => SP + sfx(n), YP = n => Y + 'pos' + sfx(n), YN = n => Y + 'neg' + sfx(n), FP = n => FU + 'pos' + sfx(n);
+export const SOLAR_PRESETS = [
+  { id: 'A', short: '1 panel', name: 'DIY rack, 3 bars at the hole pitch, 1 panel',
+    hash: rack('bars=3,gap=400,rail_sp=110,rail_len=150') + panel(1, 'm0') },
+  { id: 'B', short: '2 parallel', name: 'DIY rack, 3 bars, 2 panels side by side in parallel (Y-branch pair), cable to the AC70',
+    hash: rack('bars=3,gap=400,rail_sp=140,rail_len=150') + panel(1, 'a1') + panel(2, 'a2') + onOut(Y + 'pos', 1, P(1) + '.lead_pos') + onOut(Y + 'neg', 1, P(1) + '.lead_neg') + station(...STATION_AT) +
+      '&j=' + [wire(P(2) + '.lead_pos', YP(1) + '.in_b', 'red'), wire(P(2) + '.lead_neg', YN(1) + '.in_b', 'black'), wire(YP(1) + '.out', ST + '.pv_pos', 'red'), wire(YN(1) + '.out', ST + '.pv_neg', 'black')].join('~') },
+  { id: 'C', short: '4 + fuses', name: 'DIY rack, 6 bars, 4 panels (2 x 2), 10 A fuse on each + lead, three Y-branch pairs',
+    hash: rack('bars=6,gap=400,rail_sp=140,rail_len=200') + panel(1, 'b1') + panel(2, 'b2') + panel(3, 'b3') + panel(4, 'b4') +
+      [1, 2, 3, 4].map(n => onOut(FU + 'pos', n, P(n) + '.lead_pos')).join('') +
+      onOut(Y + 'pos', 1, FP(1) + '.out') + onOut(Y + 'neg', 1, P(1) + '.lead_neg') + onOut(Y + 'pos', 2, FP(3) + '.out') + onOut(Y + 'neg', 2, P(3) + '.lead_neg') +
+      onOut(Y + 'pos', 3, YP(1) + '.out') + onOut(Y + 'neg', 3, YN(1) + '.out') + station(...STATION_AT) +
+      '&j=' + [wire(FP(2) + '.out', YP(1) + '.in_b', 'red'), wire(P(2) + '.lead_neg', YN(1) + '.in_b', 'black'), wire(FP(4) + '.out', YP(2) + '.in_b', 'red'), wire(P(4) + '.lead_neg', YN(2) + '.in_b', 'black'),
+        wire(YP(2) + '.out', YP(3) + '.in_b', 'red'), wire(YN(2) + '.out', YN(3) + '.in_b', 'black'), wire(YP(3) + '.out', ST + '.pv_pos', 'red'), wire(YN(3) + '.out', ST + '.pv_neg', 'black')].join('~') },
+];
+const HOST_LISTS = { 'fan-80mm': FAN_PRESETS, 'roof-rack': SOLAR_PRESETS };
+const listFor = S => !S || S.isDefaultHost ? BATTERY_PRESETS : HOST_LISTS[S.host.id] || FAN_PRESETS;
+// the active list follows the start scene: battery options by default, the host's own options otherwise (setHost is called once, when the scene is created)
 export let PRESETS = BATTERY_PRESETS;
-export const setHost = S => { PRESETS = S && !S.isDefaultHost ? FAN_PRESETS : BATTERY_PRESETS; };
+export const setHost = S => { PRESETS = listFor(S); };
 export const ids = () => PRESETS.map(p => p.id);
 export const byId = id => PRESETS.find(p => p.id === String(id).toUpperCase()) || null;
 export const nextId = id => { const i = ids().indexOf(id); return ids()[(i + 1) % ids().length]; };
@@ -46,7 +73,7 @@ export function relPlace(hostAt, hostYaw, rel, yaw = 0) {
 // scene = { insts, offs, marks, measures, jumpers }. S = createScene(catalog). -> new scene, or null for an unknown id.
 // Replaces only what the preset owns (parts stacked on the battery studs); keeps parts placed elsewhere and jumpers whose two ends still exist.
 export function applyPreset(S, scene, id) {
-  if (!S.isDefaultHost) return applyFanPreset(S, scene, id);
+  if (!S.isDefaultHost) return applyHostPreset(S, scene, id);
   const p = byId(id); if (!p) return null;
   const parsed = S.fromHash(p.hash);
   const host = scene.insts.find(i => i.part === S.host.id) || parsed.insts.find(i => i.part === S.host.id);
@@ -71,17 +98,19 @@ export function applyPreset(S, scene, id) {
   return { ...scene, insts, jumpers };
 }
 // fan scene: the fan keeps its pose (at, yaw), takes the preset's fan options, and everything else is replaced by the preset's chain. Marks and offsets stay.
-function applyFanPreset(S, scene, id) {
-  const p = FAN_PRESETS.find(x => x.id === String(id).toUpperCase()); if (!p) return null;
+// Solar roof: same, plus ground parts ('@x,y,z' inches in the rack frame, the AC70) are placed relative to the rack's pose, and the preset's cables come with it.
+function applyHostPreset(S, scene, id) {
+  const p = listFor(S).find(x => x.id === String(id).toUpperCase()); if (!p) return null;
   const parsed = S.fromHash(p.hash), ph = parsed.insts.find(i => i.part === S.host.id), old = scene.insts.find(i => i.part === S.host.id) || ph;
   const host = { ...old, opts: { ...old.opts, ...ph.opts } };
-  return { ...scene, insts: [host, ...parsed.insts.filter(i => i.part !== S.host.id)], jumpers: [] };
+  const rest = parsed.insts.filter(i => i.part !== S.host.id).map(i => { if (!i.at) return i; const pl = relPlace(host.at, host.yaw, i.at, i.yaw); return { ...i, at: pl.at, yaw: pl.yaw }; });
+  return { ...scene, insts: [host, ...rest], jumpers: parsed.jumpers || [] };
 }
 // which preset the instances equal (parts and their mounts, ignoring the host pose), or null
 export function presetOf(S, insts) {
   if (!S.isDefaultHost) {   // fan scene: the fan's options and the chain on it, ignoring where the fan stands
-    const key = list => list.map(i => S.serializeState([i.part === S.host.id ? { ...i, at: null, yaw: 0 } : i])).sort().join('~');
-    const mine = key(insts), hit = FAN_PRESETS.find(p => key(S.fromHash(p.hash).insts) === mine);
+    const key = list => list.map(i => S.serializeState([i.part === S.host.id || i.at ? { ...i, at: null, yaw: 0 } : i])).sort().join('~');
+    const mine = key(insts), hit = listFor(S).find(p => key(S.fromHash(p.hash).insts) === mine);
     return hit ? hit.id : null;
   }
   const key = list => S.serializeState(list.filter(i => i.part !== S.host.id && sideOf(S, list, i.id) != null)).split('~').sort().join('~');
@@ -112,7 +141,7 @@ export function stackHeights(S, insts, topIn) {
 }
 export function tooltip(id, heights, fmt) {
   const p = byId(id);
-  if (PRESETS === FAN_PRESETS) return p ? 'Option ' + p.id + ': ' + p.name : 'Custom fume extractor setup';
+  if (PRESETS !== BATTERY_PRESETS) return p ? 'Option ' + p.id + ': ' + (PRESETS === SOLAR_PRESETS ? p.short : p.name) : PRESETS === SOLAR_PRESETS ? 'Custom solar setup' : 'Custom fume extractor setup';
   const f = v => v == null ? '–' : fmt(v);
   return (p ? 'Option ' + p.id + ': ' + p.name : 'Custom') + ' · + ' + f(heights.pos) + ' · − ' + f(heights.neg);
 }

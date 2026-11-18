@@ -1,0 +1,95 @@
+{
+ "kind": "station",
+ "id": "bluetti-ac70",
+ "name": "Bluetti AC70 power station, about 314 x 209 x 236 mm (APPROXIMATE)",
+ "short": "Bluetti AC70",
+ "units": "in",
+ "catalog": {
+  "category": "Solar",
+  "mountKind": "surface",
+  "icon": "solar",
+  "short": "AC70",
+  "swatch": "#6b7078"
+ },
+ "approximate": true,
+ "electrical": {
+  "vmin": 12,
+  "vmax": 45,
+  "imax": 10,
+  "verify": true,
+  "note": "from memory of the AC70 spec, NOT verified: check the label. The real input is one DC port; modelled as an MC4 + / - pair (an MC4 to DC adapter is assumed)."
+ },
+ "mounts": [
+  {
+   "id": "surface",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "fixed"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = centre of the bottom face; stands on the ground beside the car"
+  }
+ ],
+ "connections": [
+  {
+   "id": "pv_pos",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "mc4+",
+   "polarity": "+",
+   "pos": [
+    -4.6457,
+    1.5748,
+    4.626
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "align_parent": true,
+   "accepts": {
+    "thread": "mc4+",
+    "max_items": 1,
+    "note": "solar input +, 12-45 V, 10 A max (verify)"
+   },
+   "label": "solar in, 12-45 V, 10 A max (verify)"
+  },
+  {
+   "id": "pv_neg",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "mc4-",
+   "polarity": "-",
+   "pos": [
+    -3.1496,
+    1.5748,
+    4.626
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "align_parent": true,
+   "accepts": {
+    "thread": "mc4-",
+    "max_items": 1,
+    "note": "solar input -, 12-45 V, 10 A max (verify)"
+   },
+   "label": "solar in, 12-45 V, 10 A max (verify)"
+  }
+ ],
+ "options": {},
+ "notes": "Dimensions approximate (about 31.4 x 20.9 x 23.6 cm); the front faces +Z with a small screen, ports and the solar input on the left."
+}
