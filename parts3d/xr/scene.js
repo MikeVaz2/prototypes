@@ -10,7 +10,7 @@
 // Hash: s=<id>:<mount>:<yaw>:<opt>=<v>,...~...   mount = "-" | legacy host mount id | "<hostId>.<conn>" | "@x,y,z"
 //       o=h,x,z,yaw   m=x,y,z,S~...   d=ax,ay,az,bx,by,bz~...   (positions in inches, 2 decimals)
 // Stacking: items on one outlet are ordered lug, busbar, other, nut (then insertion order); each sits on the previous item's `top` mount.
-import { needsOf, consumes, outletsFor, noOutletMessage, mountKind, connPos } from './match.js';
+import { needsOf, consumes, outletsFor, outletsAny, resolveConn, noOutletMessage, mountKind, connPos } from './match.js';
 import * as OFS from '../offsets.js';
 import * as JMP from './jumper.js';
 
@@ -38,8 +38,9 @@ export function hostSelFrom(search, hash) {
 // How a part's node is turned and lifted by its options (fan orientation, grill): choice values may carry `pose` {rot_z_deg, lift_mm, when: {opt: value}} (one or a list).
 // -> { rz: degrees about the part's own Z, lift: metres } | null. Node matrix = T(pos) Ry(yaw) T(0,lift,0) Rz(rz); everything stacked on the part is a child of that node.
 export function poseOf(p, opts = {}) {
-  let rz = 0, lift = 0, dx = 0;
+  let rz = 0, lift = 0, dx = 0, px = 0, pz = 0;
   for (const [k, o] of Object.entries(p.options || {})) {
+    if (o.type === 'number' && o.slide && o.slide.frame === 'parent' && typeof opts[k] === 'number') { if (o.slide.axis === 'z') pz += opts[k] * (o.slide.unit_m || 0.001); else px += opts[k] * (o.slide.unit_m || 0.001); continue; }   // Move: offset in the parent's (rack's) frame
     if (o.type === 'number' && o.slide && typeof opts[k] === 'number') { dx += opts[k] * (o.slide.unit_m || 0.01); continue; }   // Slide: moves the part along its own X
     const e = o.type === 'choice' && o.values[opts[k]];
     if (!e || !e.pose) continue;
@@ -48,7 +49,8 @@ export function poseOf(p, opts = {}) {
       rz += q.rot_z_deg || 0; lift += (q.lift_mm || 0) / 1000;
     }
   }
-  return rz || lift || dx ? { rz, lift, dx } : null;
+  if (!(rz || lift || dx || px || pz)) return null;
+  return px || pz ? { rz, lift, dx, px, pz } : { rz, lift, dx };   // px, pz: offset in the parent's frame (set by Move)
 }
 // 3x3 rotations, row-major, same convention as three.js (makeRotationY / makeRotationZ)
 const RY = d => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
@@ -57,6 +59,12 @@ const mul3 = (a, b) => { const o = []; for (let i = 0; i < 3; i++) for (let j = 
 const mv3 = (m, v) => [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]];
 const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 
+// Old part ids from before the Y-branch and fuse became one part each (2026-11-18): old scene hashes still load (the instance keeps its old id, so cables and mounts that name it still resolve).
+export const PART_ALIAS = {
+  'mc4-y-pos': { part: 'mc4-y', opts: { split: '2', pol: 'pos' } }, 'mc4-y-neg': { part: 'mc4-y', opts: { split: '2', pol: 'neg' } },
+  'mc4-y4-pos': { part: 'mc4-y', opts: { split: '4', pol: 'pos' } }, 'mc4-y4-neg': { part: 'mc4-y', opts: { split: '4', pol: 'neg' } },
+  'mc4-fuse-pos': { part: 'mc4-fuse', opts: { pol: 'pos' } }, 'mc4-fuse-neg': { part: 'mc4-fuse', opts: { pol: 'neg' } },
+};
 export function createScene(catalog, hostSel) {
   const hostId = resolveHostId(catalog, hostSel), host = catalog.parts.find(p => p.id === hostId), isDefaultHost = hostId === catalog.host;
   const partOf = id => catalog.parts.find(p => p.id === id);
@@ -82,7 +90,7 @@ export function createScene(catalog, hostSel) {
   const hostInst = insts => insts.find(i => i.part === host.id);
   const connOf = (insts, key) => {
     const [hid, cid] = String(key).split('.'), h = insts.find(i => i.id === hid), hp = h && partOf(h.part);
-    return hp ? { h, hp, conn: (hp.connections || []).find(c => c.id === cid) } : null;
+    return hp ? { h, hp, conn: resolveConn((hp.connections || []).find(c => c.id === cid), h.opts) } : null;
   };
 
   // ---- hash ----
@@ -111,7 +119,7 @@ export function createScene(catalog, hostSel) {
   function parseState(str) {
     let out = [];
     for (const t of (str || '').split('~')) {
-      const [id, mount, yaw, o] = t.split(':'), p = id && partOf(baseOf(id));
+      const [id, mount, yaw, o] = t.split(':'), al = id && PART_ALIAS[baseOf(id)], p = id && partOf(al ? al.part : baseOf(id));
       if (!p || out.some(x => x.id === id)) continue;
       const d = defInst(p, id), sm = snapMount(p);
       d.on = null; d.at = null;
@@ -126,6 +134,7 @@ export function createScene(catalog, hostSel) {
       else if (p !== host) continue;   // stud part without an outlet
       const y = Number(yaw);
       if (yaw !== '' && yaw !== undefined && Number.isFinite(y)) { const step = yawStep(p.id) || 0.1; d.yaw = r1(norm(Math.round(y / step) * step)); }
+      if (al) d.opts = { ...d.opts, ...al.opts };
       parseOpts(p, d, o);
       out.push(d);
     }
@@ -212,7 +221,7 @@ export function createScene(catalog, hostSel) {
       else if (p === host || inst.at) r = { parent: null, pos: (inst.at || [0, 0, 0]).map(v => v * IN), yaw: inst.yaw || 0, tilt: poseOf(p, inst.opts) };
       else if (inst.on) {
         const pr = parentOf(insts, inst);
-        if (pr && go(pr.parent)) r = { parent: pr.parent.id, pos: pr.pos, yaw: inst.yaw || 0, tilt: poseOf(p, inst.opts) };
+        if (pr && go(pr.parent)) { const t = poseOf(p, inst.opts); r = { parent: pr.parent.id, pos: t && (t.px || t.pz) ? add3(pr.pos, [t.px || 0, 0, t.pz || 0]) : pr.pos, yaw: inst.yaw || 0, tilt: t }; }
       }
       busy.delete(inst.id);
       out.set(inst.id, r);
@@ -271,13 +280,14 @@ export function createScene(catalog, hostSel) {
   }
 
   // ---- add / remove ----
-  const outlets = (partId, opts, insts) => outletsFor(partOf(partId), opts || defOpts(partOf(partId)), insts, partOf);
+  const outlets = (partId, opts, insts) => outletsAny(partOf(partId), opts || defOpts(partOf(partId)), insts, partOf);
   function addOnOutlet(insts, partId, key) {
     const p = partOf(partId); if (!p) return { ok: false, why: 'unknown part' };
     const o = outlets(partId, defOpts(p), insts).find(x => x.key === key);
     if (!o) return { ok: false, why: 'not a compatible outlet' };
     if (!o.ok) return { ok: false, why: o.why };
     let inst = { ...defInst(p, nextId(insts, partId)), on: key, at: null };
+    if (o.opts) inst.opts = { ...inst.opts, ...o.opts };   // a part with a polarity option takes the one that fits this outlet
     // the part's default yaw is a pose in the surface frame; stored relative to its parent so it looks the same and then follows the parent
     // (a connection with align_parent, like the fan outlet, keeps yaw 0 relative: the part is aligned with its parent whatever the parent's pose)
     const pr = parentOf([...insts, inst], inst), pw = pr && placements([...insts, inst]).get(pr.parent.id);

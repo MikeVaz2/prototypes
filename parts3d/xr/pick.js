@@ -53,11 +53,22 @@ export function controlsFor(kind, rotStep = 0) {
 }
 // option buttons of the selected part, in order (at most 3: ids gauge, gauge2, gauge3). Library parts (bar / fuse / cable): every choice and bool option except one that
 // follows its parent (auto_from, e.g. the duct diameter). Others (lug): the first choice only, the old Gauge button.
-export function optionButtons(part, kind) {
+// an option with `when: { opt: [values] }` applies only while the part's options match (platform sizes only for the platform)
+export const optShown = (spec, opts) => !spec.when || !opts || Object.entries(spec.when).every(([k, vs]) => [].concat(vs).includes(opts[k]));
+export function optionButtons(part, kind, opts) {
   const ent = Object.entries((part && part.options) || {});
-  if (kind === 'bar' || kind === 'fuse' || kind === 'cable') return ent.filter(([, o]) => (o.type === 'choice' || o.type === 'bool') && !o.auto_from).map(([k]) => k).slice(0, 3);
+  if (kind === 'bar' || kind === 'fuse' || kind === 'cable') return ent.filter(([, o]) => (o.type === 'choice' || o.type === 'bool') && !o.auto_from && !o.derived && optShown(o, opts)).map(([k]) => k).slice(0, 3);
   const c = ent.find(([, o]) => o.type === 'choice');
   return c ? [c[0]] : [];
+}
+// number options the +/- buttons edit (size): not nocycle (Move's offsets), and `when` matches the part's current options
+export const sizeKeys = (p, opts) => Object.keys((p && p.options) || {}).filter(k => p.options[k].type === 'number' && !p.options[k].nocycle && optShown(p.options[k], opts));
+// a part that Move slides over its host and Turn 90 turns (the solar panel): it has Move's offset options px and pz
+export const isPanel = p => !!(p && p.options && p.options.px && p.options.pz);
+// what the context row needs to know about the selected instance (see stackForTool): free on a surface, host, has a size, several sizes (Size row), panel actions, option buttons
+export function extrasFor(p, inst, kind, hostId) {
+  const n = sizeKeys(p, inst.opts).length;
+  return { free: !!inst.at || inst.part === hostId, host: inst.part === hostId, num: n > 0, size: n > 1, turn: isPanel(p), move: isPanel(p), choice: optionButtons(p, kind, inst.opts).length };
 }
 export const OPT_IDS = ['gauge', 'gauge2', 'gauge3'];
 // text of an option button: the part's own prefix (btn) plus the value label; a bool shows "Label: on|off"

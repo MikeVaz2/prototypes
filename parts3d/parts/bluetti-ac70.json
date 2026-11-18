@@ -14,10 +14,12 @@
  "approximate": true,
  "electrical": {
   "vmin": 12,
-  "vmax": 45,
+  "vmax": 58,
   "imax": 10,
-  "verify": true,
-  "note": "from memory of the AC70 spec, NOT verified: check the label. The real input is one DC port; modelled as an MC4 + / - pair (an MC4 to DC adapter is assumed)."
+  "w": 500,
+  "nick": "AC70",
+  "verify": false,
+  "note": "Bluetti US store spec: solar input XT60, 12-58 V DC, 10 A max, 500 W; ships with an MC4-to-XT60 cable. Modelled as an MC4 + / - pair at the end of that cable. Strings in series and in parallel in the check line (series-aware)."
  },
  "mounts": [
   {
@@ -61,9 +63,9 @@
    "accepts": {
     "thread": "mc4+",
     "max_items": 1,
-    "note": "solar input +, 12-45 V, 10 A max (verify)"
+    "note": "solar input + (XT60, via the MC4-to-XT60 cable), 12-58 V, 10 A max"
    },
-   "label": "solar in, 12-45 V, 10 A max (verify)"
+   "label": "solar in XT60, 12-58 V, 10 A"
   },
   {
    "id": "pv_neg",
@@ -85,9 +87,9 @@
    "accepts": {
     "thread": "mc4-",
     "max_items": 1,
-    "note": "solar input -, 12-45 V, 10 A max (verify)"
+    "note": "solar input - (XT60, via the MC4-to-XT60 cable), 12-58 V, 10 A max"
    },
-   "label": "solar in, 12-45 V, 10 A max (verify)"
+   "label": "solar in XT60, 12-58 V, 10 A"
   }
  ],
  "options": {},

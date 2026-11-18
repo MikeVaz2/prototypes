@@ -14,7 +14,7 @@ export const BUTTONS = {
   mode: ['cursor', null], opt: ['layers', null], jfrom: ['wire', 'Cable'], jgauge: ['wire', null], gauge2: ['layers', null], gauge3: ['dot', null], jcolor: ['dot', null], jremove: ['trash', 'Remove'], undoj: ['undo', 'Undo'], addpart: ['plus', 'Add'], undomark: ['undo', 'Undo'], mundo: ['undo', 'Undo'], more: ['dots', 'More'],
   qselect: ['cursor', 'Select'], qadd: ['plus', 'Add'], qmeasure: ['ruler', 'Measure'], qmark: ['pin', 'Mark'], qhere: ['plus', 'Add'],
   extp: ['length', 'Length +'], extm: ['length', 'Length \u2212'], rotm: ['rotR', 'Rotate ↻'], rotp: ['rotL', 'Rotate ↺'], cover: ['cover', 'Cover'],
-  hp: ['up', 'Up'], hm: ['down', 'Down'], tp: ['rotL', 'Rotate ↺'], tm: ['rotR', 'Rotate ↻'], move: ['move', 'Move'], deselect: ['x', 'Deselect'], select: ['cursor', 'Select'], gauge: ['wire', null],
+  hp: ['up', 'Up'], hm: ['down', 'Down'], tp: ['rotL', 'Rotate ↺'], tm: ['rotR', 'Rotate ↻'], move: ['move', 'Move'], size: ['length', 'Size'], turn: ['rotR', 'Turn 90°'], deselect: ['x', 'Deselect'], select: ['cursor', 'Select'], gauge: ['wire', null],
   nl: ['left', 'Nudge'], nr: ['right', 'Nudge'], nu: ['away', 'Nudge'], nd: ['toward', 'Nudge'], again: ['place', 'Place'], drop: ['pin', 'Mark'],
   clearmarks: ['trash', 'Clear'], mnew: ['ruler', 'Measure'], mclear: ['trash', 'Clear'], remove: ['trash', 'Remove'], rmmark: ['trash', 'Remove'], rmmeasure: ['trash', 'Remove'],
   confirm: ['check', 'Place'], next: ['next', 'Next'], cancel: ['x', 'Cancel'], reset: ['reset', 'Reset'], exit: ['exit', 'Exit'], back: ['back', 'Back'],

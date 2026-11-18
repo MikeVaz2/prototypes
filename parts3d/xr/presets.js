@@ -32,28 +32,40 @@ export const FAN_PRESETS = [
 ];
 // Solar roof options (2026-11-18): the DIY rack with panels, MC4 Y-branches, fuses and cables to the Bluetti AC70 on the ground beside the car.
 // Ground parts are '@x,y,z' inches in the rack frame (y = 0 is the roof, the ground is about 185 cm below).
-const R = 'roof-rack', SP = 'solar-panel', Y = 'mc4-y-', FU = 'mc4-fuse-', ST = 'bluetti-ac70';
+const R = 'roof-rack', SP = 'solar-panel', ST = 'bluetti-ac70';
 const rack = o => 's=' + R + ':-:0:rack=diy,profile=tslot,' + o;
 const sfx = n => n > 1 ? '_' + n : '';
 const panel = (n, slot) => '~' + SP + sfx(n) + ':' + R + '.' + slot + ':90:width=690,length=855,slide=0';
-const onOut = (pid, n, parent) => '~' + pid + sfx(n) + ':' + parent + ':0:';
 const station = (xc, yc, zc) => '~' + ST + ':@' + [xc, yc, zc].map(c => Math.round(c / 2.54 * 100) / 100).join(',') + ':0:';
 const wire = (a, b, col) => a + ':' + b + ':12:' + col + ':mc4:mc4';
 const STATION_AT = [190, -185, 280];   // cm in the rack frame: beside the car, on the ground (the roof is y = 0)
-const P = n => SP + sfx(n), YP = n => Y + 'pos' + sfx(n), YN = n => Y + 'neg' + sfx(n), FP = n => FU + 'pos' + sfx(n);
+const P = n => SP + sfx(n);
+// the MC4 Y-branch is one part with options split (2 / 4) and pol (pos / neg); a + and a - Y of one preset are the instances mc4-y and mc4-y_2
+const YP = 'mc4-y', YN = 'mc4-y_2', yTok = (id, parent, split, pol) => '~' + id + ':' + parent + ':0:split=' + split + ',pol=' + pol;
+const lead = (n, pol) => P(n) + '.lead_' + pol;
+const J = list => '&j=' + list.join('~');
+const R2 = rack('bars=3,gap=400,rail_sp=140,rail_len=135'), R4 = rack('bars=6,gap=400,rail_sp=140,rail_len=200');
+const panels2 = panel(1, 'a1') + panel(2, 'a2'), panels4 = panel(1, 'b1') + panel(2, 'b2') + panel(3, 'b3') + panel(4, 'b4');
+// Five ways to connect the panels (2026-11-18). The AC70 solar input takes 12-58 V and 10 A; a panel is Voc 22.42 V, Isc 5.79 A, Vmp 19 V, Imp 5.26 A.
+// A series link is a cable from one panel's + lead to the next panel's - lead (or the plugs mated directly).
 export const SOLAR_PRESETS = [
-  { id: 'A', short: '1 panel', name: 'DIY rack, 3 bars at the hole pitch, 1 panel',
-    hash: rack('bars=3,gap=400,rail_sp=110,rail_len=150') + panel(1, 'm0') },
-  { id: 'B', short: '2 parallel', name: 'DIY rack, 3 bars, 2 panels side by side in parallel (Y-branch pair), cable to the AC70',
-    hash: rack('bars=3,gap=400,rail_sp=140,rail_len=150') + panel(1, 'a1') + panel(2, 'a2') + onOut(Y + 'pos', 1, P(1) + '.lead_pos') + onOut(Y + 'neg', 1, P(1) + '.lead_neg') + station(...STATION_AT) +
-      '&j=' + [wire(P(2) + '.lead_pos', YP(1) + '.in_b', 'red'), wire(P(2) + '.lead_neg', YN(1) + '.in_b', 'black'), wire(YP(1) + '.out', ST + '.pv_pos', 'red'), wire(YN(1) + '.out', ST + '.pv_neg', 'black')].join('~') },
-  { id: 'C', short: '4 + fuses', name: 'DIY rack, 6 bars, 4 panels (2 x 2), 10 A fuse on each + lead, three Y-branch pairs',
-    hash: rack('bars=6,gap=400,rail_sp=140,rail_len=200') + panel(1, 'b1') + panel(2, 'b2') + panel(3, 'b3') + panel(4, 'b4') +
-      [1, 2, 3, 4].map(n => onOut(FU + 'pos', n, P(n) + '.lead_pos')).join('') +
-      onOut(Y + 'pos', 1, FP(1) + '.out') + onOut(Y + 'neg', 1, P(1) + '.lead_neg') + onOut(Y + 'pos', 2, FP(3) + '.out') + onOut(Y + 'neg', 2, P(3) + '.lead_neg') +
-      onOut(Y + 'pos', 3, YP(1) + '.out') + onOut(Y + 'neg', 3, YN(1) + '.out') + station(...STATION_AT) +
-      '&j=' + [wire(FP(2) + '.out', YP(1) + '.in_b', 'red'), wire(P(2) + '.lead_neg', YN(1) + '.in_b', 'black'), wire(FP(4) + '.out', YP(2) + '.in_b', 'red'), wire(P(4) + '.lead_neg', YN(2) + '.in_b', 'black'),
-        wire(YP(2) + '.out', YP(3) + '.in_b', 'red'), wire(YN(2) + '.out', YN(3) + '.in_b', 'black'), wire(YP(3) + '.out', ST + '.pv_pos', 'red'), wire(YN(3) + '.out', ST + '.pv_neg', 'black')].join('~') },
+  { id: 'A', short: '2 in series', name: '2 panels in series (the founder build): leads mate, extension cables to the AC70',
+    hash: R2 + panels2 + station(...STATION_AT) +
+      J([wire(lead(1, 'pos'), ST + '.pv_pos', 'red'), wire(lead(1, 'neg'), lead(2, 'pos'), 'black'), wire(lead(2, 'neg'), ST + '.pv_neg', 'black')]) },
+  { id: 'B', short: '2 parallel', name: '2 panels in parallel with a 2-to-1 Y pair',
+    hash: R2 + panels2 + yTok(YP, lead(1, 'pos'), 2, 'pos') + yTok(YN, lead(1, 'neg'), 2, 'neg') + station(...STATION_AT) +
+      J([wire(lead(2, 'pos'), YP + '.in_b', 'red'), wire(lead(2, 'neg'), YN + '.in_b', 'black'), wire(YP + '.out', ST + '.pv_pos', 'red'), wire(YN + '.out', ST + '.pv_neg', 'black')]) },
+  { id: 'C', short: '4: 2S2P', name: '4 panels, two strings of 2 in series, joined with a 2-to-1 Y pair',
+    hash: R4 + panels4 + yTok(YP, lead(3, 'pos'), 2, 'pos') + yTok(YN, lead(1, 'neg'), 2, 'neg') + station(...STATION_AT) +
+      J([wire(lead(1, 'pos'), lead(3, 'neg'), 'red'), wire(lead(2, 'pos'), lead(4, 'neg'), 'red'), wire(lead(4, 'pos'), YP + '.in_b', 'red'), wire(lead(2, 'neg'), YN + '.in_b', 'black'),
+        wire(YP + '.out', ST + '.pv_pos', 'red'), wire(YN + '.out', ST + '.pv_neg', 'black')]) },
+  { id: 'D', short: '4 parallel', name: '4 panels in parallel with a 1-to-4 Y pair',
+    hash: R4 + panels4 + yTok(YP, lead(1, 'pos'), 4, 'pos') + yTok(YN, lead(1, 'neg'), 4, 'neg') + station(...STATION_AT) +
+      J([...[2, 3, 4].map((n, k) => wire(lead(n, 'pos'), YP + '.in_' + 'bcd'[k], 'red')), ...[2, 3, 4].map((n, k) => wire(lead(n, 'neg'), YN + '.in_' + 'bcd'[k], 'black')),
+        wire(YP + '.out', ST + '.pv_pos', 'red'), wire(YN + '.out', ST + '.pv_neg', 'black')]) },
+  { id: 'E', short: '4 in series: too high', name: '4 panels in series: over the AC70 voltage limit, do not connect',
+    hash: R4 + panels4 + station(...STATION_AT) +
+      J([wire(lead(1, 'neg'), ST + '.pv_neg', 'black'), wire(lead(1, 'pos'), lead(2, 'neg'), 'red'), wire(lead(2, 'pos'), lead(3, 'neg'), 'red'), wire(lead(3, 'pos'), lead(4, 'neg'), 'red'), wire(lead(4, 'pos'), ST + '.pv_pos', 'red')]) },
 ];
 const HOST_LISTS = { 'fan-80mm': FAN_PRESETS, 'roof-rack': SOLAR_PRESETS };
 const listFor = S => !S || S.isDefaultHost ? BATTERY_PRESETS : HOST_LISTS[S.host.id] || FAN_PRESETS;

@@ -51,6 +51,33 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
     for (const c of match(o.nodes[1])) c.position[ax] += d;
   }
 
+  // Flexible ETFE panel surface (2026-11-18): a small procedural pebble normal map (128 px, made once on a canvas) on the panel body, border and cells; low specular, no glassy look.
+  // The GLB meshes have no UVs, so planar ones are made from the vertex positions (one tile = 40 mm). Skipped without a DOM (tests).
+  let etfeTex = null;
+  function etfeNormal() {
+    if (etfeTex !== null) return etfeTex || null;
+    try {
+      const N = 128, cv = document.createElement('canvas'); cv.width = cv.height = N; const g = cv.getContext('2d'), img = g.createImageData(N, N), T = Math.PI * 2;
+      const rnd = (x, y) => { const v = Math.sin((x * 127.1 + y * 311.7) * 12.9898) * 43758.5453; return v - Math.floor(v); };
+      const h = (x, y) => { x = (x + N) % N; y = (y + N) % N; return 0.5 * Math.cos(T * 8 * x / N) * Math.cos(T * 8 * y / N) + 0.3 * Math.cos(T * (13 * x + 9 * y) / N) + 0.25 * Math.cos(T * (5 * x - 17 * y) / N) + 0.12 * rnd(x, y); };
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        const dx = h(x + 1, y) - h(x - 1, y), dy = h(x, y + 1) - h(x, y - 1), k = 1 / Math.hypot(dx, dy, 1.6), i = (y * N + x) * 4;
+        img.data[i] = 128 + 127 * dx * k; img.data[i + 1] = 128 + 127 * dy * k; img.data[i + 2] = 128 + 127 * 1.6 * k; img.data[i + 3] = 255;
+      }
+      g.putImageData(img, 0, 0); etfeTex = new THREE.CanvasTexture(cv); etfeTex.wrapS = etfeTex.wrapT = THREE.RepeatWrapping; etfeTex.anisotropy = 4;
+    } catch (e) { etfeTex = false; }
+    return etfeTex || null;
+  }
+  function etfeSurface(obj) {
+    const tex = etfeNormal(); if (!tex) return;
+    obj.traverse(c => {
+      if (!c.isMesh || !/^(pn_(az|bx|back|cells)|pc_)/.test(c.name)) return;
+      const g = c.geometry, pos = g.getAttribute('position');
+      if (!g.getAttribute('uv') && pos) { const uv = new Float32Array(pos.count * 2); for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i) * 25; uv[i * 2 + 1] = pos.getZ(i) * 25; } g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); }
+      const ms = Array.isArray(c.material) ? c.material : [c.material];
+      for (const m of ms) { m.normalMap = tex; if (m.normalScale) m.normalScale.set(0.45, 0.45); m.roughness = Math.max(m.roughness || 0, 0.62); m.metalness = Math.min(m.metalness || 0, 0.15); m.needsUpdate = true; }
+    });
+  }
   // Real tree: root (the surface frame) -> node per instance (local pose relative to its parent) -> body (the part's meshes) + the nodes stacked on it.
   // Turning or moving a node carries everything below it. Bodies carry the instance data (pick, tint); nodes only carry the pose.
   async function build(state) {
@@ -71,6 +98,7 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
         c.castShadow = true; c.receiveShadow = true;
         c.material = Array.isArray(c.material) ? c.material.map(m => m.clone()) : c.material.clone();   // per instance, so tints stay on this part
       } });
+      if (p.kind === 'solarpanel') etfeSurface(obj);
       obj.userData = { instanceId: inst.id, partId: p.id, kind: kindOf(p.id, host.id, 'cover' in (p.options || {})), tint: null };
       const node = new THREE.Group(); node.name = 'node:' + inst.id; node.userData.nodeId = inst.id;
       node.matrixAutoUpdate = false; node.add(obj); nodes.set(inst.id, node); bodies.push(obj);

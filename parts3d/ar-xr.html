@@ -14,7 +14,7 @@
 <script type="module" src="tb/space/space.js"></script>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-18 09:09 solar';
+const BUILD = '2026-11-18 13:50 solar3';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
@@ -102,6 +102,7 @@ window.__BUILD = BUILD;
   @container ctl (max-width: 480px) { @media (orientation: landscape) { #bottom .t { display:none; } #bottom button { padding:0.35em 0.7em; } } }
   /* tooltip line (no actions), or a short chip in front of the actions (mark / measure tools, adding) */
   #info { display:flex; align-items:center; gap:8px; font-size:0.7em; line-height:1.3; white-space:nowrap; color:var(--deck-muted); }
+  #sel[data-level="over"] { color:#ff5a5a; font-weight:600; } #sel[data-level="limited"] { color:#ffc24a; }
   #selthumb { flex:none; width:1.8em; height:1.8em; object-fit:contain; } #selthumb[hidden] { display:none; }
   #info div { overflow:hidden; text-overflow:ellipsis; } #info div:empty { display:none; }
   #ctx.acts #info { max-width:46%; }
@@ -205,6 +206,8 @@ window.__BUILD = BUILD;
       <button data-space-model="relative" id="rotp" type="button" aria-label="Rotate left"><span>&#8634;</span><small>15&deg;</small></button>
       <button data-space-model="relative" id="cover" type="button" aria-pressed="true">Cover</button>
       <button data-space-model="relative" id="move" type="button" aria-label="Move part on its surface">Move</button>
+      <button data-space-model="relative" id="size" type="button" aria-label="Change the size: width, length">Size</button>
+      <button data-space-model="relative" id="turn" type="button" aria-label="Turn the part 90 degrees">Turn 90&deg;</button>
       <button data-space-model="relative" id="hp" type="button" aria-label="Raise 0.5 inch">&uarr;<small>0.5 in</small></button>
       <button data-space-model="relative" id="hm" type="button" aria-label="Lower 0.5 inch">&darr;<small>0.5 in</small></button>
       <button data-space-model="relative" id="tp" type="button" aria-label="Turn left 5 degrees">&#8634;<small>5&deg;</small></button>

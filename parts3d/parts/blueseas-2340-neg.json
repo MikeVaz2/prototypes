@@ -134,7 +134,7 @@
    "note": "top of the tab on the stud axis; the nut sits here"
   }
  ],
- "notes": "Source: Blue Sea Systems customer drawing PN 2340 (dimensioned drawing on bluesea.com). Cover height, joggle offset and copper thickness are not dimensioned: measured from sheet 2 side view proportions (estimates). Drawing says #8-32 screws; the Amazon listing title says 10-24; drawing used. Plain shapes, no logos.",
+ "notes": "Source: Blue Sea Systems customer drawing PN 2340 (ref/bluesea-2340-drawing.pdf). Cover height, joggle offset and copper thickness are not dimensioned: measured from sheet 2 side view proportions (estimates). Drawing says #8-32 screws; the Amazon listing title says 10-24; drawing used. Plain shapes, no logos.",
  "options": {
   "cover": {
    "type": "bool",

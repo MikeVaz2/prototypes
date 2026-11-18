@@ -30,42 +30,139 @@ export function nets(insts, jumpers, partOf) {
   return find;
 }
 
-// Parallel check at one station. -> null when there is no station, else
-// { n, voc, isc, vocOk, iscOk, limited, text, panels: [ids] }
+// Station check (series aware, 2026-11-18). Every panel is an edge from its - net to its + net; a string is a chain of panels from the station's - net to its + net
+// (series links are cables or direct plugs joining a + lead to the next panel's - lead). Strings in parallel add current.
+// Voc of a string = sum of the panel Voc; cold Voc = Voc x COLD (note "cold ~"); string current = the weakest panel's; power ~ min(Vmp_string x I_total, imax x Vmp_string, station watts).
+// -> null when there is no station, else { n, strings, label, voc, cold, isc, imp, w, vocOk, iscOk, limited, level: 'ok' | 'limited' | 'over', text, panels: [ids] }
+export const COLD = 1.10;
+function stringsOf(panels, find, pos, neg) {
+  const byNeg = new Map(); for (const p of panels) { const k = find(p.id + '.lead_neg'); if (!byNeg.has(k)) byNeg.set(k, []); byNeg.get(k).push(p); }
+  const out = [];
+  const walk = (net, chain, seen) => {
+    if (net === pos) { out.push(chain); return; }
+    if (chain.length > 12) return;
+    for (const p of byNeg.get(net) || []) { const nx = find(p.id + '.lead_pos'); if (!chain.includes(p) && !seen.has(nx)) walk(nx, [...chain, p], new Set([...seen, nx])); }
+  };
+  if (pos !== neg) walk(neg, [], new Set([neg]));
+  return out;
+}
+const labelOf = lens => {
+  const k = lens[0], s = lens.length;
+  if (!lens.every(l => l === k)) return lens.length + ' strings (' + lens.join('+') + ' panels)';
+  return s === 1 ? (k === 1 ? '1 panel' : k + 'S') : k === 1 ? s + 'P' : k + 'S' + s + 'P';
+};
 export function stationCheck(insts, jumpers, partOf) {
   const st = insts.find(i => { const p = partOf(i.part); return p && p.electrical && p.electrical.vmax; });
   if (!st) return null;
-  const sp = partOf(st.part), lim = sp.electrical, find = nets(insts, jumpers, partOf), pos = find(st.id + '.pv_pos'), neg = find(st.id + '.pv_neg');
-  const panels = insts.filter(i => { const p = partOf(i.part); return p && p.electrical && p.electrical.imp && find(i.id + '.lead_pos') === pos && find(i.id + '.lead_neg') === neg; });
-  if (!panels.length) return { n: 0, voc: 0, isc: 0, vocOk: true, iscOk: true, limited: false, panels: [], text: 'No panel is wired to the station yet' };
-  const nums = panels.map(i => panelNums(partOf(i.part), i.opts)), voc = Math.max(...nums.map(n => n.voc)), isc = nums.reduce((a, n) => a + n.isc, 0);
-  const vocOk = voc <= lim.vmax && voc >= lim.vmin, iscOk = isc <= lim.imax;
-  const vtxt = vocOk ? 'OK, max ' + lim.vmax : voc > lim.vmax ? 'over the ' + lim.vmax + ' V max' : 'below the ' + lim.vmin + ' V min';
-  const itxt = iscOk ? 'OK, max ' + lim.imax : 'limited to ' + lim.imax + ' A';
-  const text = (panels.length > 1 ? 'Parallel' : '1 panel') + ': Voc ' + f1(voc) + ' V (' + vtxt + '), Isc ' + f1(isc) + ' A (' + itxt + ')';
-  return { n: panels.length, voc, isc, vocOk, iscOk, limited: !iscOk, panels: panels.map(i => i.id), text };
+  const sp = partOf(st.part), lim = sp.electrical, nick = lim.nick || sp.short || 'station', find = nets(insts, jumpers, partOf);
+  const pos = find(st.id + '.pv_pos'), neg = find(st.id + '.pv_neg');
+  const all = insts.filter(i => { const p = partOf(i.part); return p && p.electrical && p.electrical.imp; });
+  const chains = stringsOf(all, find, pos, neg).filter(c => c.length);
+  const used = [...new Set(chains.flat())];
+  if (!used.length) return { n: 0, strings: 0, voc: 0, isc: 0, vocOk: true, iscOk: true, limited: false, level: 'ok', panels: [], text: 'No panel is wired to the station yet' };
+  const num = i => panelNums(partOf(i.part), i.opts);
+  const strs = chains.map(c => { const ns = c.map(num); return { n: c.length, voc: ns.reduce((a, x) => a + x.voc, 0), vmp: ns.reduce((a, x) => a + x.vmp, 0), isc: Math.min(...ns.map(x => x.isc)), imp: Math.min(...ns.map(x => x.imp)) }; });
+  const voc = Math.max(...strs.map(x => x.voc)), vmp = Math.max(...strs.map(x => x.vmp)), cold = voc * COLD;
+  const isc = strs.reduce((a, x) => a + x.isc, 0), imp = strs.reduce((a, x) => a + x.imp, 0);
+  const label = labelOf(strs.map(x => x.n));
+  const vocOver = cold > lim.vmax, vocLow = voc < lim.vmin, iscOk = isc <= lim.imax;
+  const wRaw = Math.min(vmp * imp, lim.imax * vmp, lim.w || Infinity), wLim = wRaw < vmp * imp - 0.5;
+  const r = { n: used.length, strings: strs.length, label, voc, cold, isc, imp, w: wRaw, vocOk: !vocOver && !vocLow, iscOk, limited: !iscOk || wLim, panels: used.map(i => i.id) };
+  if (vocOver) {
+    r.level = 'over';
+    r.text = label + ' Voc ' + f1(voc) + ' V' + (voc > lim.vmax ? '' : ' (cold ~' + f1(cold) + ' V)') + ' — over the ' + nick + ' max ' + lim.vmax + ' V: do not connect';
+  } else if (vocLow) {
+    r.level = 'over'; r.text = label + ' Voc ' + f1(voc) + ' V — below the ' + nick + ' min ' + lim.vmin + ' V: it will not start';
+  } else {
+    r.level = r.limited ? 'limited' : 'ok';
+    r.text = label + ': Voc ' + f1(voc) + ' V (cold ~' + f1(cold) + ' V, OK, max ' + lim.vmax + ') · Isc ' + f1(isc) + ' A (' + (iscOk ? 'OK, max ' + lim.imax : 'limited to ' + lim.imax + ' A') + ') · ~' + f0(wRaw) + ' W' + (wLim ? ' (limited by ' + (lim.imax * vmp < (lim.w || Infinity) ? lim.imax + ' A' : lim.w + ' W') + ')' : ' (OK)');
+  }
+  return r;
 }
 
 // ---- grommet holes over the bars ----
-export const HOLE_END_MM = 25, HOLE_TOL_MM = 10;
+// POFENZE: first crossbar centre PLAT_FRONT_MM from the front tip (-X, the deflector end), last bar PLAT_REAR_MM from the rear end (estimates, same numbers as make_solar.py)
+export const PLAT_FRONT_MM = 205, PLAT_REAR_MM = 80;
+export const HOLE_END_MM = 25, HOLE_EDGE_MM = 15, HOLE_TOL_MM = 10;
+const rackKind = rack => (rack.opts && rack.opts.rack) || 'diy';
+// platform size in mm and its crossbar count (options plat_len / plat_wid in cm, plat_bars)
+export function platformDims(rack) {
+  const o = rack.opts || {};
+  return { len: (+o.plat_len || 232.4) * 10, wid: (+o.plat_wid || 120.7) * 10, n: +o.plat_bars || 7 };
+}
 // bar centres along the car (mm, rack frame) for a rack instance
 export function barsX(rack) {
   const o = rack.opts || {};
-  if (o.rack === 'platform') return Array.from({ length: 9 }, (_, k) => -1100 + 40 + k * (2200 - 80) / 8);
+  if (rackKind(rack) === 'platform') { const { len, n } = platformDims(rack); return Array.from({ length: n }, (_, k) => -len / 2 + PLAT_FRONT_MM + k * (len - PLAT_FRONT_MM - PLAT_REAR_MM) / (n - 1)); }
   const n = +o.bars || 3, gap = +o.gap || 400;
   return Array.from({ length: n }, (_, i) => (i - (n - 1) / 2) * gap);
 }
-// Does each row of holes (end, middle, end) sit over a bar? Panel inst on a rack slot. -> { ok, pitch, text }
-// The rows run across the panel width, so the panel must lie with its length along the car (yaw 90 or 270).
-export function holesCheck(inst, rack, partOf) {
-  if (!inst.on || inst.on.split('.')[0] !== rack.id) return { ok: true, text: '' };
+// panel geometry in the rack frame for its yaw: lengths along / across the car and the hole lines (car-X offsets from the panel centre, mm).
+// Length along the car (yaw 90 / 270): three hole rows (end, middle, end), each row across the width. Turned (0 / 180): the two long sides run across the car, one bar each.
+export function panelGeom(inst) {
+  const L = +inst.opts.length || 855, W = +inst.opts.width || 690, alongL = Math.round(inst.yaw) % 180 === 90;
+  const pitch = L / 2 - HOLE_END_MM, side = W / 2 - HOLE_EDGE_MM;
+  return { alongL, along: alongL ? L : W, across: alongL ? W : L, pitch, side, lines: alongL ? [-pitch, 0, pitch] : [-side, side] };
+}
+const rad = d => d * Math.PI / 180;
+// where the panel centre is in the rack frame (mm): slot + Move offsets + the old own-axis Slide (cm)
+export function panelCentre(inst, rack, partOf) {
   const rp = partOf(rack.part), conn = (rp.connections || []).find(c => c.id === inst.on.split('.')[1]);
-  if (!conn) return { ok: true, text: '' };
-  const pitch = ((inst.opts.length || 855) / 2 - HOLE_END_MM), pr = Math.round(pitch);
-  if (Math.round(inst.yaw) % 180 !== 90) return { ok: false, pitch, text: 'Turn the panel 90° so its hole rows lie across the bars' };
-  if (rack.opts && rack.opts.rack === 'platform') return { ok: true, pitch, text: '' };
-  const x0 = connPos(conn, rack.opts || {})[0] * 25.4, bars = barsX(rack);
-  const off = [-pitch, 0, pitch].map(d => Math.min(...bars.map(b => Math.abs(b - (x0 + d)))));
-  const ok = off.every(d => d <= HOLE_TOL_MM);
-  return { ok, pitch, text: ok ? '' : "Holes don't line up with the bars: set bar spacing to " + pr + ' mm' + (Math.abs(x0) < 1 && bars.length % 2 === 0 ? ' (and use an odd bar count)' : '') };
+  const sp = conn ? connPos(conn, rack.opts || {}) : [0, 0, 0], sl = (+inst.opts.slide || 0) * 10;
+  return { x: sp[0] * 25.4 + (+inst.opts.px || 0) + sl * Math.cos(rad(inst.yaw)), z: sp[2] * 25.4 + (+inst.opts.pz || 0) - sl * Math.sin(rad(inst.yaw)), slotX: sp[0] * 25.4, slotZ: sp[2] * 25.4 };
+}
+const onRack = (inst, rack) => !!inst.on && inst.on.split('.')[0] === rack.id;
+// bar-aligned centre positions (mm along the car) for the panel's hole lines, nearest to `want` first; [] when none exists
+export function snapCandidates(inst, rack, want) {
+  const bars = barsX(rack), g = panelGeom(inst), out = new Set();
+  for (const b of bars) for (const d of g.lines) {
+    const c = b - d;
+    if (g.lines.every(e => Math.min(...bars.map(x => Math.abs(x - (c + e)))) <= HOLE_TOL_MM)) out.add(Math.round(c * 10) / 10);
+  }
+  return [...out].sort((a, b) => Math.abs(a - want) - Math.abs(b - want));
+}
+// Does each hole line sit over a bar? Panel inst on a rack slot. -> { ok, pitch, text }
+export function holesCheck(inst, rack, partOf) {
+  if (!onRack(inst, rack)) return { ok: true, text: '' };
+  const g = panelGeom(inst);
+  if (rackKind(rack) === 'platform') return { ok: true, pitch: g.pitch, text: '' };
+  const c = panelCentre(inst, rack, partOf), bars = barsX(rack);
+  const ok = g.lines.every(d => Math.min(...bars.map(b => Math.abs(b - (c.x + d)))) <= HOLE_TOL_MM);
+  if (ok) return { ok, pitch: g.pitch, text: '' };
+  if (snapCandidates(inst, rack, c.x).length) return { ok, pitch: g.pitch, text: 'Holes are between the bars: tap Move to snap the panel onto them' };
+  const need = g.alongL ? Math.round(g.pitch) : Math.round(2 * g.side);
+  return { ok, pitch: g.pitch, text: "Holes don't line up with the bars: set bar spacing to " + need + ' mm' + (g.alongL ? (Math.abs(c.x) < 1 && bars.length % 2 === 0 ? ' (and use an odd bar count)' : '') : ' (two bars)') };
+}
+// half sizes the panel centre may move over (mm): platform = the whole panel stays on it; bars = the centre stays over the rails / bars
+export function moveLimits(inst, rack) {
+  const g = panelGeom(inst), o = rack.opts || {};
+  if (rackKind(rack) === 'platform') { const d = platformDims(rack); return { hx: Math.max(0, d.len / 2 - g.along / 2), hz: Math.max(0, d.wid / 2 - g.across / 2) }; }
+  return { hx: (+o.rail_len || 135) * 5, hz: ((+o.rail_sp || 110) * 10 + 60) / 2 };
+}
+const clamp = (v, h) => Math.min(h, Math.max(-h, v));
+// Move the panel centre to (tx, tz) in the rack frame (mm). On bars the along-car position snaps so the hole lines land on bars (nearest valid spot);
+// on the platform it moves freely, kept inside. -> { px, pz, snapped, x, z } offsets from the slot (mm, whole numbers); caller also zeroes Slide
+export function movePanel(inst, rack, partOf, tx, tz) {
+  const c = panelCentre(inst, rack, partOf), lim = moveLimits(inst, rack);
+  let x = clamp(tx, lim.hx), snapped = false;
+  if (rackKind(rack) !== 'platform') { const s = snapCandidates(inst, rack, x); if (s.length) { x = s[0]; snapped = true; } }
+  const z = clamp(tz, lim.hz);
+  return { px: Math.round(x - c.slotX), pz: Math.round(z - c.slotZ), snapped, x, z };
+}
+// Turn the panel 90 degrees about its centre, then re-snap its hole lines to the bars. -> { yaw, px, pz, slide: 0, snapped }
+export function turnPanel(inst, rack, partOf) {
+  const c = panelCentre(inst, rack, partOf), yaw = (Math.round(inst.yaw) + 90) % 360;
+  const next = { ...inst, yaw, opts: { ...inst.opts, slide: 0, px: 0, pz: 0 } };
+  const m = movePanel(next, rack, partOf, c.x, c.z);
+  return { yaw, px: m.px, pz: m.pz, slide: 0, snapped: m.snapped };
+}
+// bolt heads show only while the hole lines sit over bars: sets opts.bolted on every panel (in place). -> true when something changed
+export function syncBolts(insts, partOf) {
+  let ch = false;
+  for (const i of insts) {
+    const p = partOf(i.part); if (!(p && p.options && p.options.bolted)) continue;
+    const rack = i.on && insts.find(r => r.id === i.on.split('.')[0]), ok = rack ? holesCheck(i, rack, partOf).ok : true;
+    if (i.opts.bolted !== ok) { i.opts.bolted = ok; ch = true; }
+  }
+  return ch;
 }

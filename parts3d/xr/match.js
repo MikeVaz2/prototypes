@@ -11,9 +11,21 @@ export function match(needs, conn) {
 }
 
 // the mount of a part that says how it attaches: { mount, needs } | null
-export function needsOf(part) {
+// A mount may carry needs_by_option { opt: { value: { thread, polarity, ... } } }: the needs for this instance's options (MC4 Y-branch and fuse: the polarity option decides + or -).
+export function needsOf(part, opts = {}) {
   const all = (part.mounts || []).filter(x => x.needs), m = all.find(x => x.needs.kind === part.mountKind) || all[0];
-  return m ? { mount: m, needs: m.needs } : null;
+  if (!m) return null;
+  let needs = m.needs;
+  for (const [k, tbl] of Object.entries(m.needs_by_option || {})) { const v = opts[k] === undefined ? (part.options && part.options[k] && part.options[k].default) : opts[k]; if (tbl[v]) needs = { ...needs, ...tbl[v] }; }
+  return { mount: m, needs };
+}
+// A connection with accepts_by_option / polarity_by_option applied for the host's options (same shape as the plain one). Others are returned unchanged.
+export function resolveConn(conn, opts = {}) {
+  if (!conn || !(conn.accepts_by_option || conn.polarity_by_option)) return conn;
+  const c = { ...conn, accepts: conn.accepts && { ...conn.accepts } };
+  for (const [k, tbl] of Object.entries(conn.accepts_by_option || {})) if (tbl[opts[k]]) c.accepts = { ...c.accepts, ...tbl[opts[k]] };
+  for (const [k, tbl] of Object.entries(conn.polarity_by_option || {})) if (tbl[opts[k]]) c.polarity = tbl[opts[k]];
+  return c;
 }
 export const mountKind = part => part.mountKind || (needsOf(part) && needsOf(part).needs.kind) || 'surface';
 
@@ -32,6 +44,7 @@ export const connEnabled = (conn, opts = {}) => Object.entries(conn.enabled_when
 export function connPos(conn, opts = {}) {
   let pos = conn.pos.slice();
   for (const [k, tbl] of Object.entries(conn.pos_by_option || {})) if (tbl[opts[k]]) pos = tbl[opts[k]].slice();
+  const cb = conn.pos_by_combo; if (cb) { const t = cb.table[cb.opts.map(k => opts[k]).join('|')]; if (t) pos = t.slice(); }   // two options decide together: { opts: [a, b], table: { 'va|vb': [x,y,z] } }
   for (const [k, n] of Object.entries(conn.pos_per_option || {})) if (typeof opts[k] === 'number') pos[n.axis] += (opts[k] - n.default) * n.per_unit;
   return pos;
 }
@@ -52,11 +65,12 @@ export function fits(accepts, usedIn, extraIn) {
 //   partOf: id -> catalog entry
 // -> [{ host, conn, key: "host.conn", ok, why }]   ok = rule match + enabled + capacity; why = reason when not ok
 export function outletsFor(part, opts, insts, partOf) {
-  const n = needsOf(part); if (!n || n.needs.kind !== 'stud') return [];
+  const n = needsOf(part, opts); if (!n || n.needs.kind !== 'stud') return [];
   const extra = consumes(part, opts), out = [];
   for (const h of insts) {
     const hp = partOf(h.part); if (!hp) continue;
-    for (const c of hp.connections || []) {
+    for (const c0 of hp.connections || []) {
+      const c = resolveConn(c0, h.opts);
       if (!match(n.needs, c)) continue;
       const key = h.id + '.' + c.id;
       if (!connEnabled(c, h.opts)) { out.push({ host: h.id, conn: c.id, key, ok: false, why: 'not available with these options' }); continue; }
@@ -68,14 +82,27 @@ export function outletsFor(part, opts, insts, partOf) {
   return out;
 }
 
+// Option sets that cover every variant of a part whose mount needs depend on options (needs_by_option): [base] for ordinary parts.
+export function needVariants(part, base = {}) {
+  const m = (part.mounts || []).find(x => x.needs_by_option); let sets = [base];
+  if (m) for (const [k, tbl] of Object.entries(m.needs_by_option)) sets = sets.flatMap(o => Object.keys(tbl).map(v => ({ ...o, [k]: v })));
+  return sets;
+}
+// outlets the part can go on in any of its variants (an ok one wins over a refused one); each result also says which options fit: { ..., opts }
+export function outletsAny(part, base, insts, partOf) {
+  const seen = new Map();
+  for (const o of needVariants(part, base)) for (const r of outletsFor(part, o, insts, partOf)) { const old = seen.get(r.key); if (!old || (r.ok && !old.ok)) seen.set(r.key, { ...r, opts: o }); }
+  return [...seen.values()];
+}
+
 // Free outlets of an instance, for "Add to this": every connection of the part except its own mount (kind/form 'ring'),
 // enabled for its options and not full. Screws, crimps and studs all count. Independent of yaw and of the cover option (the cover never hides an outlet:
 // the Blue Sea cover leaves the screw terminals reachable). -> [{ key, conn, kind, thread }]
 export function freeOutlets(inst, insts, partOf) {
   const p = inst && partOf(inst.part); if (!p) return [];
   const out = [];
-  for (const c of p.connections || []) {
-    const kind = c.form || c.kind;
+  for (const c0 of p.connections || []) {
+    const c = resolveConn(c0, inst.opts), kind = c.form || c.kind;
     if (kind === 'ring' || !connEnabled(c, inst.opts)) continue;
     const key = inst.id + '.' + c.id, used = insts.filter(i => i.on === key).map(i => consumes(partOf(i.part), i.opts));
     if (kind === 'stud' && c.accepts ? !fits(c.accepts, used, 0).ok : used.length > 0) continue;
@@ -97,7 +124,7 @@ export function noOutletMessage(part, outlets) {
 export function partsFitting(parts, insts, partOf, keyFilter = () => true, optsOf = () => ({})) {
   const out = [];
   for (const part of parts) {
-    const keys = outletsFor(part, optsOf(part), insts, partOf).filter(o => o.ok && keyFilter(o.key)).map(o => o.key);
+    const keys = outletsAny(part, optsOf(part), insts, partOf).filter(o => o.ok && keyFilter(o.key)).map(o => o.key);
     if (keys.length) out.push({ part, keys });
   }
   return out;

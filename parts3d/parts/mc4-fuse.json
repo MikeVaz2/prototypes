@@ -1,0 +1,144 @@
+{
+ "kind": "mc4fuse",
+ "id": "mc4-fuse",
+ "name": "MC4 inline fuse holder 10 A (+ or -), 22 x 128 mm",
+ "short": "Fuse 10 A",
+ "units": "in",
+ "polarity": "+",
+ "through": true,
+ "catalog": {
+  "category": "Solar",
+  "mountKind": "stud",
+  "icon": "solar",
+  "short": "Fuse 10 A",
+  "swatch": "#c81414"
+ },
+ "mounts": [
+  {
+   "id": "ring",
+   "type": "ring",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "needs": {
+    "kind": "stud",
+    "thread": "mc4+",
+    "consumes_in": 0,
+    "polarity": "+"
+   },
+   "accepts": [
+    "mc4+"
+   ],
+   "default_yaw_deg": 0,
+   "yaw_step_deg": 0,
+   "note": "origin = the mating face of the input plug; the body runs along +Z",
+   "needs_by_option": {
+    "pol": {
+     "pos": {
+      "thread": "mc4+",
+      "polarity": "+"
+     },
+     "neg": {
+      "thread": "mc4-",
+      "polarity": "-"
+     }
+    }
+   }
+  }
+ ],
+ "connections": [
+  {
+   "id": "out",
+   "kind": "stud",
+   "form": "stud",
+   "thread": "mc4+",
+   "polarity": "+",
+   "pos": [
+    0,
+    0,
+    5.0394
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "align_parent": true,
+   "accepts": {
+    "thread": "mc4+",
+    "max_items": 1,
+    "note": "output"
+   },
+   "accepts_by_option": {
+    "pol": {
+     "pos": {
+      "thread": "mc4+"
+     },
+     "neg": {
+      "thread": "mc4-"
+     }
+    }
+   },
+   "polarity_by_option": {
+    "pol": {
+     "pos": "+",
+     "neg": "-"
+    }
+   },
+   "pos_by_option": {
+    "pol": {
+     "pos": [
+      0,
+      0,
+      5.0394
+     ],
+     "neg": [
+      0,
+      0,
+      5.0394
+     ]
+    }
+   }
+  }
+ ],
+ "options": {
+  "pol": {
+   "type": "choice",
+   "default": "pos",
+   "label": "Polarity",
+   "btn": "Polarity: ",
+   "values": {
+    "pos": {
+     "label": "+ (red band)",
+     "nodes": [
+      "fp_in_body",
+      "fp_in_band",
+      "fp_holder",
+      "fp_amp",
+      "fp_out_body",
+      "fp_out_band"
+     ]
+    },
+    "neg": {
+     "label": "- (blue band)",
+     "nodes": [
+      "fn_in_body",
+      "fn_in_band",
+      "fn_holder",
+      "fn_amp",
+      "fn_out_body",
+      "fn_out_band"
+     ]
+    }
+   }
+  }
+ },
+ "label": "10 A"
+}

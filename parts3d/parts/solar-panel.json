@@ -134,8 +134,24 @@
     "axis": "x",
     "scale": [
      [
-      "pn_",
+      "pn_az",
       0.69
+     ],
+     [
+      "pn_bx",
+      0.656
+     ],
+     [
+      "pn_back",
+      0.618
+     ],
+     [
+      "pn_cells",
+      0.612
+     ],
+     [
+      "pn_bus",
+      0.612
      ]
     ],
     "moves": [
@@ -154,9 +170,18 @@
      [
       "pgb_xp",
       0.5
+     ],
+     [
+      "pc_xn",
+      -0.5
+     ],
+     [
+      "pc_xp",
+      0.5
      ]
     ]
-   }
+   },
+   "note": "the mounting border and the corner radius keep their size, the cell area grows"
   },
   "length": {
    "type": "number",
@@ -173,8 +198,24 @@
     "axis": "z",
     "scale": [
      [
-      "pn_",
+      "pn_az",
+      0.821
+     ],
+     [
+      "pn_bx",
       0.855
+     ],
+     [
+      "pn_back",
+      0.811
+     ],
+     [
+      "pn_cells",
+      0.805
+     ],
+     [
+      "pn_bus",
+      0.805
      ]
     ],
     "moves": [
@@ -213,6 +254,22 @@
      [
       "pgb_xp_b",
       0.5
+     ],
+     [
+      "pc_xn_a",
+      -0.5
+     ],
+     [
+      "pc_xn_b",
+      0.5
+     ],
+     [
+      "pc_xp_a",
+      -0.5
+     ],
+     [
+      "pc_xp_b",
+      0.5
      ]
     ]
    },
@@ -220,6 +277,7 @@
   },
   "slide": {
    "type": "number",
+   "nocycle": true,
    "default": 0,
    "min": -40,
    "max": 40,
@@ -232,8 +290,71 @@
     "axis": "x",
     "unit_m": 0.01
    },
-   "note": "moves the panel along its width axis (across the bars)"
+   "note": "moves the panel along its own width axis (older scenes; Move sets px and pz instead)"
+  },
+  "px": {
+   "type": "number",
+   "nocycle": true,
+   "default": 0,
+   "min": -1200,
+   "max": 1200,
+   "step": 1,
+   "unit": "mm",
+   "unit_m": 0.001,
+   "label": "Along the car",
+   "short": "X",
+   "slide": {
+    "axis": "x",
+    "unit_m": 0.001,
+    "frame": "parent"
+   },
+   "note": "offset from the slot along the car, in the rack frame; set by Move (snaps the hole rows to the bars)"
+  },
+  "pz": {
+   "type": "number",
+   "nocycle": true,
+   "default": 0,
+   "min": -1200,
+   "max": 1200,
+   "step": 1,
+   "unit": "mm",
+   "unit_m": 0.001,
+   "label": "Across the car",
+   "short": "Z",
+   "slide": {
+    "axis": "z",
+    "unit_m": 0.001,
+    "frame": "parent"
+   },
+   "note": "offset from the slot across the car, in the rack frame; set by Move"
+  },
+  "bolted": {
+   "type": "bool",
+   "derived": true,
+   "default": true,
+   "label": "Bolted",
+   "nodes": [
+    "pgb_xn_a",
+    "pgb_xn_m",
+    "pgb_xn_b",
+    "pgb_xp_a",
+    "pgb_xp_m",
+    "pgb_xp_b"
+   ],
+   "note": "bolt heads show only while the hole rows sit over bars (the page sets this)"
   }
  },
- "notes": "1.5 mm thick, 1.2 kg. Black backsheet, 4 x 6 dark blue cells with 3 busbars each, thin white border; junction box 90 x 60 x 15 mm on the back with two 220 mm leads ending in MC4 plugs. The + lead is male and the - lead female as briefed (verify on the real panel)."
+ "outline": {
+  "nodes": [
+   "pn_"
+  ],
+  "note": "selection box = the panel body; the junction box and leads hang past the end and are left out"
+ },
+ "corner_radius_mm": 17,
+ "border_mm": {
+  "long_sides": 36,
+  "short_ends": 22
+ },
+ "estimated": "ESTIMATES: corner radius 17 mm, mounting border 36 mm along the long sides and 22 mm at the ends (grommets 15 mm from the long edge, inside the border), cell layout 4 x 5 cells of about 150 x 160 mm with cut corners, 2.5 mm gaps and 9 busbars each. Surface: flexible ETFE laminate, semi-matte with a fine pebble texture (runtime normal map, low specular), black monocrystalline cells. The founder may send a photo of the real panel to correct these.",
+ "notes": "1.5 mm thick, 1.2 kg. ETFE laminate over a black backsheet, rounded corners, wide mounting border with the grommets, black monocrystalline cells (4 x 5, nine busbars each) inside the cell area; junction box 90 x 60 x 15 mm on the back with two 220 mm leads ending in MC4 plugs. The + lead is male and the - lead female as briefed (verify on the real panel)."
 }

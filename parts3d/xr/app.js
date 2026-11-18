@@ -20,6 +20,7 @@ import * as PR from './presets.js';
 import * as LC from './lifecycle.js';
 import * as RC from './rec.js';
 import * as SOL from './solar.js';
+import * as OL from './outline.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -328,19 +329,24 @@ const instOf = id => state.find(i => i.id === id) || null;
 const selInst = () => instOf(selectedId);
 const kindOfId = id => { const i = instOf(id), p = i && C.partOf(i.part); return p ? PK.kindOf(p.id, C.host.id, 'cover' in (p.options || {})) : null; };
 const nameOfId = id => { const i = instOf(id), p = i && C.partOf(i.part); return !p ? '' : (p.short || p.name); };
-const numKeys = p => Object.keys(p.options || {}).filter(k => p.options[k].type === 'number');
+const numKeys = (p, inst) => PK.sizeKeys(p, inst && inst.opts);   // size options (Move's offsets are nocycle, `when` hides platform sizes on a DIY rack)
 const numSel = new Map();   // instance id -> the number option the +/- buttons edit (parts with several: panel width / length / slide, rack spacing ...)
-const numKey = (p, id) => { const ks = numKeys(p), s = numSel.get(id); return ks.includes(s) ? s : ks[0]; };
+const numKey = (p, id) => { const ks = numKeys(p, instOf(id)), s = numSel.get(id); return ks.includes(s) ? s : ks[0]; };
+let sizeOpen = false;   // the size row (Back, dimension, -, +) replaces the actions of a part with several size options
 const NUM = '#num';   // pseudo option button: "Edit: <name> <value>", taps through the number options
 const choiceKey = p => Object.keys(p.options || {}).find(k => p.options[k].type === 'choice');
-const optKeys = (p, kind) => { const k = PK.optionButtons(p, kind); return numKeys(p).length > 1 ? [NUM, ...k].slice(0, 3) : k; };   // option buttons of a part: gauge, gauge2, gauge3
-const optText = (p, inst, k) => k === NUM ? 'Edit: ' + (p.options[numKey(p, inst.id)].short || p.options[numKey(p, inst.id)].label) + ' ' + MD.fmtOpt(p.options[numKey(p, inst.id)], inst.opts[numKey(p, inst.id)], units) : PK.optLabel(p.options[k], inst.opts[k]);
-const numText = (p, inst) => numKeys(p).map(k => (numKeys(p).length > 1 ? (p.options[k].short || p.options[k].label) + ' ' : '') + MD.fmtOpt(p.options[k], inst.opts[k], units)).join(' ');
+const optKeys = (p, kind, inst) => PK.optionButtons(p, kind, inst && inst.opts);   // choice / bool option buttons of a part: gauge, gauge2, gauge3
+const isPanel = PK.isPanel;
+const sizeable = (p, inst) => !!p && !!inst && numKeys(p, inst).length > 1;
+const numLabel = (p, inst) => { const k = numKey(p, inst.id), o = p.options[k]; return (o.short || o.label) + ' ' + MD.fmtOpt(o, inst.opts[k], units) + ' ▸'; };
+const optText = (p, inst, k) => PK.optLabel(p.options[k], inst.opts[k]);
+const numText = (p, inst) => numKeys(p, inst).map(k => (numKeys(p, inst).length > 1 ? (p.options[k].short || p.options[k].label) + ' ' : '') + MD.fmtOpt(p.options[k], inst.opts[k], units)).join(' ');
 
 async function rebuild() {
   if (busy) { again = true; return; }
   busy = true;
   try {
+    SOL.syncBolts(state, C.partOf);   // bolt heads only where the hole rows sit over bars
     const root = await C.build(state);
     modelHolder.clear(); modelHolder.add(root);
     hoveredId = null; outletPts = null; fitCache.clear(); hideQuick(); edgeFor = null; edgeLines = []; applyXray(); applyTints(); refreshOutline(); updateJumpers(); updateHeights(); readout(); persistSoon();
@@ -379,10 +385,12 @@ function setTint(root, want) {
 function applyTints() {
   for (const r of roots()) { const w = PK.tintFor(r.userData.instanceId, selectedId, rec.on ? null : hoveredId); if (r.userData.tint !== w) setTint(r, w); }
 }
-function localBox(obj) {   // box of obj in the modelHolder frame (outline lives in inner)
+function localBox(obj) {
   scene.updateMatrixWorld(true);
   const inv = modelHolder.matrixWorld.clone().invert(), b = new THREE.Box3(), mm = new THREE.Matrix4();
+  const part = C && C.partOf(obj.userData.partId), only = part && part.outline && part.outline.nodes;   // some parts box only their body (solar panel: not the leads)
   obj.traverse(m => { if (m.isMesh) {
+    if (only) { const chain = []; for (let o = m; o && o !== obj; o = o.parent) chain.push(o.name); if (!OL.inOutline(chain, only)) return; }
     if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
     b.union(m.geometry.boundingBox.clone().applyMatrix4(mm.multiplyMatrices(inv, m.matrixWorld)));
   } });
@@ -425,7 +433,7 @@ function setXray(m) {
 function selectPart(id, pt = null) {
   id = id && instOf(id) ? id : null; if (selJumper) { selJumper = null; tintJumpers(); }
   selOutlet = null; selPoint = id ? pt : null;
-  if (id !== selectedId) { log('selected ' + (id || 'none')); endMove(); }
+  if (id !== selectedId) { log('selected ' + (id || 'none')); endMove(); sizeOpen = false; }
   selectedId = id;
   applyTints(); refreshOutline(); readout();
 }
@@ -441,54 +449,56 @@ function solarNote(inst, p) {
     const rk = state.find(i => i.part === C.host.id), hc = rk && SOL.holesCheck(inst, rk, C.partOf);
     return SOL.panelText(p, inst.opts) + (hc && !hc.ok ? ' · ' + hc.text : '');
   }
-  if (p.electrical && p.electrical.vmax) { const ck = SOL.stationCheck(state, jumpers, C.partOf); return ck ? ck.text : ''; }
+  if (p.electrical && p.electrical.vmax) { const ck = SOL.stationCheck(state, jumpers, C.partOf); if (ck) chkLevel = ck.level; return ck ? ck.text : ''; }
   return '';
 }
+let chkLevel = '';   // 'ok' | 'limited' | 'over' while the solar check line is shown in #sel (colours it)
 function readout() {
   if (!C) return;
+  chkLevel = '';
   const inst = selInst(), p = inst && C.partOf(inst.part), kind = inst ? kindOfId(inst.id) : null;
   $('ofs').textContent = MD.describeU(offs, units);
   refreshMarks();
   let t = 'Nothing selected';
   if (!inst && selMark >= 0) t = 'Selected: mark M' + (selMark + 1); else if (!inst && selMeasure >= 0) t = 'Selected: measurement ' + (selMeasure + 1);
   if (inst) {
-    t = 'Selected: ' + nameOfId(inst.id) + (numKeys(p).length ? ' ' + numText(p, inst) : '') + optKeys(p, kind).filter(k => k !== NUM).map(k => ' ' + PK.optLabel(p.options[k], inst.opts[k])).join('') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
+    t = 'Selected: ' + nameOfId(inst.id) + (numKeys(p, inst).length ? ' ' + numText(p, inst) : '') + optKeys(p, kind, inst).map(k => ' ' + PK.optLabel(p.options[k], inst.opts[k])).join('') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
     const sx = solarNote(inst, p); if (sx) t += ' · ' + sx;
   } else if (hoveredId) t = 'Aim: ' + nameOfId(hoveredId);
-  if (!inst && !hoveredId && selMark < 0 && selMeasure < 0 && !selJumper) { t = PR.tooltip(PR.presetOf(C.SC, state), stackH, v => MD.fmtLen(v, units)); const ck = SOL.stationCheck(state, jumpers, C.partOf); if (ck && !C.SC.isDefaultHost) t += ' · ' + ck.text; }
+  if (!inst && !hoveredId && selMark < 0 && selMeasure < 0 && !selJumper) { t = PR.tooltip(PR.presetOf(C.SC, state), stackH, v => MD.fmtLen(v, units)); const ck = SOL.stationCheck(state, jumpers, C.partOf); if (ck && !C.SC.isDefaultHost) { t += ' · ' + ck.text; chkLevel = ck.level; } }
   if (selJumper) { const j = jumpers.find(x => x.id === selJumper), L = j && jumperLen(j); if (L) t = JMP.jumperText(j, JMP.isMc4(j) ? L.metres.toFixed(1) + ' m' : MD.fmtLen(L.cut, units)); }
   if (linking) t = 'Cable: ' + (linking.from ? 'pick the second stud' : 'pick the first stud');
   if (selOutlet && !inst) t = 'Outlet: ' + outletName(selOutlet);
   if (adding) t = 'Add ' + (C.partOf(adding.partId).short || adding.partId) + (adding.kind === 'stud' ? ': ' + (adding.target ? outletName(adding.target) : 'no target') : ': aim at a surface');
-  $('sel').textContent = t;
+  $('sel').textContent = t; $('sel').dataset.level = chkLevel;
   { const tp = inst ? p : hoveredId && !adding ? C.partOf((instOf(hoveredId) || {}).part) : adding ? C.partOf(adding.partId) : null, im = $('selthumb');
     const src = tp && tp.thumb || ''; if (im.getAttribute('src') !== src) { if (src) im.src = src; else im.removeAttribute('src'); } im.hidden = !src;
     $('sel').title = tp ? tp.name : ''; $('sel').setAttribute('aria-label', tp ? t + ' (' + tp.name + ')' : t); }
   const chip = $('mode'); chip.dataset.tool = tool; chip.querySelector('b').textContent = MD.TOOL_LABEL[tool]; chip.setAttribute('aria-label', 'Mode: ' + MD.TOOL_LABEL[tool] + '. Tap to change');
   const step = inst ? C.yawStep(inst.part) : 0;
   const inXR = document.body.classList.contains('inar'), libOpen = !libEl.hidden;
-  const ex = inst ? { free: !!inst.at || inst.part === C.host.id, host: inst.part === C.host.id, num: numKeys(p).length > 0, choice: optKeys(p, kind).length } : {};
+  const ex = inst ? PK.extrasFor(p, inst, kind, C.host.id) : {};
   const tg = inXR ? null : selTarget();
   const quickView = inXR && quick && { kind: quick.kind, isSel: quick.kind === 'part' && quick.id === selectedId, point: !!quick.point, fit: quick.fit.length };
   const jf = jfromKeys(inXR, quick, tg);
-  const acts = libOpen || optOpen || recOpen ? [] : MD.ctxFor({ xrayUi: true, linking: !!linking, jumper: !!selJumper, jfrom: !!(jf && jf.length), jundo: jundo.length > 0, markSel: !selectedId && (selMark >= 0 || (inXR && hovMark >= 0)), measSel: !selectedId && selMeasure >= 0, tool, kind, rotStep: step, selected: !!selectedId, x: ex, more: moreOpen, inXR, quick: quickView, target: tg && { kind: tg.kind, point: !!tg.point },
+  const acts = libOpen || optOpen || recOpen ? [] : MD.ctxFor({ xrayUi: true, size: sizeOpen && sizeable(p, inst), linking: !!linking, jumper: !!selJumper, jfrom: !!(jf && jf.length), jundo: jundo.length > 0, markSel: !selectedId && (selMark >= 0 || (inXR && hovMark >= 0)), measSel: !selectedId && selMeasure >= 0, tool, kind, rotStep: step, selected: !!selectedId, x: ex, more: moreOpen, inXR, quick: quickView, target: tg && { kind: tg.kind, point: !!tg.point },
     adding: adding ? { stud: adding.kind === 'stud', outlets: adding.outlets.length } : null });
   const low = MD.bottomFor(tool, inXR, true);   // Options: battery terminals, or the fume extractor setups
   for (const id of MD.ALL_IDS) $(id).hidden = !acts.includes(id) && !low.includes(id);
   for (const id of acts) ctx.appendChild($(id));   // keep the layout order of the list
   bottom.appendChild($('mode')); for (const id of low) bottom.appendChild($(id));
   ctx.classList.toggle('lib', libOpen); ctx.classList.toggle('optsl', optOpen); $('optlist').hidden = !optOpen; ctx.classList.toggle('recsl', recOpen); $('recopts').hidden = !recOpen; ctx.classList.toggle('acts', acts.length > 0);
-  ctx.classList.toggle('chip', acts.length > 0 && (tool !== 'select' || !!adding || !!inst || !!selJumper || !!linking || jundo.length > 0 || selMark >= 0 || selMeasure >= 0)); ctx.dataset.tool = tool;
+  ctx.classList.toggle('chip', acts.length > 0 && !(sizeOpen && sizeable(p, inst)) && (tool !== 'select' || !!adding || !!inst || !!selJumper || !!linking || jundo.length > 0 || selMark >= 0 || selMeasure >= 0)); ctx.dataset.tool = tool;
   $('more').setAttribute('aria-pressed', moreOpen && !adding);
   const cur = inXR ? quick : tg; $('qadd').disabled = !(cur && (cur.fit.length || (cur.free && cur.free.length)));   // enabled when the part has free outlets even if no library part fits yet (click says so)
   $('rotm').setAttribute('aria-label', 'Rotate right ' + step + ' degrees'); $('rotp').setAttribute('aria-label', 'Rotate left ' + step + ' degrees');
-  if (inst) PK.OPT_IDS.forEach((id, n) => { const k = optKeys(p, kind)[n]; if (k) $(id).dataset.v = optText(p, inst, k); });
+  if (inst) { PK.OPT_IDS.forEach((id, n) => { const k = optKeys(p, kind, inst)[n]; if (k) $(id).dataset.v = optText(p, inst, k); }); if (sizeOpen && sizeable(p, inst)) $('gauge').dataset.v = numLabel(p, inst); }
   { const j = jumpers.find(x => x.id === selJumper); if (j) { $('jgauge').dataset.v = j.gauge + ' AWG'; $('jcolor').dataset.v = j.color === 'red' ? 'Red' : 'Black'; } }
   { const cur = PR.presetOf(C.SC, state), ob = $('opt'), nm = cur ? cur : optLast ? optLast + '*' : null; ob.dataset.v = nm ? 'Option ' + nm + ' \u25b8' : 'Options \u25b8'; ob.setAttribute('aria-label', cur ? 'Option ' + cur + ': ' + PR.byId(cur).name + '. Tap for the next, hold for the list' : 'Options. Tap for the next, hold for the list'); }
   $('confirm').setAttribute('aria-label', adding && adding.kind === 'stud' ? 'Place on the ring' : 'Place here');
   $('cover').setAttribute('aria-pressed', !!(inst && inst.opts.cover)); $('move').setAttribute('aria-pressed', !!moving);
   const st = MD.stepsFor(units), lab = (id, big, small, aria) => { $(id).setAttribute('aria-label', aria); };
-  { const no = inst && numKeys(p).length ? p.options[numKey(p, inst.id)] : null, mmo = no && (no.unit === 'mm' || no.unit === 'cm' || no.unit === 'm'), ex = mmo ? no.step + ' ' + no.unit : units === 'mm' ? '25 mm' : '1 inch', nm = mmo ? no.label : 'Extension';   // a number option in mm (fan adapter spigot length) steps by its own size
+  { const no = inst && numKeys(p, inst).length ? p.options[numKey(p, inst.id)] : null, mmo = no && (no.unit === 'mm' || no.unit === 'cm' || no.unit === 'm'), ex = mmo ? no.step + ' ' + no.unit : units === 'mm' ? '25 mm' : '1 inch', nm = mmo ? no.label : 'Extension';   // a number option in mm (fan adapter spigot length) steps by its own size
     lab('extp', '+' + st.extLabel, st.extUnit, nm + ' plus ' + ex); lab('extm', '&minus;' + st.extLabel, st.extUnit, nm + ' minus ' + ex); }
   lab('hp', '&uarr;', st.heightLabel, 'Raise ' + st.heightLabel); lab('hm', '&darr;', st.heightLabel, 'Lower ' + st.heightLabel);
   for (const [id, ch, w] of [['nl', '&larr;', 'left'], ['nr', '&rarr;', 'right'], ['nu', '&#9650;', 'away'], ['nd', '&#9660;', 'toward me']]) lab(id, ch, st.nudgeLabel, 'Nudge ' + w + ' ' + st.nudgeLabel);
@@ -501,7 +511,9 @@ function compactButtons() {
   for (const id of Object.keys(IC.BUTTONS)) {
     const b = $(id); if (!b) continue;
     const txt = id === 'mode' ? MD.TOOL_LABEL[tool] : id === 'gauge' || id === 'gauge2' || id === 'gauge3' ? (b.dataset.v || 'Option') : id === 'jgauge' ? (b.dataset.v || 'Gauge') : id === 'jcolor' ? (b.dataset.v || 'Color') : id === 'opt' ? (b.dataset.v || 'Option') : id === 'xray' || id === 'rbxray' ? 'X-ray ' + RC.XRAY_SHORT[xray.mode] : id === 'rbpause' ? (cycle.paused ? 'Resume' : 'Pause') : null;
-    const m = IC.markup(id, txt); if (m && b.dataset.m !== m) { b.innerHTML = m; b.dataset.m = m; }
+    let m = IC.markup(id, txt);
+    if ((id === 'extp' || id === 'extm') && sizeOpen && !b.hidden) { const sp = selInst() && C.partOf(selInst().part), o = sp && sp.options[numKey(sp, selInst().id)]; if (o) m = IC.svg(id === 'extp' ? 'plus' : 'minus') + '<span class="t">' + (o.unit ? o.step + ' ' + o.unit : '1') + '</span>'; }   // size row: step size on the button
+    if (m && b.dataset.m !== m) { b.innerHTML = m; b.dataset.m = m; }
     const al = b.getAttribute('aria-label'); if (al) b.title = al; else b.title = b.textContent.trim();
   }
 }
@@ -525,14 +537,24 @@ function lugExt(d) {
   const p = C.partOf(li.part), k = numKey(p, li.id); if (!k) return;
   li.opts[k] = MD.extOpt(p.options[k], li.opts[k], d, units); rebuild();
 }
-wire('extm', () => lugExt(-1)); wire('extp', () => lugExt(1));   // direction only; the step size comes from the units
+// direction only; the step size comes from the units. Hold to repeat (long ranges: platform length, panel width), a short tap steps once.
+for (const [id, dir] of [['extm', -1], ['extp', 1]]) {
+  const b = $(id); let t0 = 0, rep = 0, held = false;
+  const stop = () => { clearTimeout(t0); clearInterval(rep); t0 = rep = 0; };
+  b.addEventListener('pointerdown', () => { held = false; stop(); t0 = setTimeout(() => { held = true; lugExt(dir); rep = setInterval(() => lugExt(dir), 110); }, 450); });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { stop(); if (held) setTimeout(() => { held = false; readout(); }, 0); });
+  b.addEventListener('click', () => { if (held) return; lugExt(dir); readout(); });
+}
 const rotSel = dir => { const li = selInst(); if (li) { li.yaw = PK.rotateYaw(li.yaw, dir * (C.yawStep(li.part) || 0)); rebuild(); } };
 wire('rotm', () => rotSel(-1)); wire('rotp', () => rotSel(1));
 PK.OPT_IDS.forEach((id, n) => wire(id, () => {   // option buttons: tap flips the option (choice: next value, bool: toggle); parts that follow it (duct, clamp) take the new value
-  const li = selInst(), p = li && C.partOf(li.part), k = p && optKeys(p, kindOfId(li.id))[n];
-  if (k === NUM) { const ks = numKeys(p); numSel.set(li.id, ks[(ks.indexOf(numKey(p, li.id)) + 1) % ks.length]); return; }
+  const li = selInst(), p = li && C.partOf(li.part);
+  if (n === 0 && sizeOpen && sizeable(p, li)) { const ks = numKeys(p, li); numSel.set(li.id, ks[(ks.indexOf(numKey(p, li.id)) + 1) % ks.length]); return; }   // size row: switch the dimension (W <-> L ...)
+  const k = p && optKeys(p, kindOfId(li.id), li)[n];
   if (k) { li.opts[k] = PK.flipOption(p.options[k], li.opts[k]); C.SC.syncOpts(state); rebuild(); }
 }));
+wire('size', () => { const li = selInst(), p = li && C.partOf(li.part); if (sizeable(p, li)) { sizeOpen = true; $('ctx').scrollLeft = 0; } });
+wire('turn', () => turnPanelSel());
 wire('cover', () => { const li = selInst(); if (li && 'cover' in li.opts) { li.opts.cover = !li.opts.cover; rebuild(); } });
 // a selected part placed on a surface (inst.at) moves by itself; otherwise these move the whole model
 const freeSel = () => { const i = selInst(); return i && (i.at || i.part === C.host.id) ? i : null; };   // surface parts and the battery itself (at = null means the origin)
@@ -540,7 +562,30 @@ const atOf = i => i.at || [0, 0, 0];
 const r2 = v => Math.round(v * 100) / 100;
 function moveFree(f, dx, dy, dz) { const a = atOf(f); f.at = [r2(a[0] + dx), r2(a[1] + dy), r2(a[2] + dz)]; rebuild(); }
 // Move: a surface part slides on its mount plane (the horizontal plane at its own height, model frame) under a ray. Stacked parts follow (their placement derives from the host).
+// A panel sits on a rack slot and Move slides it over the rack: the ray meets the panel's own height plane, the point goes into the rack frame (mm), SOL.movePanel
+// snaps it onto the bars (or keeps it on the platform) and stores the offsets in its px / pz options. Its leads travel with it (fastMove restretches the cables).
+const rackOf = () => state.find(i => i.part === C.host.id);
+function panelPoint(inst, ray) {
+  const rack = rackOf(), pl = C.SC.placements(state), rp = rack && pl.get(rack.id), pp = pl.get(inst.id); if (!(rp && pp)) return null;
+  modelHolder.updateWorldMatrix(true, false); _inv.copy(modelHolder.matrixWorld).invert();
+  _lo.fromArray(ray.origin).applyMatrix4(_inv); _ld.fromArray(ray.dir).transformDirection(_inv);
+  const h = XM.rayPlaneY(_lo.toArray(), _ld.toArray(), pp.pos[1]); if (!h) return null;
+  const a = -rp.yaw * Math.PI / 180, dx = h[0] - rp.pos[0], dz = h[2] - rp.pos[2], c = Math.cos(a), sn = Math.sin(a);
+  return { rack, q: [(dx * c + dz * sn) * 1000, (-dx * sn + dz * c) * 1000] };   // rack frame, mm (same rotation convention as scene.js rotY)
+}
+function slidePanel(inst, ray, grab = [0, 0]) {
+  const pp = panelPoint(inst, ray); if (!pp) return false;
+  const m = SOL.movePanel(inst, pp.rack, C.partOf, pp.q[0] + grab[0], pp.q[1] + grab[1]);
+  if (m.px === (inst.opts.px || 0) && m.pz === (inst.opts.pz || 0) && !inst.opts.slide) return false;
+  inst.opts.px = m.px; inst.opts.pz = m.pz; inst.opts.slide = 0; fastMove(); return true;
+}
+function turnPanelSel() {
+  const li = selInst(), rack = rackOf(); if (!li || !rack || !li.on || !isPanel(C.partOf(li.part))) return;
+  const t = SOL.turnPanel(li, rack, C.partOf); li.yaw = t.yaw; li.opts.px = t.px; li.opts.pz = t.pz; li.opts.slide = 0; rebuild();
+}
+const moveSel = () => { const i = selInst(); return freeSel() || (i && i.on && isPanel(C.partOf(i.part)) ? i : null); };
 function slideTo(inst, ray, grab = [0, 0]) {
+  if (inst && inst.on && isPanel(C.partOf(inst.part))) return slidePanel(inst, ray, grab);
   if (!inst || !(inst.at || inst.part === C.host.id)) return false;
   const a0 = atOf(inst);
   modelHolder.updateWorldMatrix(true, false); _inv.copy(modelHolder.matrixWorld).invert();
@@ -589,7 +634,7 @@ wire('reset', () => {
 wire('exit', () => { if (session) { userExit = true; session.end(); } });
 // More puts its items in the context row; tapping More again, or Back, returns
 wire('more', () => { if (adding) cancelAdd(); closeLib(); moreOpen = !moreOpen; });
-wire('back', () => { moreOpen = false; });
+wire('back', () => { moreOpen = false; sizeOpen = false; });
 wire('xray', () => setXray('next'));
 wire('rec', () => { if (adding) cancelAdd(); closeLib(); moreOpen = false; recOpen = true; $('ctx').scrollLeft = 0; });
 
@@ -877,7 +922,7 @@ function removeSelected() {
   state = r.insts; selectPart(null); rebuild();
   toast('Removed ' + names[0] + (extra.length ? ' and ' + extra.length + ' stacked: ' + extra.join(', ') : ''));
 }
-wire('addpart', () => { if (!libEl.hidden) closeLib(); else openLib(); }); wire('remove', removeSelected); wire('move', () => { const f = freeSel(); if (!f) return; if (!session) { toast('Drag the part to slide it on its surface'); return; } if (moving) endMove(); else startMove(f); }); wire('confirm', confirmAdd); wire('cancel', () => { cancelAdd(); cancelLink(); });
+wire('addpart', () => { if (!libEl.hidden) closeLib(); else openLib(); }); wire('remove', removeSelected); wire('move', () => { const f = moveSel(); if (!f) return; if (!session) { toast('Drag the part to slide it on its surface'); return; } if (moving) endMove(); else startMove(f); }); wire('confirm', confirmAdd); wire('cancel', () => { cancelAdd(); cancelLink(); });
 wire('next', () => {
   if (!adding || !adding.outlets.length) return;
   const i = adding.outlets.findIndex(o => o.key === adding.target);
@@ -901,7 +946,8 @@ function outletPoints() {   // seats of every stud outlet in the scene (model fr
   outletPts = [];
   const probe = libraryParts().find(p => MT.mountKind(p) === 'stud');
   if (!probe) return outletPts;
-  for (const i of state) for (const c of (C.partOf(i.part).connections || [])) {
+  for (const i of state) for (const c0 of (C.partOf(i.part).connections || [])) {
+    const c = MT.resolveConn(c0, i.opts);
     if (!c.accepts || (c.form || c.kind) !== 'stud' || !MT.connEnabled(c, i.opts)) continue;
     const key = i.id + '.' + c.id, pos = C.SC.seatOf(state, probe.id, key);
     if (pos) outletPts.push({ key, pos });
@@ -1493,13 +1539,15 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   const dragRay = e => pointerRayAt(ndcOf(e));
   cv.addEventListener('pointerdown', e => {
     if (session || !C || adding || tool !== 'select' || dragMove || (e.pointerType === 'mouse' && e.button)) return;
-    const f = freeSel(); if (!f) return;
+    const f = moveSel(); if (!f) return;
     scene.updateMatrixWorld(true); raycaster.setFromCamera(ndcOf(e), camera); raycaster.far = 10;
     const h = PK.pickFromHits(raycaster.intersectObjects(roots(), true)); if (!h || h.instanceId !== f.id) return;
     const ray = dragRay(e); modelHolder.updateWorldMatrix(true, false); _inv.copy(modelHolder.matrixWorld).invert();
     _lo.fromArray(ray.origin).applyMatrix4(_inv); _ld.fromArray(ray.dir).transformDirection(_inv);
-    const fa = atOf(f), p0 = XM.rayPlaneY(_lo.toArray(), _ld.toArray(), fa[1] * SCN.IN); if (!p0) return;
-    dragMove = { id: f.id, grab: [fa[0] * SCN.IN - p0[0], fa[2] * SCN.IN - p0[2]], pointerId: e.pointerId };
+    let grab;
+    if (f.on && isPanel(C.partOf(f.part))) { const pp = panelPoint(f, ray), c = pp && SOL.panelCentre(f, pp.rack, C.partOf); if (!pp) return; grab = [c.x - pp.q[0], c.z - pp.q[1]]; }   // mm in the rack frame
+    else { const fa = atOf(f), p0 = XM.rayPlaneY(_lo.toArray(), _ld.toArray(), fa[1] * SCN.IN); if (!p0) return; grab = [fa[0] * SCN.IN - p0[0], fa[2] * SCN.IN - p0[2]]; }
+    dragMove = { id: f.id, grab, pointerId: e.pointerId };
     controls.enabled = false; e.stopImmediatePropagation(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* not capturable */ }
     log('move drag start ' + f.id);
   }, true);
@@ -1609,3 +1657,6 @@ Object.assign(window.__ar, { sim: {
   pausedToast: () => toastStack.list().some(t => t.key === 'paused'),
   tapPaused() { const el = [...toastEl.querySelectorAll('.toast')].find(e => /AR paused/.test(e.textContent)); if (!el) return false; const r = el.getBoundingClientRect(), o = { clientX: r.left + 5, clientY: r.top + 5, pointerId: 1, button: 0, bubbles: true }; el.dispatchEvent(new PointerEvent('pointerdown', o)); el.dispatchEvent(new PointerEvent('pointerup', o)); return true; },
 } });
+
+// test hooks for the XR row logic (headless sim): select a part, read the state and the visible rows
+Object.assign(window.__ar, { select: id => { selectPart(id); }, state: () => JSON.parse(JSON.stringify(state)), rows: () => ({ ctx: [...ctx.children].filter(e => !e.hidden && e.id).map(e => e.id), bottom: [...bottom.children].filter(e => !e.hidden).map(e => e.id) }) });

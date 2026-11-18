@@ -42,24 +42,24 @@
    "polarity": "any",
    "pos": [
     0.0,
-    3.937,
+    3.3858,
     0.0
    ],
    "pos_by_option": {
     "rack": {
      "diy": [
       0.0,
-      3.937,
+      3.3858,
       0.0
      ],
      "rago": [
       0.0,
-      2.3622,
+      1.811,
       0.0
      ],
      "platform": [
       0.0,
-      2.3622,
+      4.4882,
       0.0
      ]
     }
@@ -85,24 +85,24 @@
    "polarity": "any",
    "pos": [
     0.0,
-    3.937,
+    3.3858,
     -13.7795
    ],
    "pos_by_option": {
     "rack": {
      "diy": [
       0.0,
-      3.937,
+      3.3858,
       -13.7795
      ],
      "rago": [
       0.0,
-      2.3622,
+      1.811,
       -13.7795
      ],
      "platform": [
       0.0,
-      2.3622,
+      4.4882,
       -13.7795
      ]
     }
@@ -128,24 +128,24 @@
    "polarity": "any",
    "pos": [
     0.0,
-    3.937,
+    3.3858,
     13.7795
    ],
    "pos_by_option": {
     "rack": {
      "diy": [
       0.0,
-      3.937,
+      3.3858,
       13.7795
      ],
      "rago": [
       0.0,
-      2.3622,
+      1.811,
       13.7795
      ],
      "platform": [
       0.0,
-      2.3622,
+      4.4882,
       13.7795
      ]
     }
@@ -171,24 +171,24 @@
    "polarity": "any",
    "pos": [
     -23.622,
-    3.937,
+    3.3858,
     -13.7795
    ],
    "pos_by_option": {
     "rack": {
      "diy": [
       -23.622,
-      3.937,
+      3.3858,
       -13.7795
      ],
      "rago": [
       -23.622,
-      2.3622,
+      1.811,
       -13.7795
      ],
      "platform": [
       -23.622,
-      2.3622,
+      4.4882,
       -13.7795
      ]
     }
@@ -214,24 +214,24 @@
    "polarity": "any",
    "pos": [
     -23.622,
-    3.937,
+    3.3858,
     13.7795
    ],
    "pos_by_option": {
     "rack": {
      "diy": [
       -23.622,
-      3.937,
+      3.3858,
       13.7795
      ],
      "rago": [
       -23.622,
-      2.3622,
+      1.811,
       13.7795
      ],
      "platform": [
       -23.622,
-      2.3622,
+      4.4882,
       13.7795
      ]
     }
@@ -257,24 +257,24 @@
    "polarity": "any",
    "pos": [
     23.622,
-    3.937,
+    3.3858,
     -13.7795
    ],
    "pos_by_option": {
     "rack": {
      "diy": [
       23.622,
-      3.937,
+      3.3858,
       -13.7795
      ],
      "rago": [
       23.622,
-      2.3622,
+      1.811,
       -13.7795
      ],
      "platform": [
       23.622,
-      2.3622,
+      4.4882,
       -13.7795
      ]
     }
@@ -300,24 +300,24 @@
    "polarity": "any",
    "pos": [
     23.622,
-    3.937,
+    3.3858,
     13.7795
    ],
    "pos_by_option": {
     "rack": {
      "diy": [
       23.622,
-      3.937,
+      3.3858,
       13.7795
      ],
      "rago": [
       23.622,
-      2.3622,
+      1.811,
       13.7795
      ],
      "platform": [
       23.622,
-      2.3622,
+      4.4882,
       13.7795
      ]
     }
@@ -488,30 +488,124 @@
      "note": "Rago Fabrication GX470 R0209LGXMFSS or similar: flat plate steel cross members, hammer-black, bolted between the factory rails"
     },
     "platform": {
-     "label": "Platform",
+     "label": "Platform (POFENZE)",
      "nodes": [
-      "plrn",
-      "plrp",
-      "pfb_1",
-      "pfb_2",
-      "pfb_3",
-      "pfb_4",
-      "pfb_5",
-      "pfb_6",
-      "pfb_7",
-      "pfb_8",
-      "pfb_9",
-      "pfoot_00",
-      "pfoot_01",
-      "pfoot_10",
-      "pfoot_11"
+      "plrn_fr",
+      "plrn_sp",
+      "plrn_g1",
+      "plrn_c1",
+      "plrn_g2",
+      "plrn_c2",
+      "plrn_g3",
+      "plrn_c3",
+      "plrn_g4",
+      "plrn_c4",
+      "plrn_g5",
+      "plrn_c5",
+      "plrn_g6",
+      "plrn_c6",
+      "plrn_g7",
+      "plrn_c7",
+      "plrp_fr",
+      "plrp_sp",
+      "plrp_g1",
+      "plrp_c1",
+      "plrp_g2",
+      "plrp_c2",
+      "plrp_g3",
+      "plrp_c3",
+      "plrp_g4",
+      "plrp_c4",
+      "plrp_g5",
+      "plrp_c5",
+      "plrp_g6",
+      "plrp_c6",
+      "plrp_g7",
+      "plrp_c7",
+      "pfb_6_01",
+      "pfb_6_02",
+      "pfb_6_03",
+      "pfb_6_04",
+      "pfb_6_05",
+      "pfb_6_06",
+      "pfb_7_01",
+      "pfb_7_02",
+      "pfb_7_03",
+      "pfb_7_04",
+      "pfb_7_05",
+      "pfb_7_06",
+      "pfb_7_07",
+      "pfb_8_01",
+      "pfb_8_02",
+      "pfb_8_03",
+      "pfb_8_04",
+      "pfb_8_05",
+      "pfb_8_06",
+      "pfb_8_07",
+      "pfb_8_08",
+      "pfb_9_01",
+      "pfb_9_02",
+      "pfb_9_03",
+      "pfb_9_04",
+      "pfb_9_05",
+      "pfb_9_06",
+      "pfb_9_07",
+      "pfb_9_08",
+      "pfb_9_09",
+      "pfb_10_01",
+      "pfb_10_02",
+      "pfb_10_03",
+      "pfb_10_04",
+      "pfb_10_05",
+      "pfb_10_06",
+      "pfb_10_07",
+      "pfb_10_08",
+      "pfb_10_09",
+      "pfb_10_10",
+      "pfb_11_01",
+      "pfb_11_02",
+      "pfb_11_03",
+      "pfb_11_04",
+      "pfb_11_05",
+      "pfb_11_06",
+      "pfb_11_07",
+      "pfb_11_08",
+      "pfb_11_09",
+      "pfb_11_10",
+      "pfb_11_11",
+      "pfb_12_01",
+      "pfb_12_02",
+      "pfb_12_03",
+      "pfb_12_04",
+      "pfb_12_05",
+      "pfb_12_06",
+      "pfb_12_07",
+      "pfb_12_08",
+      "pfb_12_09",
+      "pfb_12_10",
+      "pfb_12_11",
+      "pfb_12_12",
+      "pdf_face",
+      "pdf_gn",
+      "pdf_gp",
+      "ft_a_n",
+      "ft_a_p",
+      "ft_b_n",
+      "ft_b_p",
+      "ft_c_n",
+      "ft_c_p"
      ],
-     "note": "Pofenze or similar platform rack, about 2200 x 1180 x 60 mm, 9 crossbars; sizes APPROXIMATE"
+     "note": "POFENZE RR-T107 platform rack, 2324 x 1207 x 114 mm, black powder-coated carbon steel, 7 crossbars, front wind deflector (length, width and crossbar count are options); overall size from the maker, the rest ESTIMATED"
     }
    }
   },
   "profile": {
    "type": "choice",
+   "when": {
+    "rack": [
+     "diy"
+    ]
+   },
    "default": "tslot",
    "label": "Bar profile (DIY)",
    "btn": "Bar: ",
@@ -595,6 +689,12 @@
   },
   "bars": {
    "type": "choice",
+   "when": {
+    "rack": [
+     "diy",
+     "rago"
+    ]
+   },
    "default": "3",
    "label": "Bars",
    "btn": "Bars: ",
@@ -749,6 +849,12 @@
   },
   "gap": {
    "type": "number",
+   "when": {
+    "rack": [
+     "diy",
+     "rago"
+    ]
+   },
    "default": 400,
    "min": 200,
    "max": 700,
@@ -1215,8 +1321,616 @@
    },
    "note": "centre to centre along the car. default 400 mm = the panel hole pitch (about 402 mm). Rago members are baked at 300 mm and follow the same option"
   },
+  "plat_bars": {
+   "type": "choice",
+   "when": {
+    "rack": [
+     "platform"
+    ]
+   },
+   "default": "7",
+   "label": "Crossbars",
+   "btn": "Crossbars: ",
+   "values": {
+    "6": {
+     "label": "6",
+     "nodes": [
+      "pfb_6_01",
+      "pfb_6_02",
+      "pfb_6_03",
+      "pfb_6_04",
+      "pfb_6_05",
+      "pfb_6_06"
+     ]
+    },
+    "7": {
+     "label": "7",
+     "nodes": [
+      "pfb_7_01",
+      "pfb_7_02",
+      "pfb_7_03",
+      "pfb_7_04",
+      "pfb_7_05",
+      "pfb_7_06",
+      "pfb_7_07"
+     ]
+    },
+    "8": {
+     "label": "8",
+     "nodes": [
+      "pfb_8_01",
+      "pfb_8_02",
+      "pfb_8_03",
+      "pfb_8_04",
+      "pfb_8_05",
+      "pfb_8_06",
+      "pfb_8_07",
+      "pfb_8_08"
+     ]
+    },
+    "9": {
+     "label": "9",
+     "nodes": [
+      "pfb_9_01",
+      "pfb_9_02",
+      "pfb_9_03",
+      "pfb_9_04",
+      "pfb_9_05",
+      "pfb_9_06",
+      "pfb_9_07",
+      "pfb_9_08",
+      "pfb_9_09"
+     ]
+    },
+    "10": {
+     "label": "10",
+     "nodes": [
+      "pfb_10_01",
+      "pfb_10_02",
+      "pfb_10_03",
+      "pfb_10_04",
+      "pfb_10_05",
+      "pfb_10_06",
+      "pfb_10_07",
+      "pfb_10_08",
+      "pfb_10_09",
+      "pfb_10_10"
+     ]
+    },
+    "11": {
+     "label": "11",
+     "nodes": [
+      "pfb_11_01",
+      "pfb_11_02",
+      "pfb_11_03",
+      "pfb_11_04",
+      "pfb_11_05",
+      "pfb_11_06",
+      "pfb_11_07",
+      "pfb_11_08",
+      "pfb_11_09",
+      "pfb_11_10",
+      "pfb_11_11"
+     ]
+    },
+    "12": {
+     "label": "12",
+     "nodes": [
+      "pfb_12_01",
+      "pfb_12_02",
+      "pfb_12_03",
+      "pfb_12_04",
+      "pfb_12_05",
+      "pfb_12_06",
+      "pfb_12_07",
+      "pfb_12_08",
+      "pfb_12_09",
+      "pfb_12_10",
+      "pfb_12_11",
+      "pfb_12_12"
+     ]
+    }
+   },
+   "note": "platform crossbars, 6 to 12 (the POFENZE has 7), spread evenly between the deflector and the rear"
+  },
+  "plat_len": {
+   "type": "number",
+   "when": {
+    "rack": [
+     "platform"
+    ]
+   },
+   "default": 232.4,
+   "min": 150,
+   "max": 250,
+   "step": 0.1,
+   "unit": "cm",
+   "unit_m": 0.01,
+   "axis": "x",
+   "label": "Platform length",
+   "short": "Length",
+   "stretch": {
+    "axis": "x",
+    "scale": [
+     [
+      "plrn_g",
+      1.354
+     ],
+     [
+      "plrp_g",
+      1.354
+     ]
+    ],
+    "moves": [
+     [
+      "plrn_fr",
+      -0.5
+     ],
+     [
+      "plrn_sp",
+      -0.033235
+     ],
+     [
+      "plrn_g1",
+      -0.438208
+     ],
+     [
+      "plrn_c1",
+      -0.376416
+     ],
+     [
+      "plrn_g2",
+      -0.314623
+     ],
+     [
+      "plrn_c2",
+      -0.252831
+     ],
+     [
+      "plrn_g3",
+      -0.191039
+     ],
+     [
+      "plrn_c3",
+      -0.129247
+     ],
+     [
+      "plrn_g4",
+      -0.033235
+     ],
+     [
+      "plrn_c4",
+      0.062777
+     ],
+     [
+      "plrn_g5",
+      0.135647
+     ],
+     [
+      "plrn_c5",
+      0.208518
+     ],
+     [
+      "plrn_g6",
+      0.281388
+     ],
+     [
+      "plrn_c6",
+      0.354259
+     ],
+     [
+      "plrn_g7",
+      0.427129
+     ],
+     [
+      "plrn_c7",
+      0.5
+     ],
+     [
+      "plrp_fr",
+      -0.5
+     ],
+     [
+      "plrp_sp",
+      -0.033235
+     ],
+     [
+      "plrp_g1",
+      -0.438208
+     ],
+     [
+      "plrp_c1",
+      -0.376416
+     ],
+     [
+      "plrp_g2",
+      -0.314623
+     ],
+     [
+      "plrp_c2",
+      -0.252831
+     ],
+     [
+      "plrp_g3",
+      -0.191039
+     ],
+     [
+      "plrp_c3",
+      -0.129247
+     ],
+     [
+      "plrp_g4",
+      -0.033235
+     ],
+     [
+      "plrp_c4",
+      0.062777
+     ],
+     [
+      "plrp_g5",
+      0.135647
+     ],
+     [
+      "plrp_c5",
+      0.208518
+     ],
+     [
+      "plrp_g6",
+      0.281388
+     ],
+     [
+      "plrp_c6",
+      0.354259
+     ],
+     [
+      "plrp_g7",
+      0.427129
+     ],
+     [
+      "plrp_c7",
+      0.5
+     ],
+     [
+      "pdf_",
+      -0.5
+     ],
+     [
+      "ft_a",
+      -0.358003
+     ],
+     [
+      "ft_b",
+      0.025818
+     ],
+     [
+      "ft_c",
+      0.370912
+     ],
+     [
+      "pfb_6_01",
+      -0.5
+     ],
+     [
+      "pfb_6_02",
+      -0.3
+     ],
+     [
+      "pfb_6_03",
+      -0.1
+     ],
+     [
+      "pfb_6_04",
+      0.1
+     ],
+     [
+      "pfb_6_05",
+      0.3
+     ],
+     [
+      "pfb_6_06",
+      0.5
+     ],
+     [
+      "pfb_7_01",
+      -0.5
+     ],
+     [
+      "pfb_7_02",
+      -0.333333
+     ],
+     [
+      "pfb_7_03",
+      -0.166667
+     ],
+     [
+      "pfb_7_05",
+      0.166667
+     ],
+     [
+      "pfb_7_06",
+      0.333333
+     ],
+     [
+      "pfb_7_07",
+      0.5
+     ],
+     [
+      "pfb_8_01",
+      -0.5
+     ],
+     [
+      "pfb_8_02",
+      -0.357143
+     ],
+     [
+      "pfb_8_03",
+      -0.214286
+     ],
+     [
+      "pfb_8_04",
+      -0.071429
+     ],
+     [
+      "pfb_8_05",
+      0.071429
+     ],
+     [
+      "pfb_8_06",
+      0.214286
+     ],
+     [
+      "pfb_8_07",
+      0.357143
+     ],
+     [
+      "pfb_8_08",
+      0.5
+     ],
+     [
+      "pfb_9_01",
+      -0.5
+     ],
+     [
+      "pfb_9_02",
+      -0.375
+     ],
+     [
+      "pfb_9_03",
+      -0.25
+     ],
+     [
+      "pfb_9_04",
+      -0.125
+     ],
+     [
+      "pfb_9_06",
+      0.125
+     ],
+     [
+      "pfb_9_07",
+      0.25
+     ],
+     [
+      "pfb_9_08",
+      0.375
+     ],
+     [
+      "pfb_9_09",
+      0.5
+     ],
+     [
+      "pfb_10_01",
+      -0.5
+     ],
+     [
+      "pfb_10_02",
+      -0.388889
+     ],
+     [
+      "pfb_10_03",
+      -0.277778
+     ],
+     [
+      "pfb_10_04",
+      -0.166667
+     ],
+     [
+      "pfb_10_05",
+      -0.055556
+     ],
+     [
+      "pfb_10_06",
+      0.055556
+     ],
+     [
+      "pfb_10_07",
+      0.166667
+     ],
+     [
+      "pfb_10_08",
+      0.277778
+     ],
+     [
+      "pfb_10_09",
+      0.388889
+     ],
+     [
+      "pfb_10_10",
+      0.5
+     ],
+     [
+      "pfb_11_01",
+      -0.5
+     ],
+     [
+      "pfb_11_02",
+      -0.4
+     ],
+     [
+      "pfb_11_03",
+      -0.3
+     ],
+     [
+      "pfb_11_04",
+      -0.2
+     ],
+     [
+      "pfb_11_05",
+      -0.1
+     ],
+     [
+      "pfb_11_07",
+      0.1
+     ],
+     [
+      "pfb_11_08",
+      0.2
+     ],
+     [
+      "pfb_11_09",
+      0.3
+     ],
+     [
+      "pfb_11_10",
+      0.4
+     ],
+     [
+      "pfb_11_11",
+      0.5
+     ],
+     [
+      "pfb_12_01",
+      -0.5
+     ],
+     [
+      "pfb_12_02",
+      -0.409091
+     ],
+     [
+      "pfb_12_03",
+      -0.318182
+     ],
+     [
+      "pfb_12_04",
+      -0.227273
+     ],
+     [
+      "pfb_12_05",
+      -0.136364
+     ],
+     [
+      "pfb_12_06",
+      -0.045455
+     ],
+     [
+      "pfb_12_07",
+      0.045455
+     ],
+     [
+      "pfb_12_08",
+      0.136364
+     ],
+     [
+      "pfb_12_09",
+      0.227273
+     ],
+     [
+      "pfb_12_10",
+      0.318182
+     ],
+     [
+      "pfb_12_11",
+      0.409091
+     ],
+     [
+      "pfb_12_12",
+      0.5
+     ]
+    ]
+   },
+   "note": "along the car, 150 to 250 cm (default 232.4 = 91.5 in); side rail spacers and crossbar spacing stretch, cutouts, plates and feet keep their size"
+  },
+  "plat_wid": {
+   "type": "number",
+   "when": {
+    "rack": [
+     "platform"
+    ]
+   },
+   "default": 120.7,
+   "min": 90,
+   "max": 140,
+   "step": 0.1,
+   "unit": "cm",
+   "unit_m": 0.01,
+   "axis": "z",
+   "label": "Platform width",
+   "short": "Width",
+   "stretch": {
+    "axis": "z",
+    "scale": [
+     [
+      "pfb_",
+      1.161
+     ],
+     [
+      "pdf_face",
+      1.199
+     ]
+    ],
+    "moves": [
+     [
+      "plrn_",
+      -0.5
+     ],
+     [
+      "plrp_",
+      0.5
+     ],
+     [
+      "pdf_gn",
+      -0.5
+     ],
+     [
+      "pdf_gp",
+      0.5
+     ],
+     [
+      "ft_a_n",
+      -0.5
+     ],
+     [
+      "ft_a_p",
+      0.5
+     ],
+     [
+      "ft_b_n",
+      -0.5
+     ],
+     [
+      "ft_b_p",
+      0.5
+     ],
+     [
+      "ft_c_n",
+      -0.5
+     ],
+     [
+      "ft_c_p",
+      0.5
+     ]
+    ]
+   },
+   "note": "across the car, 90 to 140 cm (default 120.7 = 47.5 in); the crossbars and the deflector get longer, the rails move apart"
+  },
   "rail_sp": {
    "type": "number",
+   "when": {
+    "rack": [
+     "diy",
+     "rago"
+    ]
+   },
    "default": 110,
    "min": 80,
    "max": 140,
@@ -1243,7 +1957,7 @@
      ],
      [
       "bm_",
-      1.075
+      1.065
      ]
     ],
     "moves": [
@@ -1285,7 +1999,13 @@
   },
   "rail_len": {
    "type": "number",
-   "default": 150,
+   "when": {
+    "rack": [
+     "diy",
+     "rago"
+    ]
+   },
+   "default": 135,
    "min": 100,
    "max": 200,
    "step": 10,
@@ -1299,7 +2019,7 @@
     "scale": [
      [
       "rail",
-      1.5
+      1.35
      ]
     ],
     "moves": [
@@ -1313,8 +2033,8 @@
      ]
     ]
    },
-   "note": "factory rail length (about 150 cm typical)"
+   "note": "factory rail length (ESTIMATE, about 130 to 140 cm)"
   }
  },
- "notes": "ESTIMATES, no published drawings: rail section 25 mm, 35 mm stanchions, rail top 60 mm above the roof. DIY bars T-slot 40x40 (silver), square tube 38 mm (silver), strut channel 41x41 (galvanized, opening facing up, back slots not modelled). Rago members about 100 mm wide, 5 mm plate, 25 mm flanges, slots along the centre. Panels sit on slots s0, s1, s2 (upright) and q1 to q4 (turned 90, for 2x2)."
+ "notes": "SIZES: platform overall 2324 x 1207 x 114 mm and 7 slats, 6 feet are [P] (maker); everything else is an ESTIMATE [E]. Platform: black textured powder coat (rough, slightly glossy material, no texture map), side rails = 3 mm C plates 18 to 114 mm with outward flanges, a pentagon cut-out about 60 x 30 mm every ~300 mm, front piece angled down along the deflector, splice plates with 4 button-head bolts at mid-length; crossbars 50 x 25 mm tubes with 45 x 14 mm slots every 125 mm; crossbar spacing is computed from the length (about 316 mm at 232.4 cm, the maker diagram suggests about 254 mm, the 7 bars cannot satisfy both with the deflector zone modelled); deflector face 175 mm long, 106 mm rise (31 degrees from horizontal), gusset brackets, curved front edge and notches not modelled; feet plates 100 x 40 mm at x = -832, 60, 862 mm. Front of the car = -X. Factory rails: low rounded section 35 x 32 mm (14 to 46 mm above the roof) on end feet, length 1350 mm, rail-to-rail 1100 mm, satin dark grey (the real rail is silver or body colour). DIY bars sit on the rails (tops: T-slot 86, tube 84, strut 87 mm), held by saddle clamps: a 3.5 mm U wrapping the rail, ears with two 8 mm bolts and nuts. Rago members as before, plate flush with the rail top (46 mm), about 100 mm wide, 5 mm plate, 25 mm flanges, slots along the centre."
 }

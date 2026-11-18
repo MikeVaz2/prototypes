@@ -51,7 +51,7 @@ export const normTool = (s, fallback = 'select') => TOOLS.includes(s) ? s : fall
 export const nextTool = t => TOOLS[(TOOLS.indexOf(t) + 1) % TOOLS.length];
 export const TOOL_BUTTONS = ['drop', 'undomark', 'clearmarks', 'mnew', 'mundo', 'mclear'];
 export const ALL_IDS = [...new Set(['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'gauge2', 'gauge3', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
-  'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'opt', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'undoj', 'xray', 'rec', ...TOOL_BUTTONS])];
+  'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'opt', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'undoj', 'xray', 'rec', 'size', 'turn', ...TOOL_BUTTONS])];
 // buttons of the open stack for a tool. Select keeps the part controls (minus the old mark buttons); Mark and Measure show only their own actions.
 // x = extras about the selected instance: { free (placed on a surface), num (has a length option), choice (has a choice option) }
 export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) {
@@ -62,8 +62,9 @@ export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) 
   if (kind === 'fuse' || kind === 'bar' || kind === 'cable') {   // library parts: on a stud, or free on a surface
     let primary, more;
     const ch = ['gauge', 'gauge2', 'gauge3'].slice(0, Math.min(3, +x.choice || 0));   // option buttons (x.choice = how many): in the primary row, next to Length
-    if (x.free) { primary = ['move', ...(x.num ? ['extp', 'extm'] : []), ...ch, 'tp', 'tm', 'hp', 'hm', ...(x.host ? [] : ['remove']), 'deselect']; more = ['nl', 'nr', 'nu', 'nd', 'addpart', ...common]; }
-    else { primary = [...(x.num ? ['extp', 'extm'] : []), ...ch, ...rot, 'remove', 'deselect']; more = ['addpart', ...common]; }
+    const sz = x.size ? ['size'] : x.num ? ['extp', 'extm'] : [];   // several size options: one Size button that opens the size row (switch dimension, then - / +)
+    if (x.free) { primary = ['move', ...sz, ...ch, 'tp', 'tm', 'hp', 'hm', ...(x.host ? [] : ['remove']), 'deselect']; more = ['nl', 'nr', 'nu', 'nd', 'addpart', ...common]; }
+    else { primary = [...sz, ...(x.turn ? ['turn'] : []), ...(x.move ? ['move'] : []), ...ch, ...rot, 'remove', 'deselect']; more = ['addpart', ...common]; }   // a panel: Size, Turn 90, Move first
     return { primary: [...primary, 'more'], more: ['back', ...more] };
   }
   if (kind === 'battery' && selected && x.free) {   // the host moves like any surface part (Move, turn, raise; nudges in More); its stack and jumpers follow. No Remove.
@@ -102,7 +103,7 @@ function ctxCore(o) {
   if (o.linking) return ['cancel'];
   if (o.jumper && !o.adding && !o.more) return ['jgauge', 'jcolor', 'jremove', 'deselect'];
   const base = ctxBase(o);
-  if (o.adding || o.more || o.markSel || o.measSel || (o.tool && o.tool !== 'select')) return base;
+  if (o.adding || o.more || (o.size && o.selected) || o.markSel || o.measSel || (o.tool && o.tool !== 'select')) return base;
   const out = [...base];
   if (o.jfrom) { const k = out.indexOf('deselect'); if (k < 0) out.push('jfrom'); else out.splice(k, 0, 'jfrom'); }
   if (o.jundo) out.push('undoj');
@@ -112,6 +113,7 @@ function ctxBase(o) {
   const { markSel = false, measSel = false, tool = 'select', kind = null, rotStep = 0, selected = false, x = {}, adding = null, more = false, inXR = false, quick = null, target = null } = o;
   if (markSel && !adding) return tool === 'mark' ? ['drop', 'rmmark', 'clearmarks'] : ['rmmark', 'deselect'];   // a selected (or, in XR, beam-highlighted) mark: its action is Remove
   if (measSel && !adding) return ['rmmeasure', 'deselect'];
+  if (o.size && selected && !adding && !more && tool === 'select') return ['back', 'gauge', 'extm', 'extp'];   // size row: Back, the dimension being edited (tap to switch), minus, plus
   if (adding) return ['confirm', ...(adding.stud && adding.outlets > 1 ? ['next'] : []), 'cancel'];
   const lay = stackForTool(tool, kind, rotStep, selected, x), drop = new Set(['more', 'back', 'addpart', 'select', ...(inXR ? [] : ['exit'])]);
   const sel = [...new Set(lay.primary.filter(id => !drop.has(id)).concat(selected ? ['deselect'] : []))];

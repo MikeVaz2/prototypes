@@ -32,7 +32,8 @@ export function makeJumper(id, a, connA, b, connB, o = {}) {
   const ma = connA && connA.accepts && isMc4Thread(connA.accepts.thread), mb = connB && connB.accepts && isMc4Thread(connB.accepts.thread);
   if (ma || mb) {   // MC4: both ends MC4, same polarity (+ to +, - to -), PV wire, red for + and black for -
     if (!(ma && mb)) return { ok: false, why: 'An MC4 cable fits MC4 outlets only' };
-    if (connA.accepts.thread !== connB.accepts.thread) return { ok: false, why: 'Polarity mismatch: ' + connA.accepts.thread.slice(3) + ' to ' + connB.accepts.thread.slice(3) };
+    // + to + and - to - join like leads; + to - is allowed only between two panel leads (a series link, 2026-11-18) and never to the station
+    if (connA.accepts.thread !== connB.accepts.thread && !(/\.lead_(pos|neg)$/.test(a) && /\.lead_(pos|neg)$/.test(b))) return { ok: false, why: 'Polarity mismatch: ' + connA.accepts.thread.slice(3) + ' to ' + connB.accepts.thread.slice(3) };
     return { ok: true, why: '', jumper: { id, a, b, gauge: SOLAR_GAUGES.includes(o.gauge) ? o.gauge : '12', color: COLORS.includes(o.color) ? o.color : (connA.accepts.thread === 'mc4+' ? 'red' : 'black'), endA: 'mc4', endB: 'mc4' } };
   }
   const ta = connA && connA.accepts && connA.accepts.thread, tb = connB && connB.accepts && connB.accepts.thread;

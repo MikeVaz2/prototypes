@@ -155,7 +155,7 @@
    "note": "top of the tab on the stud axis; the nut sits here"
   }
  ],
- "notes": "Source: Blue Sea Systems customer drawing PN 2340 (dimensioned drawing on bluesea.com). Cover height, joggle offset and copper thickness are not dimensioned: measured from sheet 2 side view proportions (estimates). Drawing says #8-32 screws; the Amazon listing title says 10-24; drawing used. Plain shapes, no logos. Variant: the end-most #8-32 screw (t3) is removed and its hole drilled to 13/32 for a 3/8-16 stud. Bar size unchanged. Coverless (cover cannot fit over the stud). See dims.drill.edge_wall.",
+ "notes": "Source: Blue Sea Systems customer drawing PN 2340 (ref/bluesea-2340-drawing.pdf). Cover height, joggle offset and copper thickness are not dimensioned: measured from sheet 2 side view proportions (estimates). Drawing says #8-32 screws; the Amazon listing title says 10-24; drawing used. Plain shapes, no logos. Variant: the end-most #8-32 screw (t3) is removed and its hole drilled to 13/32 for a 3/8-16 stud. Bar size unchanged. Coverless (cover cannot fit over the stud). See dims.drill.edge_wall.",
  "options": {
   "cover": {
    "type": "bool",
