@@ -14,13 +14,13 @@
 <script type="module" src="tb/space/space.js"></script>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-18 13:50 solar3';
+const BUILD = '2026-11-19 13:16 twist3';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
   var map = { imports: { 'three': cdn + 'build/three.module.js', 'three/addons/': cdn + 'examples/jsm/',
     './xr/app.js': './xr/app.js' + v, './xr/compose.js': './xr/compose.js' + v, './xr/xrmath.js': './xr/xrmath.js' + v,
-    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './xr/lifecycle.js': './xr/lifecycle.js' + v, './xr/toasts.js': './xr/toasts.js' + v, './xr/scan.js': './xr/scan.js' + v, './xr/icons.js': './xr/icons.js' + v, './xr/jumper.js': './xr/jumper.js' + v, './xr/presets.js': './xr/presets.js' + v, './xr/cats.js': './xr/cats.js' + v, './xr/rec.js': './xr/rec.js' + v, './offsets.js': './offsets.js' + v } };
+    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './xr/lifecycle.js': './xr/lifecycle.js' + v, './xr/toasts.js': './xr/toasts.js' + v, './xr/scan.js': './xr/scan.js' + v, './xr/icons.js': './xr/icons.js' + v, './xr/jumper.js': './xr/jumper.js' + v, './xr/presets.js': './xr/presets.js' + v, './xr/cats.js': './xr/cats.js' + v, './xr/controls.js': './xr/controls.js' + v, './xr/edit.js': './xr/edit.js' + v, './xr/version.js': './xr/version.js' + v, './xr/rec.js': './xr/rec.js' + v, './offsets.js': './offsets.js' + v } };
   var im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify(map); document.head.appendChild(im);
   var m = document.createElement('script'); m.type = 'module'; m.src = 'xr/app.js' + v; document.head.appendChild(m);
 })();
@@ -29,10 +29,10 @@ window.__BUILD = BUILD;
   * { box-sizing: border-box; }
   html, body { margin:0; height:100%; }
   body { display:flex; flex-direction:column; overflow:hidden; }
-  header { padding:10px 64px 6px 16px; }
+  header { display:none; }   /* the top row (status chip + menu) replaces the page header */
   h1 { margin:0; font-size:18px; }
   #status { margin:4px 0 0; font-size:13.5px; color:var(--deck-muted); }
-  #stage { flex:1; min-height:0; margin:0 16px; border:1px solid var(--tb-border-color); border-radius:12px; overflow:hidden; }
+  #stage { flex:1; min-height:0; margin:calc(3.6rem + env(safe-area-inset-top)) 16px 0; border:1px solid var(--tb-border-color); border-radius:12px; overflow:hidden; }
   #stage canvas { display:block; }
   .bar { display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
   #enter { min-height:3.25rem; width:100%; font-size:1.1rem; }
@@ -40,12 +40,16 @@ window.__BUILD = BUILD;
   #help { margin:0 16px 8px; padding:8px 12px 8px 28px; border:1px solid var(--tb-border-color); border-radius:8px; font-size:13px; line-height:1.4; max-height:30vh; overflow:auto; }
   #help h2 { margin:0 0 4px -16px; font-size:14px; }
 
+  /* AR session: nothing may paint behind the controls. tb/deck-look.css paints body with glows and a solid --deck-bg; the overlay root and its ::backdrop must be clear too. */
+  #overlay { background:transparent !important; } #overlay:fullscreen { background:transparent !important; } #overlay:xr-overlay { background:transparent !important; }
+  #overlay::backdrop { background:transparent !important; }
+  html:has(body.inar), body.inar { background:transparent !important; background-image:none !important; }
   /* AR overlay root: the browser makes it fullscreen in a session; it ignores touches except on its children */
   #overlay { display:none; position:fixed; inset:0; z-index:10; pointer-events:none; font-size:14px; }
   body #overlay { display:block; }
-  body:not(.inar):not(.arpreview) #overlay .build { display:none; }
-  body.inar header, body.inar #stage, body.inar .bar, body.inar #help { display:none; }
-  #hint { position:absolute; top:calc(12px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); padding:8px 14px; border-radius:20px; font-size:15px; white-space:nowrap; }
+  body.inar header, body.inar #stage, body.inar #help { display:none; }
+  body.hinting #toasts { top:calc(6.6rem + env(safe-area-inset-top)); }
+  #hint { position:absolute; top:calc(3.6rem + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); padding:8px 14px; border-radius:20px; font-size:15px; white-space:nowrap; }
   body.arpreview #hint { display:none; }
   /* toasts: glass, top of the screen under the menu button, in XR too (they live in the dom-overlay root). Max 3. Never over the bottom rows. */
   #toasts { position:absolute; left:0; right:0; top:calc(3.6rem + env(safe-area-inset-top)); display:flex; flex-direction:column; align-items:center; gap:0.4rem;
@@ -59,74 +63,109 @@ window.__BUILD = BUILD;
   .toast button { flex:none; min-height:2.25rem; min-width:2.25rem; padding:0; font-size:1.1rem; line-height:1; touch-action:manipulation; }
   /* menu: hamburger pill at the top right (the tilesDeck .deck-button look) and a small glass panel; outside XR only */
   #menubtn { position:absolute; top:calc(0.5rem + env(safe-area-inset-top)); right:calc(0.5rem + env(safe-area-inset-right)); min-height:2.75rem; min-width:2.75rem; padding:0; font-size:1.3rem; line-height:1; pointer-events:auto; touch-action:manipulation; }
-  #menu { position:absolute; top:calc(3.6rem + env(safe-area-inset-top)); right:calc(0.5rem + env(safe-area-inset-right)); z-index:1; display:flex; flex-direction:column; align-items:stretch; gap:0.6rem;
+  #menu { position:absolute; top:calc(3.6rem + env(safe-area-inset-top)); right:calc(0.5rem + env(safe-area-inset-right)); z-index:30; max-height:calc(100% - 4.2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; align-items:stretch; gap:0.6rem;
           padding:0.8rem 1rem; border-radius:1.25rem; pointer-events:auto; }
   #menu .row { display:flex; align-items:center; justify-content:space-between; gap:0.8rem; font-size:0.85rem; }
   #menu .row button { min-height:2.5rem; flex-direction:row; gap:0.4em; padding:0.3em 1em; }
   #menu[hidden], #menubtn[hidden] { display:none; }
-  body.inar #menu, body.inar #menubtn { display:none; }
+  body.inar #menu { --tb-glass-opacity:92%; }
+  #menu .mi { width:100%; min-height:2.75rem; flex-direction:row; justify-content:flex-start; gap:0.5em; padding:0.3em 1em; font-size:0.95rem; }
+  #menu .mi[disabled] { opacity:.5; cursor:default; } #menu .mi svg { flex:none; }
+  #aboutbox { padding:0.2rem 0.4rem 0.1rem; font-size:0.85rem; line-height:1.4; } #aboutbox[hidden] { display:none; } #aboutbuild { font-family:monospace; font-size:0.8rem; color:var(--deck-muted); }
   #menu small { display:inline; font-size:inherit; }
   #cross { position:absolute; left:50%; top:50%; width:26px; height:26px; margin:-13px 0 0 -13px; pointer-events:none; }
   #cross:before, #cross:after { content:""; position:absolute; background:#fff; box-shadow:0 0 2px #000; }
   #cross:before { left:12px; top:0; width:2px; height:26px; } #cross:after { top:12px; left:0; height:2px; width:26px; }
   #cross.hit:before, #cross.hit:after { background:#1affb0; }
-  /* Two rows, fixed to the viewport bottom (safe-area aware), in XR and outside it. Bottom row always visible; the row above is context:
-     actions, the Add library, More, or a tooltip line. Both scroll sideways when crowded, never wrap, never a third row.
-     Look: tilesDeck (tb/deck-look.css): glass pills (.tiles-nav) with outlined pill buttons (.deck-button). */
-  #ctl { background:transparent; min-width:0; touch-action:pan-x; position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; flex-direction:column; gap:0.4rem; pointer-events:auto;
+  /* Controls (round 4). Bottom row: [context FAB | Scene, Add, Option pill | modes FAB]. Above it: the info line and, when the context FAB is open, the action panel.
+     The modes FAB is a speed dial that expands upward. Look: tilesDeck (tb/deck-look.css): glass surfaces with outlined pill buttons. */
+  #ctl { position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; flex-direction:column; align-items:stretch; gap:0.4rem; pointer-events:none; touch-action:manipulation;
          padding:0 calc(0.5rem + env(safe-area-inset-right)) calc(0.5rem + env(safe-area-inset-bottom)) calc(0.5rem + env(safe-area-inset-left)); }
-  #ctx, #bottom { display:flex; align-items:center; justify-content:safe center; gap:0.4rem; padding:0.4rem 1rem; border-radius:999px; }
-  #bottom { overflow-x:auto; overflow-y:hidden; scrollbar-width:none; } #bottom::-webkit-scrollbar { display:none; }
-  body.inar #ctx, body.inar #bottom { --tb-glass-opacity:92%; }   /* over the camera feed the blur may not apply: more tint, same token */
-  #ctx { flex-wrap:nowrap; min-width:0; overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; touch-action:pan-x; scrollbar-width:none; -webkit-overflow-scrolling:touch; height:calc(32px + 0.8rem + 2px); }
-  #ctx::-webkit-scrollbar { display:none; }
-  #ctx > * { flex:0 0 auto; }
-  /* compact: one line (icon + text), sized to content, never stretched; 40px tall on touch, 32px with a mouse */
-  #ctl button { flex:0 0 auto; flex-direction:row; gap:0.35em; padding:0.35em 0.8em; min-height:32px; font-size:0.85em; line-height:1; white-space:nowrap; touch-action:manipulation; }
-  @media (pointer: coarse) { #ctl button { min-height:40px; } #ctx { height:calc(40px + 0.8rem + 2px); } }
-  #ctl .t { white-space:nowrap; }
-  #ctl button svg { flex:none; }
-  #ctl [hidden] { display:none !important; }
-  #ctl button[disabled] { opacity:.4; }
-  #mode b { font-weight:inherit; color:var(--deck-accent); }
-  #remove { color:var(--deck-accent); }
-  /* Landscape (phone sideways, wide windows): ONE row of two glass cards. Left = context card (grows, scrolls), right = fixed Mode / Add / More
-     (icon only when the row is narrow). Portrait keeps the two stacked rows. Pure CSS, so rotating changes it live, in XR dom-overlay too. */
-  #ctl { container-type:inline-size; container-name:ctl; }
-  @media (orientation: landscape) {
-    #ctl { flex-direction:row; align-items:stretch; gap:0.5rem; }
-    #ctx { flex:1 1 0; min-width:0; justify-content:flex-start; } #ctx.lib, #ctx.acts { justify-content:flex-start; }
-    #bottom { flex:0 0 auto; height:calc(32px + 0.8rem + 2px); justify-content:center; padding:0.4rem 0.6rem; overflow:visible; }
-  }
-  @media (orientation: landscape) and (pointer: coarse) { #bottom { height:calc(40px + 0.8rem + 2px); } }
-  @container ctl (max-width: 480px) { @media (orientation: landscape) { #bottom .t { display:none; } #bottom button { padding:0.35em 0.7em; } } }
-  /* tooltip line (no actions), or a short chip in front of the actions (mark / measure tools, adding) */
-  #info { display:flex; align-items:center; gap:8px; font-size:0.7em; line-height:1.3; white-space:nowrap; color:var(--deck-muted); }
+  /* tb/theme/theme.css paints every [data-theme] element with --tb-background-color: #ctl carries data-theme, and it spans the full width, so it was a solid sheet over the camera */
+  #ctl, #row { background:transparent !important; background-image:none !important; }
+  #ctl > #ctx, #row > * { pointer-events:auto; }
+  /* status chip: top row, left of the menu button, one line with an ellipsis */
+  #info { position:absolute; z-index:5; top:calc(0.5rem + env(safe-area-inset-top)); left:calc(0.5rem + env(safe-area-inset-left)); right:calc(3.75rem + env(safe-area-inset-right)); height:2.75rem; display:flex; align-items:center; gap:8px; padding:0 0.9rem; border-radius:999px; font-size:0.8rem; line-height:1.2; white-space:nowrap; color:var(--deck-fg); pointer-events:none; }
+  body.inar #info, body.inar #ctx, body.inar .fab { --tb-glass-opacity:92%; }   /* over the camera feed the blur may not apply: more tint, same token */
+  #info div { min-width:0; overflow:hidden; text-overflow:ellipsis; } #info div:empty { display:none; }
   #sel[data-level="over"] { color:#ff5a5a; font-weight:600; } #sel[data-level="limited"] { color:#ffc24a; }
   #selthumb { flex:none; width:1.8em; height:1.8em; object-fit:contain; } #selthumb[hidden] { display:none; }
-  #info div { overflow:hidden; text-overflow:ellipsis; } #info div:empty { display:none; }
-  #ctx.acts #info { max-width:46%; }
-  #ctx.acts #ofs, #ctx.acts[data-tool="mark"] #sel, #ctx.acts[data-tool="measure"] #sel { display:none; }
-  #ctx.acts:not(.chip) #info, #ctx.lib #info { display:none; }
-  /* Add part library inside the context row */
-  #lib { display:flex; align-items:center; gap:6px; }
-  #ctx.lib > *:not(#lib) { display:none; }
-  #libtitle { font-size:0.65em; color:var(--deck-muted); white-space:nowrap; }
-  #liblist { list-style:none; margin:0; padding:0; display:flex; align-items:center; gap:6px; } #liblist li { flex:none; }
-  #liblist li.cat { padding:0 2px; font-size:0.6em; letter-spacing:.08em; text-transform:uppercase; opacity:.7; }
-  #liblist button { padding-left:0.45em; }
-  #libcat { display:inline-flex; align-items:center; gap:0.35em; white-space:nowrap; } #libcat svg, #liblist button svg { flex:none; }
-  #liblist button.on { font-weight:700; }
-  #liblist .ic { flex:none; width:1.7em; height:1.7em; margin:-0.4em 0; object-fit:contain; }
+  #info[data-sel="1"] #ofs { display:none; }
+  #info #sel { flex:0 1 auto; min-width:0; } #info #marks { flex:0 1 auto; }
+  #row { display:flex; align-items:flex-end; justify-content:space-between; gap:0.5rem; pointer-events:none; }
+  #ctl button { flex:0 0 auto; flex-direction:row; gap:0.35em; padding:0.35em 0.8em; min-height:32px; font-size:0.85em; line-height:1; white-space:nowrap; touch-action:manipulation; }
+  @media (pointer: coarse) { #ctl button { min-height:40px; } }
+  #ctl .t { white-space:nowrap; } #ctl button svg { flex:none; } #ctl [hidden] { display:none !important; }
+  #ctl button[disabled] { opacity:.4; }
+  @media (max-width:440px) { #ctl .fab { width:3.25rem; height:3.25rem; min-height:3.25rem; } #row { gap:0.4rem; } }
+  #remove { color:var(--deck-accent); }
+  /* floating buttons: round, glass-filled so they read over the camera */
+  #ctl .fab, #ctl #modelist button { background-color:color-mix(in srgb, var(--tb-background-color) 88%, transparent); box-shadow:0 0.3em 1em rgb(0 0 0 / 0.2); -webkit-backdrop-filter:blur(var(--tb-glass-blur)); backdrop-filter:blur(var(--tb-glass-blur)); }
+  #ctl .fab { width:3.5rem; height:3.5rem; min-height:3.5rem; padding:0; border-radius:50%; font-size:1.5rem; flex-direction:column; gap:0.05rem; }
+  #ctl .fab[aria-expanded="true"] { color:var(--deck-accent); border-color:var(--deck-accent); }
+  #ctl #modefab { font-size:0.6rem; line-height:1.05; } #ctl #modefab svg { font-size:1.45rem; } #ctl #modefab .t { font-size:0.6rem; }
+  #modedial { position:relative; flex:0 0 auto; }
+  #modelist { position:absolute; right:0; bottom:calc(100% + 0.5rem); display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem; z-index:2; }
+  #ctl #modelist button { flex-direction:row; gap:0.5em; min-height:44px; padding:0.4em 1.1em; font-size:0.95rem; }
+  #ctl #modelist button.on { color:var(--deck-accent); border-color:var(--deck-accent); font-weight:700; }
+  /* the part actions: a wrapped panel above the bottom row, scrolls inside when tall */
+  #ctx { align-self:flex-start; max-width:min(36rem, calc(100% - 9rem)); max-height:42vh; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem; padding:0.6rem 0.7rem; border-radius:1.25rem; }
+  #ctx > * { flex:0 0 auto; }
+  @media (orientation: landscape) { #ctx { max-width:min(54rem, calc(100% - 9rem)); max-height:46vh; } }
+  /* Edit mode (Move): axis lock chips inside the part actions, and the drag readout */
+  #editbar { flex:1 0 100%; display:flex; flex-direction:column; gap:0.4rem; padding-top:0.3rem; border-top:1px solid var(--deck-line, rgb(128 128 128 / 0.35)); } #editbar[hidden] { display:none; }
+  #editbar .edrow { display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; }
+  #editbar .edchip { min-height:40px; padding:0.2em 0.6em; border-radius:999px; gap:0.3em; font-size:0.8rem; flex-direction:row; opacity:0.75; }
+  #editbar .edchip[aria-pressed="true"] { opacity:1; color:var(--deck-accent); border-color:var(--deck-accent); font-weight:700; }
+  #editbar .edchip:disabled { opacity:0.35; } #editbar .edchip svg:last-child { font-size:0.9em; }
+  #edhint { font-size:0.72rem; color:var(--deck-muted); flex:1 1 8rem; min-width:0; }
+  #editchip { position:absolute; left:50%; top:30%; transform:translateX(-50%); z-index:30; padding:0.35em 0.9em; border-radius:999px; font-size:1rem; font-weight:700; pointer-events:none; background:color-mix(in srgb, var(--tb-background-color) 88%, transparent); color:var(--deck-accent); border:1px solid var(--deck-accent); box-shadow:0 0.3em 1em rgb(0 0 0 / 0.2); white-space:nowrap; } #editchip[hidden] { display:none; }
+  .tile.on { border-color:var(--deck-accent); box-shadow:inset 0 0 0 1px var(--deck-accent); } .tile.on .tt b::after { content:'Current'; margin-left:0.6em; padding:0.1em 0.6em; border-radius:999px; font-size:0.65rem; font-weight:700; background:var(--deck-accent); color:var(--tb-background-color, #fff); vertical-align:middle; }
+  /* parts dialog: option choice groups; panel labels never widen the panel */
+  .pv-opt { display:flex; flex-direction:column; gap:0.25rem; margin:0.35rem 0; } .pv-lab { font-weight:600; }
+  .pv-seg { display:flex; flex-wrap:wrap; gap:0.3rem; } .pv-opt button { min-height:38px; padding:0.2em 0.8em; border-radius:999px; font-size:0.8rem; text-align:left; align-self:flex-start; }
+  .pv-opt button[aria-pressed="true"] { color:var(--deck-accent); border-color:var(--deck-accent); font-weight:700; }
+  .pv-msg { color:#d9534f; margin-bottom:0.4rem; }
+  #ctx { overflow-x:hidden; } #ctx > button { max-width:100%; min-width:0; } #ctx > button .t { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
   /* Options list (long-press on the Option button) inside the context row, same pattern as the library */
-  #optlist { display:flex; align-items:center; gap:6px; } #optlist[hidden] { display:none; }
-  #ctx.optsl > *:not(#optlist) { display:none; } #ctx.optsl #info { display:none; }
   #recopts { display:flex; align-items:center; gap:6px; } #recopts[hidden] { display:none; } #rectitle { font-size:0.65em; color:var(--deck-muted); white-space:nowrap; }
   #ctx.recsl > *:not(#recopts) { display:none; } #ctx.recsl #info { display:none; }
+  /* dialogs (native <dialog>, opened with show() inside the overlay root so they render over the AR camera) and their scrim */
+  #scrim { position:absolute; inset:0; z-index:35; background:rgb(0 0 0 / 0.25); pointer-events:auto; touch-action:none; } #scrim[hidden] { display:none; }
+  dialog.dlg { position:absolute; inset:0; z-index:40; margin:auto; box-sizing:border-box; width:min(40rem, calc(100% - 32px)); height:fit-content; max-height:calc(100% - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+               padding:0; border-radius:1.25rem; display:none; flex-direction:column; overflow:hidden; color:var(--deck-fg); pointer-events:auto; --tb-glass-opacity:95%; font-size:0.95rem; touch-action:manipulation; }
+  dialog.dlg[open] { display:flex; }
+  .dh { display:flex; align-items:center; gap:0.6rem; padding:0.7rem 0.8rem 0.5rem 1.1rem; } .dh b { flex:1; font-size:1.05rem; }
+  .dlg button { min-height:40px; }
+  .dbody { overflow-y:auto; overscroll-behavior:contain; padding:0.2rem 1rem 1rem; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(12rem, 1fr)); gap:0.6rem; list-style:none; margin:0; padding:0; }
+  .tiles .gh { grid-column:1 / -1; margin:0.6rem 0 0; font-size:0.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--deck-muted); }
+  .tile { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; min-height:4rem; padding:0.5rem 0.8rem; border-radius:1rem; text-align:left; }
+  .tile img, .tile .ph { flex:none; width:2.8rem; height:2.8rem; object-fit:contain; display:flex; align-items:center; justify-content:center; font-size:1.6rem; }
+  .tile .tt { min-width:0; } .tile .tt b { display:block; font-weight:600; } .tile .tt small { display:block; color:var(--deck-muted); font-size:0.78em; line-height:1.25; }
+  .tile.on { border-color:var(--deck-accent); color:var(--deck-accent); }
+  #partsq { margin:0 1rem 0.5rem; padding:0.5em 1em; min-height:2.75rem; font:inherit; color:inherit; background:transparent; border:1px solid var(--tb-border-color); border-radius:999px; }
+  #partsq:focus-visible { outline:2px solid var(--tb-outline-color); outline-offset:2px; }
+  #partsbody { display:flex; flex-direction:column; flex:1 1 auto; min-height:0; overflow:hidden; }
+  #partslist { flex:1 1 auto; min-height:7rem; overflow-y:auto; overscroll-behavior:contain; display:grid; grid-template-columns:repeat(auto-fill, minmax(5.6rem, 1fr)); gap:0.4rem; align-content:start; list-style:none; margin:0; padding:0 1rem 0.6rem; }
+  .pt { flex-direction:column; justify-content:flex-start; gap:0.15rem; width:100%; padding:0.4rem 0.25rem; border-radius:0.9rem; font-size:0.74rem; line-height:1.15; text-align:center; }
+  .pt img { width:2.8rem; height:2.8rem; object-fit:contain; } .pt.sel { border-color:var(--deck-accent); color:var(--deck-accent); border-width:2px; } .pt .fit { color:var(--deck-accent); font-weight:700; }
+  #partsprev { flex:0 0 auto; max-height:46%; overflow-y:auto; overscroll-behavior:contain; padding:0.7rem 1rem 0.9rem; border-top:1px solid color-mix(in srgb, var(--tb-font-color) 18%, transparent); display:flex; flex-direction:column; gap:0.45rem; }
+  .pv-top { display:flex; flex-wrap:wrap; align-items:center; gap:0.6rem 0.8rem; } .pv-top img { flex:none; width:4.6rem; height:4.6rem; object-fit:contain; } .pv-meta { flex:1 1 7rem; min-width:0; } .pv-meta b { display:block; line-height:1.25; }
+  .pv-meta span { display:block; color:var(--deck-muted); font-size:0.8rem; line-height:1.3; }
+  #partsadd { flex:0 0 auto; padding:0.5em 1.4em; font-weight:700; color:var(--deck-accent); border-color:var(--deck-accent); }
+  .pv-sec { font-size:0.8rem; line-height:1.35; } .pv-sec h3 { margin:0 0 0.2rem; font-size:0.68rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--deck-muted); }
+  .pv-var { display:flex; flex-wrap:wrap; gap:0.4rem; } .pv-var button { flex-direction:row; gap:0.4em; padding:0.2em 0.7em 0.2em 0.3em; font-size:0.75rem; min-height:36px; } .pv-var img { width:1.7rem; height:1.7rem; object-fit:contain; }
+  #partsnone { padding:1rem; color:var(--deck-muted); text-align:center; }
+  @media (orientation: landscape) {
+    dialog#partsdlg { width:min(58rem, calc(100% - 32px)); height:calc(100% - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+    #partsbody { flex-direction:row; } #partslist { min-height:0; } #partsprev { flex:0 0 19rem; max-height:none; border-top:0; border-left:1px solid color-mix(in srgb, var(--tb-font-color) 18%, transparent); }
+  }
+  body.rec #scrim, body.rec dialog.dlg { display:none !important; }
   /* toasts that replace themselves (option names) have no x */
   .toast.noclose { padding-right:1rem; }
   /* recording mode: the clean camera. Only the caption, the corner button and the mini bar stay. */
-  body.rec .build, body.rec #toasts, body.rec #ctl, body.rec #menubtn, body.rec #menu, body.rec #hint, body.rec #cross, body.rec #dbg, body.rec header, body.rec .bar, body.rec #help { display:none !important; }
+  body.rec #toasts, body.rec #ctl, body.rec #menubtn, body.rec #menu, body.rec #hint, body.rec #info, body.rec #cross, body.rec #dbg, body.rec header, body.rec #help { display:none !important; }
   body.rec #stage { margin:0; border:0; border-radius:0; } body.rec:not(.inar) { padding-bottom:0; }
   #reccap { position:absolute; top:calc(0.6rem + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); max-width:calc(100% - 1.5rem); padding:0.3rem 0.9rem; border-radius:1.2rem; font-size:0.85rem; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
   body.inar #reccap, body.inar #recbar { --tb-glass-opacity:85%; }
@@ -139,12 +178,8 @@ window.__BUILD = BUILD;
   @media (max-width:520px) { #recbar { gap:0.3rem; padding:0.4rem; } #recbar button { padding:0.4em 0.2em; font-size:0.9rem; } #recbar button svg { display:none; } }
   #recbar button svg, #recopts button svg { flex:none; } #recbar [hidden] { display:none !important; }
   #opttitle { font-size:0.65em; color:var(--deck-muted); white-space:nowrap; }
-  #optul { list-style:none; margin:0; padding:0; display:flex; align-items:center; gap:6px; } #optul li { flex:none; } #optul button.on { font-weight:700; }
   /* outside XR the page leaves room for the controls (one row in landscape, two in portrait) (--ctlh is measured) so nothing hides behind them */
   body:not(.inar) { padding-bottom:var(--ctlh, 124px); }
-  body:not(.inar) .build { left:auto; right:calc(3.8rem + env(safe-area-inset-right)); bottom:auto; top:2px; }
-  .build { position:fixed; left:4px; bottom:2px; font:10px/1 monospace; color:#6b7480; opacity:.8; pointer-events:none; z-index:30; }
-  #overlay .build { position:absolute; top:2px; bottom:auto; color:#fff; }
   #dbg { position:absolute; left:4px; top:46px; right:4px; max-height:30vh; overflow:hidden; margin:0; padding:3px 5px; background:rgba(0,0,0,.65); color:#9fffc4;
          font:10px/1.25 monospace; white-space:pre-wrap; word-break:break-all; pointer-events:none; border-radius:6px; }
 </style>
@@ -157,31 +192,42 @@ window.__BUILD = BUILD;
 <ol id="help" hidden>
   <h2>What to try (?help)</h2>
   <li>Enter AR, sweep the phone over the floor until the green ring shows, tap to place.</li>
-  <li>Two rows stick to the bottom: Mode, Add, Undo, More; above them the context row (actions or a tooltip line). The model must not jump when you use any button.</li>
+  <li>Bottom row: the round … button (part actions, Undo, Redo), Scene, Add, Option, and the round Mode button (tap it, pick Select, Mark or Measure). The model must not jump when you use any button.</li>
   <li>Height up and down: the model moves 0.5 in and stays where you left it.</li>
   <li>Nudge arrows: up moves away from you, left and right follow your view. Walk around and try again.</li>
   <li>Turn: 5 degrees per tap. Aim the crosshair at a part (beam + tint), press Select or tap the part: the context row shows its controls (lug: length, rotate, gauge; busbar: cover, rotate; nut: none). Tap empty space or Deselect to go back.</li>
   <li>While the ring shows, tap the scene to place; tapping the rows must not place.</li>
-  <li>Mode (bottom row) cycles Select, Mark, Measure. Mark: Drop (or tap the scene) drops a dot; its label shows when you select it or aim within 2 cm. Measure: tap A then B for a line with the distance. Units and Theme are in the menu (top right, outside AR). Alerts show as toasts at the top.</li>
-  <li>Preview editor (this page, no AR): click a part to select, drag to orbit, Mark and Measure by clicking the model. Add part (bottom row) lists the library; stud parts show pulsing rings on compatible studs (click one or use Next, then Place); surface parts drop where you click.</li>
+  <li>The Mode button (bottom right) opens a list: Select, Mark, Measure. Mark: Drop (or tap the scene) drops a dot; its label shows when you select it or aim within 2 cm. Measure: tap A then B for a line with the distance. Units and Theme are in the menu (top right, outside AR). Alerts show as toasts at the top.</li>
+  <li>Preview editor (this page, no AR): click a part to select, drag to orbit, Mark and Measure by clicking the model. Add part (menu) opens the parts dialog (search, preview, Add); stud parts show pulsing rings on compatible studs (click one or use Next, then Place); surface parts drop where you click.</li>
   <li>Place again: ring returns, tap a new spot. Reset: offsets and parts back to default.</li>
   <li>Exit AR and check the page returns. Compare the battery with the real one for size.</li>
 </ol>
 <div id="stage"></div>
-<div class="bar">
-  <button id="enter" data-space-model="relative" hidden>Enter AR</button>
-</div>
 
-<div class="build" id="build0"></div>
 <div id="overlay">
-  <div class="build" id="build1"></div>
   <div id="toasts" aria-live="polite"></div>
+  <div id="editchip" aria-live="polite" hidden></div>
+  <div id="scrim" hidden></div>
+  <dialog id="scenedlg" class="dlg" data-theme="auto" data-surface="glass" data-space="large" data-space-model="relative" aria-labelledby="scenetitle">
+    <div class="dh"><b id="scenetitle">Choose a scene</b><button data-space-model="relative" id="sceneclose" type="button" aria-label="Close">Close</button></div>
+    <div class="dbody"><ul class="tiles" id="scenelist"></ul></div>
+  </dialog>
+  <dialog id="partsdlg" class="dlg" data-theme="auto" data-surface="glass" data-space="large" data-space-model="relative" aria-labelledby="partstitle">
+    <div class="dh"><b id="partstitle">Add part</b><button data-space-model="relative" id="partsclose" type="button" aria-label="Close">Close</button></div>
+    <input id="partsq" type="search" placeholder="Search name or category" aria-label="Search parts" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+    <div id="partsbody"><ul id="partslist"></ul><div id="partsprev" aria-live="polite"></div></div>
+  </dialog>
+  <div id="info" data-surface="glass"><img id="selthumb" alt="" hidden><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
   <button id="menubtn" type="button" data-theme="auto" data-surface="glass" aria-label="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="menu">&#9776;</button>
   <div id="menu" data-theme="auto" data-surface="glass" data-space="large" data-space-model="relative" hidden>
+    <button class="mi" data-space-model="relative" id="scenebtn" type="button" aria-label="Scene: choose or start a scene">Scene</button>
+    <button class="mi" data-space-model="relative" id="armenu" type="button" disabled>Enter AR</button>
+    <button class="mi" data-space-model="relative" id="addpart" type="button" aria-label="Add part">Add part</button>
     <div class="row"><span>Theme</span><tb-theme></tb-theme></div>
-    <div class="row"><span>Scene</span><button data-space-model="relative" id="scenebtn" type="button" aria-label="Scene"><small>Battery</small></button></div>
     <div class="row"><span>Units</span><button data-space-model="relative" id="unitbtn" type="button" aria-label="Units"><small>in</small></button></div>
     <div class="row"><span>Debug</span><button data-space-model="relative" id="dbgbtn" type="button" aria-label="Debug"><small>Off</small></button></div>
+    <button class="mi" data-space-model="relative" id="aboutbtn" type="button" aria-expanded="false" aria-controls="aboutbox">About</button>
+    <div id="aboutbox" hidden><b>buildXR prototype</b><br><span id="aboutbuild"></span></div>
   </div>
   <div id="hint" data-theme="auto" data-surface="glass" hidden>Move the phone to find the floor, tap to place</div>
   <div id="cross" hidden></div>
@@ -196,15 +242,15 @@ window.__BUILD = BUILD;
     <button data-space-model="relative" id="rbexit" type="button" aria-label="Exit recording mode">Exit</button>
   </div>
   <div id="ctl" data-theme="auto" data-space="large" data-space-model="relative">
-    <div id="ctx" data-tool="select" data-space-model="relative" data-surface="glass">
-      <div id="info"><img id="selthumb" alt="" hidden><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
-      <div id="lib" hidden aria-label="Add part"><button data-space-model="relative" id="libclose" type="button">Back</button><button data-space-model="relative" id="libcat" type="button" aria-label="Category filter"></button><b id="libtitle">Add part</b><ul id="liblist"></ul></div>
+    <div id="ctx" data-tool="select" data-space-model="relative" data-surface="glass" aria-label="Part actions" hidden>
+      <button data-space-model="relative" id="undo" type="button" aria-label="Undo">Undo</button><button data-space-model="relative" id="redo" type="button" aria-label="Redo">Redo</button><button data-space-model="relative" id="undomark" type="button">Undo<small>last mark</small></button><button data-space-model="relative" id="mundo" type="button">Undo<small>measure</small></button>
       <button data-space-model="relative" id="qselect" type="button">Select</button><button data-space-model="relative" id="qadd" type="button">Add to this</button><button data-space-model="relative" id="qmeasure" type="button">Measure from here</button><button data-space-model="relative" id="qmark" type="button">Mark here</button><button data-space-model="relative" id="qhere" type="button">Add part here</button>
       <button data-space-model="relative" id="extp" type="button" aria-label="Extension plus 1 inch">+1<small>ext in</small></button>
       <button data-space-model="relative" id="extm" type="button" aria-label="Extension minus 1 inch">&minus;1<small>ext in</small></button>
       <button data-space-model="relative" id="rotm" type="button" aria-label="Rotate right"><span>&#8635;</span><small>15&deg;</small></button>
       <button data-space-model="relative" id="rotp" type="button" aria-label="Rotate left"><span>&#8634;</span><small>15&deg;</small></button>
       <button data-space-model="relative" id="cover" type="button" aria-pressed="true">Cover</button>
+      <button data-space-model="relative" id="change" type="button" aria-label="Change options or variant of the selected part">Change…</button>
       <button data-space-model="relative" id="move" type="button" aria-label="Move part on its surface">Move</button>
       <button data-space-model="relative" id="size" type="button" aria-label="Change the size: width, length">Size</button>
       <button data-space-model="relative" id="turn" type="button" aria-label="Turn the part 90 degrees">Turn 90&deg;</button>
@@ -212,6 +258,10 @@ window.__BUILD = BUILD;
       <button data-space-model="relative" id="hm" type="button" aria-label="Lower 0.5 inch">&darr;<small>0.5 in</small></button>
       <button data-space-model="relative" id="tp" type="button" aria-label="Turn left 5 degrees">&#8634;<small>5&deg;</small></button>
       <button data-space-model="relative" id="tm" type="button" aria-label="Turn right 5 degrees">&#8635;<small>5&deg;</small></button>
+      <div id="editbar" hidden aria-label="Move mode: axis locks">
+        <div class="edrow" id="edmove"></div><div class="edrow" id="edrot"></div>
+        <div class="edrow"><button data-space-model="relative" id="detach" type="button" aria-label="Detach: make the part free to move and tilt">Detach</button><small id="edhint"></small></div>
+      </div>
       <button data-space-model="relative" id="deselect" type="button">Deselect</button>
       <button data-space-model="relative" id="select" type="button" disabled hidden>Select</button>
       <button data-space-model="relative" id="gauge" type="button" aria-label="Toggle gauge"><span>2 AWG</span><small>gauge</small></button>
@@ -232,25 +282,21 @@ window.__BUILD = BUILD;
       <button data-space-model="relative" id="next" type="button">Next<small>outlet</small></button>
       <button data-space-model="relative" id="cancel" type="button">Cancel</button>
       <button data-space-model="relative" id="reset" type="button">Reset</button>
-      <button data-space-model="relative" id="exit" type="button">Exit AR</button>
       <button data-space-model="relative" id="jfrom" type="button" aria-label="Cable from here">Cable</button>
       <button data-space-model="relative" id="jgauge" type="button" aria-label="Jumper gauge">Gauge</button>
       <button data-space-model="relative" id="jcolor" type="button" aria-label="Jumper color">Color</button>
       <button data-space-model="relative" id="jremove" type="button" aria-label="Remove jumper">Remove</button>
-      <button data-space-model="relative" id="undoj" type="button" aria-label="Undo last jumper change">Undo</button>
-      <div id="optlist" hidden aria-label="Options"><button data-space-model="relative" id="optback" type="button">Back</button><b id="opttitle">Options</b><ul id="optul"></ul></div>
-      <button data-space-model="relative" id="xray" type="button" aria-label="X-ray of the battery: Solid, Ghost, Wireframe, Hide. Tap to change">X-ray</button>
+      <button data-space-model="relative" id="xray" type="button" aria-pressed="false" aria-label="X-ray: show the battery as a ghost, on or off">X-ray</button>
       <button data-space-model="relative" id="rec" type="button" aria-label="Recording mode: clean camera, optional auto-cycle of the options">Record</button>
       <div id="recopts" hidden aria-label="Recording mode"><button data-space-model="relative" id="recback" type="button">Back</button><b id="rectitle">Record</b><button data-space-model="relative" id="rec0" type="button" aria-label="Clean camera, no auto-cycle">Clean</button><button data-space-model="relative" id="rec4" type="button" aria-label="Auto-cycle options every 4 seconds">Auto 4 s</button><button data-space-model="relative" id="rec6" type="button" aria-label="Auto-cycle options every 6 seconds">Auto 6 s</button><button data-space-model="relative" id="rec8" type="button" aria-label="Auto-cycle options every 8 seconds">Auto 8 s</button></div>
       <button data-space-model="relative" id="back" type="button">Back</button>
     </div>
-    <div id="bottom" data-space-model="relative" data-surface="glass">
-      <button data-space-model="relative" id="mode" type="button" aria-label="Mode: Select. Tap to change"><small>MODE</small><b>Select</b></button>
-      <button data-space-model="relative" id="addpart" type="button" aria-label="Add part">Add<small>part</small></button>
-      <button data-space-model="relative" id="undomark" type="button">Undo<small>last mark</small></button>
-      <button data-space-model="relative" id="mundo" type="button">Undo<small>measure</small></button>
-      <button data-space-model="relative" id="opt" type="button" aria-label="Terminal option. Tap for the next, hold for the list">Option</button>
-      <button data-space-model="relative" id="more" type="button" aria-pressed="false" aria-label="More">More</button>
+    <div id="row">
+      <button class="fab" id="ctxfab" type="button" data-space-model="relative" aria-expanded="false" aria-controls="ctx" aria-label="Part actions"></button>
+      <div id="modedial">
+        <div id="modelist" hidden role="menu" aria-label="Modes"></div>
+        <button class="fab" id="modefab" type="button" data-space-model="relative" aria-expanded="false" aria-haspopup="true" aria-controls="modelist" aria-label="Mode: Select. Tap to change"></button>
+      </div>
     </div>
   </div>
 </div>

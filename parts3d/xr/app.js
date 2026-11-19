@@ -21,16 +21,19 @@ import * as LC from './lifecycle.js';
 import * as RC from './rec.js';
 import * as SOL from './solar.js';
 import * as OL from './outline.js';
+import * as CTL from './controls.js';
+import * as ED from './edit.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
-const overlay = $('overlay'), ctl = $('ctl'), ctx = $('ctx'), bottom = $('bottom'), status = $('status'), enterBtn = $('enter'), hint = $('hint');
+const overlay = $('overlay'), ctl = $('ctl'), ctx = $('ctx'), status = $('status'), hint = $('hint');
 const PREVIEW = !!q.get('arpreview');
 const DEBUG_KEY = 'ar-xr-debug';
 let DEBUG = q.get('debug') === '1';   // mutable: ?debug=1 forces it on; otherwise the menu toggle (localStorage)
 if (!DEBUG) { try { DEBUG = localStorage.getItem(DEBUG_KEY) === '1'; } catch (e) { /* storage blocked */ } }
 const BUILD = window.__BUILD || 'dev';
-$('build0').textContent = $('build1').textContent = 'build ' + BUILD;
+$('aboutbuild').textContent = BUILD;
+$('aboutbtn').addEventListener('click', () => { const b = $('aboutbox'); b.hidden = !b.hidden; $('aboutbtn').setAttribute('aria-expanded', String(!b.hidden)); });   // About: expands inline in the menu (the menu stays open)
 
 // ---- debug log (?debug=1): last 20 lines in the overlay; errors always land here ----
 const logLines = [];
@@ -119,6 +122,8 @@ outline.material.depthTest = false; outline.renderOrder = 8; outline.visible = f
 
 // ---- tools (select | mark | measure), marks and measurements: world-fixed (not children of pivot) ----
 let tool = MD.normTool(q.get('tool'));
+const ctxT = CTL.createToggle(), modeDial = CTL.createDial(MD.TOOLS, tool), hist = CTL.createHistory(60);   // context FAB, modes speed dial, undo / redo of scene edits
+let histT = 0;
 const marks = [];      // { group, ball, sprite, pos: Vector3, src, text }
 const measures = [];   // { group, sprite, a: [x,y,z], b: [x,y,z], text }
 let pendingA = null;   // { pos: [x,y,z], ball } first point of a measurement
@@ -264,7 +269,7 @@ function persist() {
   return h;
 }
 function suspendMarks() { sceneNow(); marksLive = false; removeMarkObjs(); removeMeasureObjs(); refreshMarks(); }
-function persistSoon() { clearTimeout(persistT); persistT = setTimeout(persist, 200); }
+function persistSoon() { clearTimeout(persistT); persistT = setTimeout(persist, 200); clearTimeout(histT); histT = setTimeout(histCommit, 350); }
 // rebuild the mark / measure objects from the stored model-frame lists at the model's current world pose
 function restoreMarks() {
   removeMarkObjs(); removeMeasureObjs();
@@ -272,12 +277,12 @@ function restoreMarks() {
   for (const m of storedMeasures) addMeasureObj(toWorld(m.a), toWorld(m.b));
   marksLive = true; refreshMarks();
 }
-function setHint(t) { hint.hidden = !t; if (t) hint.textContent = t; }
+function setHint(t) { hint.hidden = !t; document.body.classList.toggle('hinting', !!t); if (t) hint.textContent = t; }
 function setTool(t) {
   t = MD.normTool(t); if (t === tool) return;
   if (adding) cancelAdd(); closeLib();
   if (tool === 'measure') cancelPending();
-  tool = t; moreOpen = false; log('tool ' + t);
+  tool = t; log('tool ' + t);
   if (t !== 'select') selectPart(null);
   if (t === 'measure') selMark = -1;
   readout();
@@ -307,13 +312,13 @@ $('unitbtn').addEventListener('click', () => setUnits(units === 'mm' ? 'in' : 'm
 syncUnitButtons();
 
 // ---- app state ----
-let moreOpen = false, recOpen = false;
+let recOpen = false;
 const rec = { on: false, bar: false, chosen: false };   // recording mode (#126)
 let adding = null;   // Add part in progress: { partId, kind: 'stud'|'surface', outlets: [{ key, seat: [x,y,z] model frame m }], target: key|null, lock: ray|null }
 let selOutlet = null, selPoint = null;   // outside XR: a selected outlet (key) and the surface point the click hit
 let moving = null;   // XR Move: { id }, the part follows the beam on its mount plane until the next tap
 let dragMove = null;   // outside XR: { id, grab: [dx, dz], pointerId } a drag of the selected surface part
-let jumpers = [], jundo = [], selJumper = null, linking = null, linkAim = null, optLast = null, optOpen = false, stackH = { pos: null, neg: null };   // jumpers: see xr/jumper.js
+let jumpers = [], selJumper = null, linking = null, linkAim = null, optLast = null, stackH = { pos: null, neg: null };   // jumpers: see xr/jumper.js
 let C, state = [], offs = { ...OFS.ZERO }, selectedId = null, hoveredId = null, busy = false, again = false;
 let session = null, hitSource = null, anchor = null, anchorFix = null, lastFrame = null, lastHit = null;
 const baseMat = new THREE.Matrix4();
@@ -455,6 +460,9 @@ function solarNote(inst, p) {
 let chkLevel = '';   // 'ok' | 'limited' | 'over' while the solar check line is shown in #sel (colours it)
 function readout() {
   if (!C) return;
+  const keepTop = ctx.scrollTop; try { readoutBody(); } finally { if (ctx.scrollTop !== keepTop) ctx.scrollTop = keepTop; }
+}
+function readoutBody() {
   chkLevel = '';
   const inst = selInst(), p = inst && C.partOf(inst.part), kind = inst ? kindOfId(inst.id) : null;
   $('ofs').textContent = MD.describeU(offs, units);
@@ -474,29 +482,36 @@ function readout() {
   { const tp = inst ? p : hoveredId && !adding ? C.partOf((instOf(hoveredId) || {}).part) : adding ? C.partOf(adding.partId) : null, im = $('selthumb');
     const src = tp && tp.thumb || ''; if (im.getAttribute('src') !== src) { if (src) im.src = src; else im.removeAttribute('src'); } im.hidden = !src;
     $('sel').title = tp ? tp.name : ''; $('sel').setAttribute('aria-label', tp ? t + ' (' + tp.name + ')' : t); }
-  const chip = $('mode'); chip.dataset.tool = tool; chip.querySelector('b').textContent = MD.TOOL_LABEL[tool]; chip.setAttribute('aria-label', 'Mode: ' + MD.TOOL_LABEL[tool] + '. Tap to change');
   const step = inst ? C.yawStep(inst.part) : 0;
-  const inXR = document.body.classList.contains('inar'), libOpen = !libEl.hidden;
+  const inXR = document.body.classList.contains('inar');
   const ex = inst ? PK.extrasFor(p, inst, kind, C.host.id) : {};
   const tg = inXR ? null : selTarget();
   const quickView = inXR && quick && { kind: quick.kind, isSel: quick.kind === 'part' && quick.id === selectedId, point: !!quick.point, fit: quick.fit.length };
   const jf = jfromKeys(inXR, quick, tg);
-  const acts = libOpen || optOpen || recOpen ? [] : MD.ctxFor({ xrayUi: true, size: sizeOpen && sizeable(p, inst), linking: !!linking, jumper: !!selJumper, jfrom: !!(jf && jf.length), jundo: jundo.length > 0, markSel: !selectedId && (selMark >= 0 || (inXR && hovMark >= 0)), measSel: !selectedId && selMeasure >= 0, tool, kind, rotStep: step, selected: !!selectedId, x: ex, more: moreOpen, inXR, quick: quickView, target: tg && { kind: tg.kind, point: !!tg.point },
-    adding: adding ? { stud: adding.kind === 'stud', outlets: adding.outlets.length } : null });
+  const ca = { xrayUi: true, size: sizeOpen && sizeable(p, inst), linking: !!linking, jumper: !!selJumper, jfrom: !!(jf && jf.length), markSel: !selectedId && (selMark >= 0 || (inXR && hovMark >= 0)), measSel: !selectedId && selMeasure >= 0, tool, kind, rotStep: step, selected: !!selectedId, x: ex, inXR, quick: quickView, target: tg && { kind: tg.kind, point: !!tg.point },
+    adding: adding ? { stud: adding.kind === 'stud', outlets: adding.outlets.length } : null };
+  // one panel: the part's actions, then what used to sit behind More (model nudges, Place again, Reset, X-ray, Record, Exit AR); not while a flow owns the row
+  const flow = !!(linking || selJumper || adding || ca.markSel || ca.measSel || ca.size), sub = recOpen;
+  const noLift = !!(inst && ED.mountOf({ host: inst.part === C.host.id, on: inst.on, at: inst.at, panel: !!(inst.on && isPanel(p)), free: inst.free }) !== 'free');   // #107: only a free part lifts (Up / Down); a surface part stays in its plane
+  ex.change = !!(inst && (partChoices(p, inst.opts).length || C.catalog.parts.some(x => x !== C.host && x.id !== p.id && CTL.familyKey(x) === CTL.familyKey(p))));
+  ca.x = ex;
+  const acts = sub ? [] : [...new Set([...MD.ctxFor({ ...ca, more: false }), ...(flow ? [] : MD.ctxFor({ ...ca, more: true }).filter(id => id !== 'back' && id !== 'addpart'))])].filter(id => id !== 'exit' && !(noLift && (id === 'hp' || id === 'hm')) && (ca.size || !/^gauge[23]?$/.test(id)));   // Exit AR is in the menu
   const low = MD.bottomFor(tool, inXR, true);   // Options: battery terminals, or the fume extractor setups
-  for (const id of MD.ALL_IDS) $(id).hidden = !acts.includes(id) && !low.includes(id);
+  for (const id of MD.ALL_IDS) { const e = $(id); if (e && id !== 'addpart') e.hidden = !acts.includes(id) && !low.includes(id); }   // Add part and Option live in the menu
   for (const id of acts) ctx.appendChild($(id));   // keep the layout order of the list
-  bottom.appendChild($('mode')); for (const id of low) bottom.appendChild($(id));
-  ctx.classList.toggle('lib', libOpen); ctx.classList.toggle('optsl', optOpen); $('optlist').hidden = !optOpen; ctx.classList.toggle('recsl', recOpen); $('recopts').hidden = !recOpen; ctx.classList.toggle('acts', acts.length > 0);
-  ctx.classList.toggle('chip', acts.length > 0 && !(sizeOpen && sizeable(p, inst)) && (tool !== 'select' || !!adding || !!inst || !!selJumper || !!linking || jundo.length > 0 || selMark >= 0 || selMeasure >= 0)); ctx.dataset.tool = tool;
-  $('more').setAttribute('aria-pressed', moreOpen && !adding);
+  for (const id of low) ctx.appendChild($(id));   // Undo of marks / measures, in the action panel while that mode is on
+  if (!$('move').hidden) $('move').after($('editbar')); else ctx.appendChild($('editbar'));   // the lock chips sit right under the Move toggle
+  ctx.classList.toggle('recsl', recOpen); $('recopts').hidden = !recOpen; ctx.classList.toggle('acts', acts.length > 0); ctx.dataset.tool = tool;
+  ctx.hidden = !(ctxT.open || sub); $('info').dataset.sel = inst ? '1' : '';
+  $('undo').disabled = !hist.canUndo; $('redo').disabled = !hist.canRedo;
+  $('xray').setAttribute('aria-pressed', String(xray.mode !== 'solid'));
+  syncFabs();
   const cur = inXR ? quick : tg; $('qadd').disabled = !(cur && (cur.fit.length || (cur.free && cur.free.length)));   // enabled when the part has free outlets even if no library part fits yet (click says so)
   $('rotm').setAttribute('aria-label', 'Rotate right ' + step + ' degrees'); $('rotp').setAttribute('aria-label', 'Rotate left ' + step + ' degrees');
-  if (inst) { PK.OPT_IDS.forEach((id, n) => { const k = optKeys(p, kind, inst)[n]; if (k) $(id).dataset.v = optText(p, inst, k); }); if (sizeOpen && sizeable(p, inst)) $('gauge').dataset.v = numLabel(p, inst); }
+  if (inst && sizeOpen && sizeable(p, inst)) $('gauge').dataset.v = numLabel(p, inst);
   { const j = jumpers.find(x => x.id === selJumper); if (j) { $('jgauge').dataset.v = j.gauge + ' AWG'; $('jcolor').dataset.v = j.color === 'red' ? 'Red' : 'Black'; } }
-  { const cur = PR.presetOf(C.SC, state), ob = $('opt'), nm = cur ? cur : optLast ? optLast + '*' : null; ob.dataset.v = nm ? 'Option ' + nm + ' \u25b8' : 'Options \u25b8'; ob.setAttribute('aria-label', cur ? 'Option ' + cur + ': ' + PR.byId(cur).name + '. Tap for the next, hold for the list' : 'Options. Tap for the next, hold for the list'); }
   $('confirm').setAttribute('aria-label', adding && adding.kind === 'stud' ? 'Place on the ring' : 'Place here');
-  $('cover').setAttribute('aria-pressed', !!(inst && inst.opts.cover)); $('move').setAttribute('aria-pressed', !!moving);
+  $('cover').setAttribute('aria-pressed', !!(inst && inst.opts.cover)); $('move').setAttribute('aria-pressed', String(!!edit.on)); renderEdit();
   const st = MD.stepsFor(units), lab = (id, big, small, aria) => { $(id).setAttribute('aria-label', aria); };
   { const no = inst && numKeys(p, inst).length ? p.options[numKey(p, inst.id)] : null, mmo = no && (no.unit === 'mm' || no.unit === 'cm' || no.unit === 'm'), ex = mmo ? no.step + ' ' + no.unit : units === 'mm' ? '25 mm' : '1 inch', nm = mmo ? no.label : 'Extension';   // a number option in mm (fan adapter spigot length) steps by its own size
     lab('extp', '+' + st.extLabel, st.extUnit, nm + ' plus ' + ex); lab('extm', '&minus;' + st.extLabel, st.extUnit, nm + ' minus ' + ex); }
@@ -510,7 +525,7 @@ function readout() {
 function compactButtons() {
   for (const id of Object.keys(IC.BUTTONS)) {
     const b = $(id); if (!b) continue;
-    const txt = id === 'mode' ? MD.TOOL_LABEL[tool] : id === 'gauge' || id === 'gauge2' || id === 'gauge3' ? (b.dataset.v || 'Option') : id === 'jgauge' ? (b.dataset.v || 'Gauge') : id === 'jcolor' ? (b.dataset.v || 'Color') : id === 'opt' ? (b.dataset.v || 'Option') : id === 'xray' || id === 'rbxray' ? 'X-ray ' + RC.XRAY_SHORT[xray.mode] : id === 'rbpause' ? (cycle.paused ? 'Resume' : 'Pause') : null;
+    const txt = id === 'mode' ? MD.TOOL_LABEL[tool] : id === 'gauge' || id === 'gauge2' || id === 'gauge3' ? (b.dataset.v || 'Option') : id === 'jgauge' ? (b.dataset.v || 'Gauge') : id === 'jcolor' ? (b.dataset.v || 'Color') : id === 'armenu' ? (b.dataset.v || 'Enter AR') : id === 'xray' ? 'X-ray' : id === 'rbxray' ? 'X-ray ' + RC.XRAY_SHORT[xray.mode] : id === 'rbpause' ? (cycle.paused ? 'Resume' : 'Pause') : null;
     let m = IC.markup(id, txt);
     if ((id === 'extp' || id === 'extm') && sizeOpen && !b.hidden) { const sp = selInst() && C.partOf(selInst().part), o = sp && sp.options[numKey(sp, selInst().id)]; if (o) m = IC.svg(id === 'extp' ? 'plus' : 'minus') + '<span class="t">' + (o.unit ? o.step + ' ' + o.unit : '1') + '</span>'; }   // size row: step size on the button
     if (m && b.dataset.m !== m) { b.innerHTML = m; b.dataset.m = m; }
@@ -545,14 +560,12 @@ for (const [id, dir] of [['extm', -1], ['extp', 1]]) {
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { stop(); if (held) setTimeout(() => { held = false; readout(); }, 0); });
   b.addEventListener('click', () => { if (held) return; lugExt(dir); readout(); });
 }
-const rotSel = dir => { const li = selInst(); if (li) { li.yaw = PK.rotateYaw(li.yaw, dir * (C.yawStep(li.part) || 0)); rebuild(); } };
+const rotSel = dir => { const li = selInst(); if (li) { li.yaw = PK.rotateYaw(li.yaw, dir * (C.yawStep(li.part) || 0)); log('rotate btn ' + (dir * (C.yawStep(li.part) || 0)) + ', yaw now ' + li.yaw); rebuild(); } };
 wire('rotm', () => rotSel(-1)); wire('rotp', () => rotSel(1));
-PK.OPT_IDS.forEach((id, n) => wire(id, () => {   // option buttons: tap flips the option (choice: next value, bool: toggle); parts that follow it (duct, clamp) take the new value
+wire('gauge', () => {   // size row only: switch the dimension (W <-> L ...). Options are chosen in the parts dialog (Change...)
   const li = selInst(), p = li && C.partOf(li.part);
-  if (n === 0 && sizeOpen && sizeable(p, li)) { const ks = numKeys(p, li); numSel.set(li.id, ks[(ks.indexOf(numKey(p, li.id)) + 1) % ks.length]); return; }   // size row: switch the dimension (W <-> L ...)
-  const k = p && optKeys(p, kindOfId(li.id), li)[n];
-  if (k) { li.opts[k] = PK.flipOption(p.options[k], li.opts[k]); C.SC.syncOpts(state); rebuild(); }
-}));
+  if (sizeOpen && sizeable(p, li)) { const ks = numKeys(p, li); numSel.set(li.id, ks[(ks.indexOf(numKey(p, li.id)) + 1) % ks.length]); }
+});
 wire('size', () => { const li = selInst(), p = li && C.partOf(li.part); if (sizeable(p, li)) { sizeOpen = true; $('ctx').scrollLeft = 0; } });
 wire('turn', () => turnPanelSel());
 wire('cover', () => { const li = selInst(); if (li && 'cover' in li.opts) { li.opts.cover = !li.opts.cover; rebuild(); } });
@@ -616,13 +629,202 @@ for (const [id, dir] of [['nl', 'left'], ['nr', 'right'], ['nu', 'up'], ['nd', '
     const [dx, dz] = XM.viewDelta(viewForward(), dir, st), [lx, lz] = XM.worldToFrame(dx, dz, modelPsi());
     moveFree(f, lx, 0, lz);
   });
-const turnSel = d => { const f = freeSel(); if (f) { f.yaw = PK.rotateYaw(f.yaw, d); rebuild(); } else setOffs(XM.turn(offs, d)); };
+const turnSel = d => { const f = freeSel(); if (f) { f.yaw = PK.rotateYaw(f.yaw, d); log('rotate btn ' + d + ', yaw now ' + f.yaw); rebuild(); } else setOffs(XM.turn(offs, d)); };
 wire('tm', () => turnSel(-XM.TURN_DEG)); wire('tp', () => turnSel(XM.TURN_DEG));
+
+// ---- Edit mode (round 5, #107): the Move toggle shows axis locks; a one-finger drag moves along the unlocked axes, a two-finger twist turns about the unlocked rotate axis. Pure logic: xr/edit.js ----
+// Mount types (ED.mountOf): stud = stacked on an outlet (lug, 2340, adapter, clamp): yaw around the stud only; surface = rests on a plane (inst.at at height 0, the host, a panel on rails): X, Y, yaw;
+// free = lifted or detached: X, Y, Z. Axes are the surface's (X, Y along it, Z up). Pitch and roll are in the logic but the scene model has no tilt yet, so those chips stay disabled.
+const edit = { on: false };
+const editLocks = new Map();   // instance id -> { mount, locks } (resets when the mount type changes)
+let eg = null;                 // the running gesture { kind: 'move' | 'twist', id, ... }
+let editDragMoved = false;     // a drag happened: the select tap that follows is not a pick
+function editInfo(inst) {
+  const p = C.partOf(inst.part), panel = !!(inst.on && isPanel(p));
+  const mount = ED.mountOf({ host: inst.part === C.host.id, on: inst.on, at: inst.at, panel, free: inst.free });
+  const canYaw = mount === 'stud' ? C.yawStep(inst.part) > 0 : !panel;
+  let rc = editLocks.get(inst.id); if (!rc || rc.mount !== mount) { rc = { mount, locks: ED.defaultLocks(mount) }; editLocks.set(inst.id, rc); }
+  return { mount, canYaw, rec: rc, panel, st: ED.axisStates(mount, rc.locks, canYaw, false) };
+}
+const editActive = () => !!(edit.on && C && selectedId && selInst() && tool === 'select' && !adding && !rec.on);
+let editSig = '';
+function renderEdit() {
+  const bar = $('editbar'), inst = selInst(), show = !!(edit.on && inst && C && tool === 'select');
+  bar.hidden = !show; if (!show) { editSig = ''; return; }
+  const ei = editInfo(inst), sig = inst.id + '|' + ei.mount + '|' + JSON.stringify(ei.st);
+  $('detach').hidden = ei.mount === 'free';
+  if (sig === editSig) return; editSig = sig;
+  const mk = a => {
+    const s = ei.st[a], on = s === 'on', ic = a.startsWith('m') ? 'axis' + a[1].toUpperCase() : 'rot' + a[0].toUpperCase() + a.slice(1), kind = a.startsWith('m') ? 'Move ' : 'Rotate ';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'edchip'; b.dataset.axis = a; b.dataset.state = s; b.disabled = s === 'off'; b.dataset.spaceModel = 'relative';
+    b.setAttribute('aria-pressed', String(on));
+    b.setAttribute('aria-label', kind + ED.AXIS_LABEL[a] + ': ' + (s === 'on' ? 'unlocked' : s === 'locked' ? 'locked' : 'not allowed here (' + ED.hintFor(ei.mount, a) + ')')); b.title = b.getAttribute('aria-label');
+    b.innerHTML = IC.svg(ic) + '<span class="t">' + ED.AXIS_LABEL[a] + '</span>' + (s === 'locked' ? IC.svg('lock') : ''); return b;
+  };
+  $('edmove').replaceChildren(...ED.MOVE_AXES.map(mk)); $('edrot').replaceChildren(...['pitch', 'roll', 'yaw'].map(mk));
+  $('edhint').textContent = ei.mount === 'stud' ? 'Bolted to a stud: turn only. Detach to move it.' : ei.mount === 'surface' ? 'On a surface: ' + (ei.panel ? 'slide only, ' : '') + ED.DETACH_HINT + '.' : 'Free part. Pitch and roll need tilt support in the scene.';
+}
+for (const id of ['edmove', 'edrot']) $(id).addEventListener('click', e => {
+  const b = e.target.closest('.edchip'), inst = selInst(); if (!b || b.disabled || !inst) return;
+  const ei = editInfo(inst); ei.rec.locks = ED.toggleLock(ei.mount, ei.rec.locks, b.dataset.axis, ei.canYaw); readout();
+});
+wire('detach', () => {
+  const i = selInst(); if (!i) return; const pl = C.SC.placements(state).get(i.id); if (!pl) return;
+  histCommit(); Object.assign(i, ED.detachFields(pl.pos, pl.yaw)); editLocks.delete(i.id); rebuild(); toast('Detached: free to move', false, 1800);
+});
+const toModelRay = ray => { modelHolder.updateWorldMatrix(true, false); _inv.copy(modelHolder.matrixWorld).invert(); _lo.fromArray(ray.origin).applyMatrix4(_inv); _ld.fromArray(ray.dir).transformDirection(_inv); return { origin: _lo.toArray(), dir: _ld.toArray() }; };
+function editChip(t) { const c = $('editchip'); clearTimeout(editChip.t); if (!t) { c.hidden = true; return; } c.textContent = t; c.hidden = false; }
+const editPos = inst => atOf(inst).map(v => v * SCN.IN);
+// a one-finger / select-ray press on the selected part: starts a move along the unlocked axes. ray in world space. -> true when a gesture started
+let editWhy = '';
+const noBegin = why => { editWhy = why; return false; };
+function editBegin(ray, src) {
+  editWhy = '';
+  const inst = selInst(); if (!inst) return noBegin('no selection'); if (!editActive()) return noBegin('edit not active (edit.on ' + edit.on + ', tool ' + tool + ', adding ' + !!adding + ', rec ' + rec.on + ')');
+  const ei = editInfo(inst), axes = ED.unlockedMoves(ei.st); if (!axes.length) return noBegin('no unlocked move axes (' + ei.mount + ')');
+  if (!(ei.mount === 'surface' || ei.mount === 'free')) return noBegin('mount ' + ei.mount + ' does not move');
+  const mr = toModelRay(ray), pos = editPos(inst);
+  if (ei.panel) {   // a panel on rails slides over the rack with the existing snapping (SOL.movePanel)
+    const pp = panelPoint(inst, ray), c = pp && SOL.panelCentre(inst, pp.rack, C.partOf); if (!pp) return noBegin('panel point null');
+    if (!(axes.includes('mx') && axes.includes('my'))) return noBegin('panel needs X and Y unlocked');
+    histCommit(); eg = { kind: 'move', panel: true, id: inst.id, grab: [c.x - pp.q[0], c.z - pp.q[1]], src, t0: performance.now(), started: false }; editDragMoved = false; return true;
+  }
+  const hit = ED.pressHit(mr, pos, axes, mr.dir); if (!hit) return noBegin('movement plane parallel to the ray (or behind it)');
+  histCommit(); eg = { kind: 'move', id: inst.id, axes, start: { pos, hit }, at0: atOf(inst).slice(), view: mr.dir, src, t0: performance.now(), started: false, fine: false };   // the part moves by the finger's delta on its plane from the press point
+  editDragMoved = false; return true;
+}
+const r2s = v => v.map(x => Math.round(x * 100) / 100).join(',');
+let lastEditLog = 0;
+const editLogThrottled = t => { const n = performance.now(); if (n - lastEditLog >= 500) { lastEditLog = n; log(t); } };
+let pendingEdit = null, editPress = false;   // pendingEdit: the input source that pressed, resolved with a valid frame; editPress: the press landed on the selected part (its select is not a scene tap)
+function resolveEditPress(frame, via) {
+  const src = pendingEdit; pendingEdit = null; if (!src) return;
+  if (domLock) { editPress = true; log('edit press: DOM twist owns the touches'); return; }
+  if (!editActive() || eg) { log('edit press: not resolved (editActive ' + editActive() + ', gesture ' + !!eg + ')'); return; }
+  const rs = renderer.xr.getReferenceSpace(), pose = rs && frame.getPose(src.targetRaySpace, rs);
+  log('edit press resolved via ' + via + ', pose ' + (pose ? 'ok' : 'null') + (rs ? '' : ', no reference space'));
+  editPress = true;   // Move mode: a press anywhere on the scene never changes the selection
+  if (!pose) return;
+  const ray = PK.rayFromPose(pose.transform.position, pose.transform.orientation);
+  log('edit ray o ' + r2s(ray.origin) + ' d ' + r2s(ray.dir));
+  if (editBegin(ray, src)) log('edit drag start (xr) ' + selectedId); else log('edit drag refused: ' + editWhy);
+}
+function editUpdate(ray) {
+  if (!eg || eg.kind !== 'move' || domLock) return;
+  const inst = instOf(eg.id); if (!inst) { editEnd(); return; }
+  if (eg.panel) { if (slidePanel(inst, ray, eg.grab)) { eg.started = true; editDragMoved = true; editChip('slide'); } return; }
+  const mr = toModelRay(ray);
+  if (!eg.started) {
+    const probe = ED.dragMove(mr, eg.start, eg.axes, true, eg.view);
+    if (!probe || Math.max(...Object.values(probe.comps).map(Math.abs)) < 0.003) return;   // not moved yet: still a press (a still press first = fine steps)
+    eg.started = true; eg.fine = ED.isLongPress(eg.t0, performance.now()); editDragMoved = true; log('edit move started (' + (eg.fine ? 'fine' : 'coarse') + ')');
+  }
+  const r = ED.dragMove(mr, eg.start, eg.axes, eg.fine, eg.view); if (!r) { editLogThrottled('edit update: ray parallel to the plane'); return; }
+  const at = eg.at0.map((v, i) => Math.round((v + r.delta[i] / SCN.IN) * 1000) / 1000), txt = ED.moveText(r.comps) + (eg.fine ? ' (fine)' : '');
+  editChip(txt); editLogThrottled('edit move ' + txt);
+  if (at.every((v, i) => v === atOf(inst)[i])) return;
+  inst.at = at; fastMove();
+}
+function editEnd() {
+  const g = eg; eg = null;
+  if (!g) return;
+  controls.enabled = !session; flushMove(); if (g.started) { persist(); histCommit(); }   // one drag or twist = one undo step
+  clearTimeout(editChip.t); editChip.t = setTimeout(() => editChip(''), 700);
+  readout();
+}
+// ---- XR twist: every touch is its own transient 'screen' input source, so two fingers = two sources. Their screen positions come from gamepad.axes ([x, y] in -1..1) when present, else the source's ray projected to the screen. ----
+const xrFingers = new Set();   // active screen input sources
+let xrLocked = false;          // a twist happened: no new drag until every finger is up
+const _pp = new THREE.Vector3();
+function xrScreenPoint(src, frame, rs) {   // -> { p: [x * aspect, y], how } or null; y down like pixels, x scaled by the aspect ratio so angles are true
+  const asp = innerWidth / Math.max(1, innerHeight);
+  const ax = src.gamepad && src.gamepad.axes;
+  if (ax && ax.length >= 2 && (ax[0] !== 0 || ax[1] !== 0)) return { p: [ax[0] * asp, ax[1]], how: 'gamepad axes' };
+  const pose = frame.getPose(src.targetRaySpace, rs); if (!pose) return null;
+  const ray = PK.rayFromPose(pose.transform.position, pose.transform.orientation), cam = renderer.xr.getCamera().cameras && renderer.xr.getCamera().cameras[0];
+  if (!cam) return null;
+  _pp.set(ray.origin[0] + ray.dir[0] * 2, ray.origin[1] + ray.dir[1] * 2, ray.origin[2] + ray.dir[2] * 2).project(cam);
+  return { p: [_pp.x * asp, -_pp.y], how: 'projected ray' };
+}
+function xrTwistBegin() {   // the second finger landed: commit any move in progress and switch to twist
+  const inst = selInst(); if (!editActive() || !inst) { log('xr twist: not starting (editActive ' + editActive() + ')'); return; }
+  const axis = ED.rotAxisOf(editInfo(inst).st); if (axis !== 'yaw') { log('xr twist: yaw is locked or not allowed here'); return; }
+  if (eg) { const g = eg; eg = null; if (g.started) { flushMove(); persist(); histCommit(); } log('xr twist: move committed'); }
+  histCommit(); pendingEdit = null;
+  eg = { kind: 'twist', xr: true, id: inst.id, axis, srcs: [...xrFingers].slice(0, 2), p0: null, p1: null, yaw0: inst.yaw || 0, t0: performance.now(), started: false, fine: false, total: 0 };
+  editDragMoved = false; editPress = true; xrLocked = true; log('xr twist: start, ' + xrFingers.size + ' sources');
+}
+function xrTwistFrame(frame, rs) {
+  const g = eg; if (!g || g.kind !== 'twist' || !g.xr) return;
+  const inst = instOf(g.id); if (!inst) { editEnd(); return; }
+  const a = xrScreenPoint(g.srcs[0], frame, rs), b = xrScreenPoint(g.srcs[1], frame, rs);
+  if (!a || !b) { editLogThrottled('xr twist: no screen point (' + (a ? '' : 'first ') + (b ? '' : 'second') + ')'); return; }
+  if (!g.p0) { g.p0 = a.p; g.p1 = b.p; g.t0 = performance.now(); log('xr twist: positions from ' + a.how + ' / ' + b.how); return; }
+  const d = ED.twistDeg(g.p0, g.p1, a.p, b.p);
+  if (!g.started) { if (Math.abs(d) < 3) return; g.started = true; g.fine = ED.isLongPress(g.t0, performance.now()); editDragMoved = true; }
+  g.total = ED.snapDeg(d, g.fine); inst.yaw = ED.applyYaw(g.yaw0, d, g.fine); fastMove(); editChip(ED.rotText(g.total) + (g.fine ? ' (fine)' : ''));
+  editLogThrottled('xr twist angle ' + Math.round(d) + ' deg, snapped ' + g.total);
+}
+// ---- DOM touch twist inside an AR session: Chrome AR gives only one transient XR input source, so the second finger is read from DOM touch events on the overlay root (capture phase, whatever child it lands on) ----
+let domLock = false, domTouchLogged = false;   // domLock: a DOM twist is running or its fingers are still down: no XR drag / update meanwhile
+const touchUi = t => !!(t && t.closest && t.closest('button, input, select, textarea, a, label, dialog, #ctx, #menu, #modedial, #toasts, #editbar'));
+const touchPts = e => [[e.touches[0].clientX, e.touches[0].clientY], [e.touches[1].clientX, e.touches[1].clientY]];
+const tdesc = t => (t && (t.id || t.tagName)) || '?';
+document.addEventListener('touchstart', e => {
+  if (!domTouchLogged) { domTouchLogged = true; log('first DOM touchstart this session (target ' + tdesc(e.target) + ', touches ' + e.touches.length + ', session ' + !!session + ')'); }
+  if (!session || e.touches.length !== 2 || touchUi(e.target)) return;
+  const inst = selInst();
+  if (!editActive() || !inst) { log('dom twist: not starting (editActive ' + editActive() + ')'); return; }
+  if (ED.rotAxisOf(editInfo(inst).st) !== 'yaw') { log('dom twist: yaw is locked or not allowed here'); return; }
+  if (eg) { const g = eg; eg = null; if (g.started) { flushMove(); persist(); histCommit(); } log('dom twist: move committed'); }
+  histCommit(); pendingEdit = null; domLock = true; editPress = true; editDragMoved = false;
+  const pts = touchPts(e);
+  eg = { kind: 'twist', dom: true, id: inst.id, axis: 'yaw', p0: pts[0], p1: pts[1], yaw0: inst.yaw || 0, t0: performance.now(), started: false, fine: false, total: 0 };
+  log('dom twist start (target ' + tdesc(e.target) + ')'); e.preventDefault();
+}, { capture: true, passive: false });
+document.addEventListener('touchmove', e => {
+  if (!(eg && eg.kind === 'twist' && eg.dom)) return;
+  if (e.touches.length < 2) return; e.preventDefault();
+  const inst = instOf(eg.id); if (!inst) { editEnd(); return; }
+  const pts = touchPts(e), d = ED.twistDeg(eg.p0, eg.p1, pts[0], pts[1]);
+  if (!eg.started) { if (Math.abs(d) < 3) return; eg.started = true; eg.fine = ED.isLongPress(eg.t0, performance.now()); editDragMoved = true; }
+  eg.total = ED.snapDeg(d, eg.fine); inst.yaw = ED.applyYaw(eg.yaw0, d, eg.fine); fastMove(); editChip(ED.rotText(eg.total) + (eg.fine ? ' (fine)' : ''));
+  editLogThrottled('dom twist angle ' + Math.round(d) + ' deg, snapped ' + eg.total);
+}, { capture: true, passive: false });
+for (const ev of ['touchend', 'touchcancel']) document.addEventListener(ev, e => {
+  if (eg && eg.kind === 'twist' && eg.dom && e.touches.length < 2) { log('dom twist end, total ' + eg.total + ' deg'); editEnd(); }
+  if (!e.touches.length) domLock = false;
+}, { capture: true, passive: false });
+// two-finger twist: the unlocked rotate axis (yaw) turns by the snapped twist angle
+const fingers = new Map();
+const editUiTarget = e => { const t = e.target; return t === renderer.domElement || t === overlay || t === document.body || t === document.documentElement; };
+function twistBegin() {
+  const inst = selInst(); if (!editActive() || !inst) return false;
+  const ei = editInfo(inst), axis = ED.rotAxisOf(ei.st); if (axis !== 'yaw') return false;   // pitch / roll need scene support
+  const pts = [...fingers.values()]; if (pts.length < 2) return false;
+  if (eg) { const g = eg; eg = null; if (g.started) { flushMove(); persist(); histCommit(); } }
+  histCommit(); controls.enabled = false;
+  eg = { kind: 'twist', id: inst.id, axis, p0: pts[0].slice(), p1: pts[1].slice(), yaw0: inst.yaw || 0, t0: performance.now(), started: false, fine: false };
+  editDragMoved = false; return true;
+}
+function twistUpdate() {
+  if (!eg || eg.kind !== 'twist' || eg.xr || eg.dom || fingers.size < 2) return;
+  const inst = instOf(eg.id); if (!inst) { editEnd(); return; }
+  const pts = [...fingers.values()].slice(0, 2), d = ED.twistDeg(eg.p0, eg.p1, pts[0], pts[1]);
+  if (!eg.started) { if (Math.abs(d) < 3) return; eg.started = true; eg.fine = ED.isLongPress(eg.t0, performance.now()); editDragMoved = true; }
+  inst.yaw = ED.applyYaw(eg.yaw0, d, eg.fine); fastMove(); editChip(ED.rotText(ED.snapDeg(d, eg.fine)) + (eg.fine ? ' (fine)' : ''));
+}
+document.addEventListener('pointerdown', e => {
+  if (!editUiTarget(e)) return; fingers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (!session && fingers.size === 2 && twistBegin()) { e.stopImmediatePropagation(); e.preventDefault(); }
+  else if (fingers.size >= 2 && eg && eg.kind === 'twist') e.stopImmediatePropagation();
+}, true);
+document.addEventListener('pointermove', e => { if (!fingers.has(e.pointerId)) return; fingers.set(e.pointerId, [e.clientX, e.clientY]); if (eg && eg.kind === 'twist') { twistUpdate(); e.preventDefault(); } }, true);
+for (const ev of ['pointerup', 'pointercancel']) document.addEventListener(ev, e => { if (!fingers.delete(e.pointerId)) return; if (eg && eg.kind === 'twist') editEnd(); }, true);
 wire('again', () => { if (session) { cancelAdd(); suspendMarks(); setMode('reticle'); anchor = null; scanHint(scan.start(performance.now())); }  });
 wire('drop', dropMark); wire('undomark', undoMark);
 wire('rmmark', () => { const i = selMark >= 0 ? selMark : hovMark; if (i >= 0) removeMarkAt(i); }); wire('rmmeasure', () => { if (selMeasure >= 0) removeMeasureAt(selMeasure); });
 wire('mnew', () => { cancelPending(); flashMsg('Tap point A'); }); wire('mundo', undoMeasure); wire('mclear', clearMeasures);
-$('mode').addEventListener('click', () => { setTool(MD.nextTool(tool)); });
 wire('select', () => { if (hoveredId) selectPart(hoveredId); });
 wire('deselect', () => selectPart(null));
 wire('clearmarks', clearMarks);
@@ -631,12 +833,9 @@ wire('reset', () => {
   state = startScene().insts;
   selectedId = null; rebuild(); setOffs({ ...OFS.ZERO });
 });
-wire('exit', () => { if (session) { userExit = true; session.end(); } });
-// More puts its items in the context row; tapping More again, or Back, returns
-wire('more', () => { if (adding) cancelAdd(); closeLib(); moreOpen = !moreOpen; });
-wire('back', () => { moreOpen = false; sizeOpen = false; });
-wire('xray', () => setXray('next'));
-wire('rec', () => { if (adding) cancelAdd(); closeLib(); moreOpen = false; recOpen = true; $('ctx').scrollLeft = 0; });
+wire('back', () => { sizeOpen = false; });
+wire('xray', () => setXray(xray.mode === 'solid' ? 'ghost' : 'solid'));   // one toggle: the battery as a ghost, or solid again
+wire('rec', () => { if (adding) cancelAdd(); closeLib(); recOpen = true; $('ctx').scrollLeft = 0; });
 
 // ---- recording mode (#126): a clean camera. Hides the build stamp, toasts (queued silently), the context card and every control except a small
 //      translucent corner button that opens a mini bar (next option, x-ray, pause, exit). Optional auto-cycle of options A-F every 4, 6 or 8 s with a glass caption. ----
@@ -654,7 +853,7 @@ function updateRecUi() {
 function startRec(secs = 0) {
   if (rec.on || !C) return;
   cancelAdd(); closeLib(); cancelLink(); endMove(); hideQuick(); selectPart(null); selectMark(-1); selectMeasure(-1);
-  moreOpen = false; recOpen = false; optOpen = false; if (tool !== 'select') setTool('select');
+  closeDlgs(); recOpen = false; if (tool !== 'select') setTool('select');
   rec.on = true; rec.bar = false; rec.chosen = secs > 0;
   toastStack.hold(); renderToasts(); log('recording on' + (secs ? ', auto ' + secs + ' s' : ''));
   if (rec.chosen) {
@@ -675,12 +874,12 @@ function recNext() {
 wire('recbtn', () => { rec.bar = !rec.bar; });
 wire('rbnext', recNext); wire('rbxray', () => setXray('next')); wire('rbpause', () => { cycle.toggle(Date.now()); });
 wire('rbexit', stopRec);
-wire('recback', () => { recOpen = false; moreOpen = true; });
+wire('recback', () => { recOpen = false; });
 for (const [id, n] of [['rec0', 0], ['rec4', 4], ['rec6', 6], ['rec8', 8]]) wire(id, () => startRec(n));
 addEventListener('keydown', e => { if (e.key === 'Escape' && rec.on) stopRec(); });
 // the rows follow the page theme choice (<tb-theme> sets it on the root); rows keep their own data-theme so their buttons are themed even before a choice
 {
-  const sync = v => ctl.setAttribute('data-theme', v === 'light' || v === 'dark' ? v : 'auto');
+  const sync = v => { const t = v === 'light' || v === 'dark' ? v : 'auto'; ctl.setAttribute('data-theme', t); document.querySelectorAll('dialog.dlg').forEach(d => d.setAttribute('data-theme', t)); };
   sync(document.documentElement.getAttribute('data-theme'));
   document.addEventListener('tb-theme-change', e => sync(e.detail && e.detail.value));
 }
@@ -698,7 +897,7 @@ overlay.addEventListener('beforexrselect', e => { if (e.target !== overlay) e.pr
 ctl.addEventListener('beforexrselect', e => e.preventDefault());
 
 // ---- Add part: library list, compatible outlets (xr/match.js), place on an outlet or on a surface; Remove ----
-const libEl = $('lib'), listEl = $('liblist'), toastEl = $('toasts');
+const toastEl = $('toasts');
 const outletGroup = new THREE.Group(); inner.add(outletGroup);   // rings live in the model frame (inner == modelHolder frame)
 let lastAim = null;
 // toasts: pure stack logic in xr/toasts.js, DOM here. Info hides after ~4 s; warn and error stay until closed (x), swiped or tapped. Max 3.
@@ -740,86 +939,250 @@ function toast(t, warn = false, ms = 3500, level, opts = null) {
   else toastStack.add({ text: t, level }, Date.now());
   renderToasts();
 }
-// menu (top right, outside XR only): Theme and Units. Closes on outside tap, Esc, or the button.
+let closeMenuFn = () => {};
+// menu (top right, in XR too): Scene, Enter / Exit AR, Add part, Option, Theme, Units, Debug. Closes on outside tap, Esc, or the button.
 {
   const btn = $('menubtn'), panel = $('menu');
   const setOpen = o => { panel.hidden = !o; btn.setAttribute('aria-expanded', String(o)); };
+  closeMenuFn = () => setOpen(false);
   btn.addEventListener('click', () => setOpen(panel.hidden));
   document.addEventListener('pointerdown', e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) setOpen(false); }, true);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { setOpen(false); btn.focus(); } });
-  new MutationObserver(() => { if (document.body.classList.contains('inar')) setOpen(false); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(() => { syncArItem(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  panel.addEventListener('click', e => { if (e.target.closest('button.mi:not(#aboutbtn)')) setOpen(false); });   // an item was chosen: the menu gets out of the way
   const th = () => { const v = document.documentElement.getAttribute('data-theme'); for (const el of [btn, panel]) el.setAttribute('data-theme', v === 'light' || v === 'dark' ? v : 'auto'); };
   th(); document.addEventListener('tb-theme-change', th);
 }
-// menu: Scene switch (Battery <-> Fume extractor). Reloads with #host=... so the start scene is rebuilt from scratch.
-const SCENES = [['', 'Battery'], ['fan-80mm', 'Fume extractor'], ['roof-rack', 'Solar roof']];   // host id (empty = the default battery), menu label; a tap goes to the next
-const sceneIdx = () => Math.max(0, SCENES.findIndex(s => s[0] === (C.SC.isDefaultHost ? '' : C.SC.host.id)));
-function syncSceneButton() { const nm = SCENES[sceneIdx()][1]; $('scenebtn').querySelector('small').textContent = nm; $('scenebtn').setAttribute('aria-label', 'Scene: ' + nm + '. Tap to switch'); }
-$('scenebtn').addEventListener('click', () => {
-  const sp = new URLSearchParams(location.search); sp.delete('host'); sp.delete('scene');
-  const search = sp.toString() ? '?' + sp : '', next = SCENES[(sceneIdx() + 1) % SCENES.length][0], url = location.pathname + search + (next ? '#host=' + next : '');
-  try { history.replaceState(null, '', url); } catch (e) { location.href = url; return; }
-  location.reload();
-});
-let libKeys = null;   // part id -> outlet keys it fits, while the library is filtered to a highlighted outlet / part
-let libFit = null, libCat = null, libPick = false;   // fit list (or null = all), category filter (null = All), category picker open
-const catSaved = () => { try { return sessionStorage.getItem(CT.CAT_KEY) || null; } catch (_) { return null; } };
-const catSave = c => { try { if (c) sessionStorage.setItem(CT.CAT_KEY, c); else sessionStorage.removeItem(CT.CAT_KEY); } catch (_) { /* storage blocked */ } };
-const libParts = () => libFit ? libFit.map(x => x.part) : C.catalog.parts.filter(p => p !== C.host);
-function catButton(label, icon, extra) {
-  const b = document.createElement('button'); b.type = 'button'; b.innerHTML = CT.catIcon(icon) + '<span class="t">' + label + '</span>'; if (extra) Object.assign(b.dataset, extra); return b;
+// ---- controls (round 4): floating buttons, undo / redo, and the Scene and Add part dialogs ----
+// Dialogs are native <dialog> elements inside the overlay root, opened with show() (not showModal(): the top layer may not draw over the AR camera inside dom-overlay),
+// with our own scrim, Escape and outside-tap handling. Touches on them never reach the AR scene (beforexrselect on the overlay, see above).
+const scrim = $('scrim'), scenedlg = $('scenedlg'), partsdlg = $('partsdlg'), dlgs = [scenedlg, partsdlg];
+function syncScrim() { scrim.hidden = !dlgs.some(d => d.open); }
+function openDlg(d) { for (const o of dlgs) if (o !== d && o.open) o.close(); modeDial.close(); d.show(); syncScrim(); syncFabs(); }
+function closeDlg(d) { if (d.open) d.close(); syncScrim(); }
+function closeDlgs() { for (const d of dlgs) if (d.open) d.close(); syncScrim(); }
+scrim.addEventListener('click', closeDlgs);
+$('sceneclose').addEventListener('click', () => closeDlg(scenedlg)); $('partsclose').addEventListener('click', () => closeDlg(partsdlg));
+addEventListener('keydown', e => { if (e.key !== 'Escape') return; const top = partsdlg.open ? partsdlg : scenedlg.open ? scenedlg : null; if (top) { closeDlg(top); e.preventDefault(); } else if (modeDial.open) { modeDial.close(); syncFabs(); } });
+for (const d of dlgs) d.addEventListener('beforexrselect', e => e.preventDefault());
+
+// floating buttons: the context "..." (a toggle that only its own button closes) and the modes speed dial (a pick switches the mode and collapses)
+const MODE_ICON = { select: 'cursor', mark: 'pin', measure: 'ruler' };
+$('ctxfab').innerHTML = IC.svg('dots');
+for (const t of [...MD.TOOLS].reverse()) {   // the first mode sits next to the main button
+  const b = document.createElement('button'); b.type = 'button'; b.dataset.tool = t; b.setAttribute('role', 'menuitem'); b.setAttribute('data-space-model', 'relative');
+  b.innerHTML = IC.svg(MODE_ICON[t]) + '<span class="t">' + MD.TOOL_LABEL[t] + '</span>'; $('modelist').appendChild(b);
 }
-function buildLib(fit, keepCat) {
-  libFit = fit || null; libKeys = fit ? Object.fromEntries(fit.map(x => [x.part.id, x.keys])) : null;
-  const all = libParts(), cats = CT.categoriesOf(all);
-  if (!keepCat) libCat = CT.startCat(cats, catSaved(), !!fit);
-  if (libCat != null && !cats.includes(libCat)) libCat = null;
-  const parts = CT.filterParts(all, libCat), shown = libPick ? 'pick' : libCat;
-  const cb = $('libcat'); cb.innerHTML = CT.catIcon(libCat || 'All') + '<span class="t">' + (libCat || 'All') + '</span>';
-  cb.setAttribute('aria-label', 'Category ' + (libCat || 'All') + '. Tap for the next, hold for the list'); cb.title = cb.getAttribute('aria-label'); cb.hidden = libPick;
-  listEl.textContent = '';
-  if (libPick) {
-    for (const c of [null, ...cats]) { const li = document.createElement('li'), b = catButton(c || 'All', c || 'All', { pick: c || '' }); if (c === libCat) b.classList.add('on'); li.appendChild(b); listEl.appendChild(li); }
-    return;
-  }
-  for (const c of CT.categoriesOf(parts)) {
-    if (libCat == null) { const h = document.createElement('li'); h.className = 'cat'; h.textContent = c; listEl.appendChild(h); }
-    for (const p of parts.filter(x => CT.catOf(x) === c)) {
-      const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.dataset.part = p.id;
-      const ic = document.createElement('img'); ic.className = 'ic'; ic.alt = ''; if (p.thumb) ic.src = p.thumb; else ic.hidden = true;
-      const nm = document.createElement('span'); nm.className = 't'; nm.textContent = p.short || p.name;
-      b.title = p.name; b.setAttribute('aria-label', 'Add ' + p.name + (MT.mountKind(p) === 'stud' ? ' on a stud' : ' on a surface'));
-      b.append(ic, nm); li.appendChild(b); listEl.appendChild(li);
-    }
-  }
-  listEl.scrollLeft = 0;
+function syncFabs() {
+  const cf = $('ctxfab'); cf.setAttribute('aria-expanded', String(ctxT.open)); cf.setAttribute('aria-label', ctxT.open ? 'Hide part actions' : 'Part actions');
+  modeDial.current = tool;
+  const mf = $('modefab'), m = IC.svg(MODE_ICON[tool]) + '<span class="t">' + MD.TOOL_LABEL[tool] + '</span>';
+  if (mf.dataset.m !== m) { mf.innerHTML = m; mf.dataset.m = m; }
+  mf.setAttribute('aria-expanded', String(modeDial.open)); mf.setAttribute('aria-label', 'Mode: ' + MD.TOOL_LABEL[tool] + '. Tap to ' + (modeDial.open ? 'close the list' : 'change'));
+  $('modelist').hidden = !modeDial.open;
+  for (const b of $('modelist').children) { const on = b.dataset.tool === tool; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); }
 }
-function setCat(c) { libCat = c; libPick = false; if (!libFit) catSave(c); buildLib(libFit, true); $('ctx').scrollLeft = 0; log('category ' + (c || 'All')); readout(); }
-// tap: next category; hold (or right-click): the list of categories in the row
-{
-  const cb = $('libcat'); let timer = 0, held = false;
-  const openPick = () => { held = true; libPick = true; buildLib(libFit, true); $('ctx').scrollLeft = 0; log('category list'); readout(); };
-  cb.addEventListener('pointerdown', e => { if (e.button) return; held = false; clearTimeout(timer); timer = setTimeout(openPick, 500); });
-  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) cb.addEventListener(ev, () => clearTimeout(timer));
-  cb.addEventListener('contextmenu', e => { e.preventDefault(); clearTimeout(timer); if (!held) openPick(); });
-  cb.addEventListener('click', () => { if (held) { held = false; return; } setCat(CT.nextCat(CT.categoriesOf(libParts()), libCat)); });
+$('ctxfab').addEventListener('click', () => { ctxT.toggle(); readout(); });
+$('modefab').addEventListener('click', () => { modeDial.toggle(); syncFabs(); });
+$('modelist').addEventListener('click', e => { const b = e.target.closest('button[data-tool]'); if (!b) return; modeDial.choose(b.dataset.tool); setTool(b.dataset.tool); readout(); });
+document.addEventListener('pointerdown', e => { if (modeDial.open && !$('modedial').contains(e.target)) { modeDial.close(); syncFabs(); } }, true);
+
+// undo / redo: snapshots of the parts, offsets and jumpers, committed shortly after any change (a held +/- is one step). Marks and measurements keep their own Undo.
+const snapNow = () => ({ state: JSON.parse(JSON.stringify(state)), offs: { ...offs }, jumpers: JSON.parse(JSON.stringify(jumpers)) });
+function histCommit() { clearTimeout(histT); if (C && hist.commit(snapNow())) readout(); }
+function doUndo(redo) {
+  histCommit();
+  const sn = redo ? hist.redo() : hist.undo(); if (!sn) return;
+  cancelAdd(); cancelLink(); endMove(); hideQuick();
+  state = JSON.parse(JSON.stringify(sn.state)); offs = { ...sn.offs }; jumpers = JSON.parse(JSON.stringify(sn.jumpers)); selJumper = null;
+  if (selectedId && !instOf(selectedId)) selectPart(null);
+  applyOffsets(); rebuild(); toast(redo ? 'Redone' : 'Undone', false, 1200); log((redo ? 'redo' : 'undo') + ', ' + hist.undoS.length + ' undo / ' + hist.redoS.length + ' redo left');
 }
-function openLib(fit, title) {   // fit = [{ part, keys }] from MT.partsFitting: show only those parts
+$('undo').addEventListener('click', () => doUndo(false)); $('redo').addEventListener('click', () => doUndo(true));
+addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && !e.altKey && e.target && e.target.tagName !== 'INPUT' && (e.key === 'z' || e.key === 'Z' || e.key === 'y')) { doUndo(e.key === 'y' || e.shiftKey); e.preventDefault(); } });
+
+// ---- Scene dialog: new empty scene first, then every start scene (battery options, fume extractor, solar roof) ----
+const thumbOf = id => { const p = C.partOf(id); return p && p.thumb || ''; };
+function sceneHosts() {
+  return [{ host: '', hostId: C.catalog.host, title: 'Battery', presets: PR.BATTERY_PRESETS }, { host: 'fan-80mm', hostId: 'fan-80mm', title: 'Fume extractor', presets: PR.FAN_PRESETS }, { host: 'roof-rack', hostId: 'roof-rack', title: 'Solar roof', presets: PR.SOLAR_PRESETS }];
+}
+function curSceneId() { const o = PR.presetOf(C.SC, state); return o ? (C.SC.isDefaultHost ? 'battery' : C.SC.host.id) + ':' + o : ''; }
+function openScenes() {
   if (!C) return;
-  cancelAdd(); moreOpen = false; hideQuick(); if (tool !== 'select') setTool('select');
-  libPick = false; buildLib(Array.isArray(fit) ? fit : null); $('libtitle').textContent = Array.isArray(fit) ? title || 'Fits here' : 'Add part';
-  libEl.hidden = false; $('ctx').scrollLeft = 0; listEl.scrollLeft = 0; log('library open'); readout();
+  cancelAdd(); hideQuick(); closeLib();
+  const ul = $('scenelist'), cur = curSceneId(); ul.textContent = ''; let grp = null;
+  for (const sc of CTL.sceneList(sceneHosts(), id => C.partOf(id))) {
+    if (sc.group && sc.group !== grp) { grp = sc.group; const h = document.createElement('li'); h.className = 'gh'; h.textContent = grp; ul.appendChild(h); }
+    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.className = 'tile'; b.dataset.scene = sc.id; b.setAttribute('data-space-model', 'relative');
+    const th = sc.empty ? '' : thumbOf(sc.thumbPart);
+    b.innerHTML = (th ? '<img alt="" src="' + th + '">' : '<span class="ph">' + (sc.empty ? '+' : '') + '</span>') + '<span class="tt"><b></b><small></small></span>';
+    b.querySelector('b').textContent = sc.title; b.querySelector('small').textContent = sc.line; b.setAttribute('aria-label', sc.title + ': ' + sc.line);
+    if (sc.id === cur) { b.classList.add('on'); b.setAttribute('aria-current', 'true'); }
+    li.appendChild(b); ul.appendChild(li); b._sc = sc;
+  }
+  openDlg(scenedlg); const body = $('scenelist').closest('.dbody'), curTile = ul.querySelector('.tile.on'); body.scrollTop = 0; if (curTile) body.scrollTop = Math.max(0, curTile.offsetTop - body.clientHeight / 2 + curTile.offsetHeight / 2); log('scene dialog open');   // the current scene is marked and in view
 }
-function closeLib() { if (libEl.hidden) return; libEl.hidden = true; log('library closed'); readout(); }
-listEl.addEventListener('click', e => {
-  const pk = e.target.closest('button[data-pick]'); if (pk) { setCat(pk.dataset.pick || null); return; }
-  const b = e.target.closest('button[data-part]'); if (!b) return;
-  const keys = libKeys && libKeys[b.dataset.part];
-  startAdd(b.dataset.part);
-  if (keys && adding && adding.kind === 'stud') { const k = keys.find(x => adding.outlets.some(o => o.key === x)); if (k) setTarget(k, true); }   // target-first: the highlighted outlet is the target
+$('scenelist').addEventListener('click', e => { const b = e.target.closest('button.tile'); if (b && b._sc) chooseScene(b._sc); });
+wire('scenebtn', () => openScenes());
+async function chooseScene(sc) {
+  closeDlg(scenedlg);
+  const h = CTL.sceneUrlHash(sc), sp = new URLSearchParams(location.search); sp.delete('host'); sp.delete('scene');
+  try { history.replaceState(null, '', location.pathname + (sp.toString() ? '?' + sp : '') + '#' + h); } catch (e) { /* sandboxed */ }
+  try { await loadScene(sc.host, h); toast(sc.title); } catch (e) { log('scene load failed: ' + (e && e.message)); toast('Could not load the scene (' + (e && e.message || 'error') + ')', true, 0, 'error'); }
+}
+// build a whole start scene in place (no reload, so an AR session and its placement survive)
+async function loadScene(hostSel, hash) {
+  cancelAdd(); cancelLink(); endMove(); hideQuick(); selectPart(null); editLocks.clear(); eg = null; selMark = selMeasure = -1; recOpen = false; sizeOpen = false;
+  const nc = await createComposer('parts/catalog.json', '', hostSel);
+  C = nc; PR.setHost(C.SC); cycle = RC.createCycle(PR.ids());
+  initialHash = hash; optLast = null; stackH = { pos: null, neg: null }; fitCache.clear(); outletPts = null; numSel.clear(); lastRemoved = null;
+  log('scene hash #' + initialHash);
+  const hp = new URLSearchParams(hash);
+  let sc;
+  if (hp.get('empty')) sc = C.SC.fromHash('s=' + C.SC.host.id + ':-:0:');   // the host (battery) alone
+  else { sc = startScene(); const oq = hp.get('opt'); if (oq && PR.byId(oq)) { sc = PR.applyPreset(C.SC, sc, oq); optLast = PR.byId(oq).id; } }   // #opt=A..F
+  state = sc.insts; offs = sc.offs; storedMarks = sc.marks; storedMeasures = sc.measures; jumpers = sc.jumpers || []; marksLive = true;
+  applyOffsets(); await rebuild();
+  if (!session) { fit(); frameModel(); }
+  updateCross(); restoreMarks(); clearTimeout(histT); hist.init(snapNow()); readout();
+  const warm = () => { const ids = !C.SC.isDefaultHost ? C.catalog.parts.filter(p => p.category === C.host.category).map(p => p.id) : PR.PRESETS.flatMap(p => C.SC.fromHash(p.hash).insts.map(i => i.part)); C.preload(ids).then(r => { const n = r.filter(x => x.status === 'rejected').length; log('preload done' + (n ? ', ' + n + ' failed' : '')); }); };   // GLB cache for the options, so switching in AR is instant
+  if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 3000 }); else setTimeout(warm, 500);
+}
+
+// ---- Add part dialog: search, a grid of parts with thumbnails, a preview pane for the focused part ----
+let pdAll = [], pdKeys = {}, pdFocus = null, pdFit = false;   // pdKeys: part id -> outlet keys it fits on the selection / highlight (the Add button targets the first)
+function selFit() {   // what the parts would attach to: the selection (outside XR) or the highlight / selection (XR), when something fits it
+  const inXR = document.body.classList.contains('inar');
+  const t = inXR ? (quick || (selectedId && { kind: 'part', id: selectedId, fit: fitFor('h:' + selectedId, k => k.startsWith(selectedId + '.')) })) : selTarget();
+  return t && t.fit && t.fit.length ? t : null;
+}
+function openLib(fit, title) {   // fit = [{ part, keys }]: show only those parts (the "Add to this" / "Add part here" buttons); no fit: every part, the ones that fit the selection are marked
+  if (!C) return;
+  cancelAdd(); hideQuick(); if (tool !== 'select') setTool('select');
+  const only = Array.isArray(fit) ? fit : null, sf = only ? null : selFit(), fl = only || (sf ? sf.fit : []);
+  pdChange = null; pdKeys = Object.fromEntries(fl.map(x => [x.part.id, x.keys])); pdFit = fl.length > 0;
+  pdAll = only ? only.map(x => x.part) : C.catalog.parts.filter(p => p !== C.host);
+  $('partstitle').textContent = only ? title || 'Fits here' : 'Add part';
+  $('partsq').value = ''; focusPart((pdFit ? pdAll.find(p => pdKeys[p.id]) : null) || pdAll[0] || null);
+  renderParts(); openDlg(partsdlg); $('partslist').scrollTop = 0; log('parts dialog open');
+}
+// Change...: the parts dialog on the selected part, with its option values; Apply changes that same instance (same place and attachment) in one undo step
+function openChange() {
+  const inst = selInst(); if (!inst || !C) return; const p = C.partOf(inst.part); if (!p) return;
+  cancelAdd(); hideQuick(); if (tool !== 'select') setTool('select');
+  pdChange = inst.id; pdKeys = {}; pdFit = false;
+  pdAll = [p, ...CTL.variantsOf(C.catalog.parts, p)];
+  $('partstitle').textContent = 'Change ' + (p.short || p.name); $('partsq').value = '';
+  focusPart(p, inst); renderParts(); openDlg(partsdlg); $('partslist').scrollTop = 0; log('change dialog open ' + inst.id);
+}
+// a variant may replace the part only on a mount it fits: same mount kind and, on a stud, the same outlet still accepts it
+function swapCheck(inst, np, opts) {
+  const op = C.partOf(inst.part);
+  if (np.id === op.id) return { ok: true };
+  if (MT.mountKind(np) !== MT.mountKind(op)) return { ok: false, why: (np.short || np.name) + ' mounts differently, so it cannot replace ' + (op.short || op.name) + '. Remove and add it instead.' };
+  if (inst.on && !inst.at) {
+    const o = C.SC.outlets(np.id, opts, state.filter(i => i.id !== inst.id)).find(x => x.key === inst.on);
+    if (!o || !o.ok) return { ok: false, why: (np.short || np.name) + ' does not fit here' + (o && o.why ? ': ' + o.why : '') + '.' };
+  }
+  return { ok: true };
+}
+function pickPart(np) {
+  if (!np) return;
+  if (pdChange) {
+    const inst = instOf(pdChange), cur = inst && C.partOf(inst.part); if (!inst) return;
+    const opts = { ...defOptsOf(np), ...(np.id === cur.id ? inst.opts : {}) }, ck = swapCheck(inst, np, opts);
+    focusPart(np, np.id === cur.id ? inst : null);
+    if (!ck.ok) pdMsg = ck.why;
+    renderParts(); return;
+  }
+  focusPart(np); renderParts();
+}
+function applyChange() {
+  const inst = instOf(pdChange), np = pdFocus; if (!inst || !np) return;
+  const old = C.partOf(inst.part), newOpts = { ...defOptsOf(np) };
+  for (const k of Object.keys(inst.opts)) if (np.options && np.options[k] !== undefined && !(np.id !== old.id && (np.options[k].type === 'choice' || np.options[k].type === 'bool'))) newOpts[k] = inst.opts[k];   // sizes carry over
+  for (const k of partChoices(np, pdOpts)) newOpts[k] = pdOpts[k];
+  const ck = swapCheck(inst, np, newOpts); if (!ck.ok) { pdMsg = ck.why; renderPreview(); return; }
+  histCommit();
+  if (np.id !== old.id) {
+    const nid = C.SC.nextId(state.filter(i => i.id !== inst.id), np.id), oid = inst.id;
+    for (const i of state) if (i.on && i.on.startsWith(oid + '.')) i.on = nid + i.on.slice(oid.length);
+    for (const j of jumpers) for (const side of ['a', 'b']) if (typeof j[side] === 'string' && j[side].startsWith(oid + '.')) j[side] = nid + j[side].slice(oid.length);
+    inst.id = nid; inst.part = np.id; if (selectedId === oid) selectedId = nid; editLocks.delete(oid);
+  }
+  inst.opts = newOpts; C.SC.syncOpts(state);
+  const nm = np.short || np.name; pdChange = null; closeDlg(partsdlg); rebuild(); histCommit(); toast('Changed to ' + nm, false, 1800);
+}
+wire('change', () => openChange());
+function closeLib() { if (!partsdlg.open) return; pdChange = null; closeDlg(partsdlg); log('parts dialog closed'); readout(); }
+function renderParts() {
+  const list = CTL.searchParts(pdAll, $('partsq').value), ul = $('partslist'); ul.textContent = '';
+  if (!list.length) { const li = document.createElement('li'); li.id = 'partsnone'; li.style.gridColumn = '1 / -1'; li.textContent = 'No part matches'; ul.appendChild(li); }
+  for (const p of list) {
+    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt'; b.dataset.part = p.id; b.setAttribute('data-space-model', 'relative');
+    if (pdFocus && p.id === pdFocus.id) { b.classList.add('sel'); b.setAttribute('aria-current', 'true'); }
+    b.innerHTML = (p.thumb ? '<img alt="" loading="lazy" src="' + p.thumb + '">' : '') + '<span class="nm"></span>';
+    b.querySelector('.nm').textContent = (pdKeys[p.id] ? '✓ ' : '') + (p.short || p.name); b.title = p.name;
+    li.appendChild(b); ul.appendChild(li);
+  }
+  renderPreview();
+}
+const fmtDim = v => MD.fmtLen(v / 0.0254, units).replace(/ in$/, ' in');
+// choice and bool options of a part (what the preview shows as segmented buttons / toggles); size options stay with the Size action
+const partChoices = (p, opts) => Object.entries((p && p.options) || {}).filter(([, o]) => (o.type === 'choice' || o.type === 'bool') && !o.auto_from && !o.derived && !o.nocycle && PK.optShown(o, opts)).map(([k]) => k);
+let pdOpts = {}, pdChange = null, pdMsg = '';   // pdOpts: the option values chosen for the focused part (Add uses them); pdChange: instance id while the dialog is in Change mode
+function focusPart(p, keepFrom) {
+  pdFocus = p; pdMsg = '';
+  const src = keepFrom && keepFrom.part === p.id ? keepFrom.opts : null;
+  pdOpts = { ...defOptsOf(p), ...(src || {}) };
+}
+async function renderPreview() {
+  const box = $('partsprev'), p = pdFocus; box.textContent = '';
+  if (!p) return;
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const top = el('div', 'pv-top'), meta = el('div', 'pv-meta');
+  if (p.thumb) { const im = el('img'); im.alt = ''; im.src = p.thumb; top.appendChild(im); }
+  const size = el('span', null, ''); size.id = 'pvsize';
+  meta.append(el('b', null, p.short || p.name), el('span', null, CT.catOf(p)), size); meta.title = p.name;
+  const add = el('button', null, pdChange ? 'Apply' : 'Add'); add.id = 'partsadd'; add.type = 'button'; add.setAttribute('data-space-model', 'relative'); add.setAttribute('aria-label', (pdChange ? 'Apply to the selected part: ' : 'Add ') + p.name);
+  top.append(meta, add); box.appendChild(top);
+  const k = pdKeys[p.id];
+  if (pdMsg) { const m = el('div', 'pv-sec pv-msg', pdMsg); m.setAttribute('role', 'status'); box.appendChild(m); }
+  if (pdFit && !pdChange) box.appendChild(el('div', 'pv-sec', k ? '✓ Fits the selected part: Add puts it there.' : 'Does not fit the selected part: Add puts it in the scene.'));
+  const ks = partChoices(p, pdOpts), lines = CTL.sizeLines(p);
+  if (ks.length || lines.length) {
+    const s = el('div', 'pv-sec'); s.appendChild(el('h3', null, 'Options'));
+    for (const key of ks) {
+      const o = p.options[key], g = el('div', 'pv-opt'); g.dataset.opt = key; g.setAttribute('role', 'group'); g.setAttribute('aria-label', (o.label || key).trim());
+      g.appendChild(el('span', 'pv-lab', (o.label || key).trim()));
+      if (o.type === 'bool') { const b = el('button', null, pdOpts[key] ? 'On' : 'Off'); b.type = 'button'; b.dataset.opt = key; b.dataset.val = pdOpts[key] ? '' : '1'; b.setAttribute('aria-pressed', String(!!pdOpts[key])); b.setAttribute('data-space-model', 'relative'); g.appendChild(b); }
+      else { const row = el('div', 'pv-seg'); for (const [v, e] of Object.entries(o.values)) { const b = el('button', null, e.label || v); b.type = 'button'; b.dataset.opt = key; b.dataset.val = v; b.setAttribute('aria-pressed', String(String(pdOpts[key]) === v)); b.setAttribute('data-space-model', 'relative'); row.appendChild(b); } g.appendChild(row); }
+      s.appendChild(g);
+    }
+    for (const t of lines) s.appendChild(el('div', 'pv-line', t));
+    box.appendChild(s);
+  }
+  const vs = CTL.variantsOf(pdChange ? C.catalog.parts : C.catalog.parts.filter(x => x !== C.host), p);
+  if (vs.length) {
+    const s = el('div', 'pv-sec'), row = el('div', 'pv-var'); s.appendChild(el('h3', null, 'Variants'));
+    for (const v of vs) { const b = el('button'); b.type = 'button'; b.dataset.variant = v.id; b.setAttribute('data-space-model', 'relative'); b.title = v.name; if (v.thumb) { const im = el('img'); im.alt = ''; im.src = v.thumb; b.appendChild(im); } b.appendChild(el('span', null, v.short || v.name)); row.appendChild(b); }
+    s.appendChild(row); box.appendChild(s);
+  }
+  try { const d = await C.sizeOf(p.id); if (d && pdFocus === p && size.isConnected) size.textContent = 'W ' + fmtDim(d[0]) + ' × H ' + fmtDim(d[1]) + ' × D ' + fmtDim(d[2]); } catch (e) { /* no model */ }
+}
+$('partsq').addEventListener('input', () => { const l = CTL.searchParts(pdAll, $('partsq').value); if (l.length && !l.includes(pdFocus)) focusPart(l[0]); renderParts(); });
+$('partslist').addEventListener('click', e => { const b = e.target.closest('button[data-part]'); if (!b) return; pickPart(C.partOf(b.dataset.part)); });
+$('partsprev').addEventListener('click', e => {
+  const v = e.target.closest('button[data-variant]');
+  const ob = e.target.closest('button[data-opt]');
+  if (ob) { const key = ob.dataset.opt, o = pdFocus.options[key]; pdOpts = { ...pdOpts, [key]: o.type === 'bool' ? !!ob.dataset.val : ob.dataset.val }; pdMsg = ''; renderPreview(); return; }
+  if (v) { pickPart(C.partOf(v.dataset.variant)); return; }
+  if (!e.target.closest('#partsadd') || !pdFocus) return;
+  if (pdChange) { applyChange(); return; }
+  const id = pdFocus.id, keys = pdKeys[id], dfl = defOptsOf(pdFocus), addOpts = Object.fromEntries(Object.entries(pdOpts).filter(([k, v]) => v !== dfl[k]));   // only what the user changed: the rest follows the outlet (polarity ...)
+  closeDlg(partsdlg); startAdd(id, addOpts);   // same rules as before: a stud part on a highlighted outlet it fits, else the rings / the surface
+  if (keys && adding && adding.kind === 'stud') { const k = keys.find(x => adding.outlets.some(o => o.key === x)); if (k) setTarget(k, true); }
 });
-$('libclose').addEventListener('click', () => { if (libPick) { libPick = false; buildLib(libFit, true); readout(); } else closeLib(); });
-libEl.addEventListener('beforexrselect', e => e.preventDefault());
 
 function outletName(key) {
   const c = C.SC.connOf(state, key);
@@ -871,20 +1234,20 @@ function nearestOutletOnScreen(e, maxPx = 70) {
   }
   return best;
 }
-function startAdd(partId) {
+function startAdd(partId, opts = null) {
   const p = C.partOf(partId); if (!p) return;
   cancelAdd(); cancelLink(); selectPart(null);
   if (MT.mountKind(p) === 'stud') {
-    const all = C.SC.outlets(partId, C.SC.defOpts(p), state), ok = all.filter(o => o.ok);
+    const all = C.SC.outlets(partId, { ...C.SC.defOpts(p), ...(opts || {}) }, state), ok = all.filter(o => o.ok);
     if (!ok.length) { toast(MT.noOutletMessage(p, all), true); return; }
-    adding = { partId, kind: 'stud', outlets: ok.map(o => ({ key: o.key, seat: C.SC.seatOf(state, partId, o.key) })).filter(o => o.seat), target: null, lock: null };
+    adding = { partId, opts, kind: 'stud', outlets: ok.map(o => ({ key: o.key, seat: C.SC.seatOf(state, partId, o.key) })).filter(o => o.seat), target: null, lock: null };
     adding.target = adding.outlets[0].key; buildOutletMarkers();
     toast(adding.outlets.length + ' compatible ' + MT.threadShort(MT.needsOf(p).needs.thread) + ' stud' + (adding.outlets.length > 1 ? 's' : '') + ': aim or click a ring, then Place', false, 0);
   } else {
-    adding = { partId, kind: 'surface', outlets: [], target: null, lock: null };
+    adding = { partId, opts, kind: 'surface', outlets: [], target: null, lock: null };
     toast(!session && !PREVIEW ? 'Click the floor to drop it' : 'Aim at a surface, then Place (or tap)', false, 0);
   }
-  closeLib(); moreOpen = false; readout();
+  closeLib(); ctxT.show(); readout();
 }
 function cancelAdd() {
   if (!adding) return;
@@ -892,6 +1255,7 @@ function cancelAdd() {
 }
 function finishAdd(r, where) {
   const nm = C.partOf(r.inst.part).short || r.inst.part;
+  if (adding && adding.opts) { const sp = C.partOf(r.inst.part); for (const [k, v] of Object.entries(adding.opts)) if (sp.options && sp.options[k] && (sp.options[k].type === 'choice' || sp.options[k].type === 'bool') && !(r.o && r.o[k] !== undefined)) r.inst.opts[k] = v; C.SC.syncOpts(r.insts); }   // the options picked in the dialog
   state = r.insts; adding = null; clearOutletMarkers();
   selectPart(r.inst.id); rebuild(); toast('Added ' + nm + ' ' + where);
 }
@@ -922,7 +1286,7 @@ function removeSelected() {
   state = r.insts; selectPart(null); rebuild();
   toast('Removed ' + names[0] + (extra.length ? ' and ' + extra.length + ' stacked: ' + extra.join(', ') : ''));
 }
-wire('addpart', () => { if (!libEl.hidden) closeLib(); else openLib(); }); wire('remove', removeSelected); wire('move', () => { const f = moveSel(); if (!f) return; if (!session) { toast('Drag the part to slide it on its surface'); return; } if (moving) endMove(); else startMove(f); }); wire('confirm', confirmAdd); wire('cancel', () => { cancelAdd(); cancelLink(); });
+wire('addpart', () => openLib()); wire('remove', removeSelected); wire('move', () => { if (!selInst()) return; endMove(); edit.on = !edit.on; editEnd(); log('edit mode ' + (edit.on ? 'on' : 'off')); }); wire('confirm', confirmAdd); wire('cancel', () => { cancelAdd(); cancelLink(); });
 wire('next', () => {
   if (!adding || !adding.outlets.length) return;
   const i = adding.outlets.findIndex(o => o.key === adding.target);
@@ -972,7 +1336,7 @@ const quickId = t => t ? t.kind + ':' + (t.key || t.id) : '';
 function hideQuick() { clearTimeout(quickHideT); quickHideT = 0; if (!quick) return; quick = null; readout(); }
 function showQuick() { readout(); }
 function updateQuick() {
-  const blocked = !C || !session || tool !== 'select' || adding || !libEl.hidden || (session && mode !== 'placed');
+  const blocked = !C || !session || tool !== 'select' || adding || partsdlg.open || (session && mode !== 'placed');
   if (blocked) { if (quick) hideQuick(); return; }
   const now = quickTargetNow();
   if (now && quickId(now) === quickId(quick)) {   // same target: follow the point until the user reaches for the chip
@@ -1107,18 +1471,16 @@ function jumperHitRay(ray) {
 function selectJumper(id) {
   selectPart(null); selMark = -1; selMeasure = -1; selJumper = jumpers.some(j => j.id === id) ? id : null; tintJumpers(); readout();
 }
-function pushUndo() { jundo.push(jumpers.map(j => ({ ...j }))); if (jundo.length > 30) jundo.shift(); }
-function jEdit(fn) { const j = jumpers.find(x => x.id === selJumper); if (!j) return; pushUndo(); fn(j); updateJumpers(); persistSoon(); }
+function jEdit(fn) { const j = jumpers.find(x => x.id === selJumper); if (!j) return; fn(j); updateJumpers(); persistSoon(); }
 wire('jgauge', () => jEdit(j => { j.gauge = JMP.nextOf(JMP.gaugesFor(j), j.gauge); }));
 wire('jcolor', () => jEdit(j => { j.color = JMP.nextOf(JMP.COLORS, j.color); }));
-wire('jremove', () => { if (!selJumper) return; pushUndo(); jumpers = jumpers.filter(x => x.id !== selJumper); selJumper = null; updateJumpers(); persistSoon(); toast('Removed jumper'); });
-wire('undoj', () => { const prev = jundo.pop(); if (!prev) return; jumpers = prev; selJumper = null; updateJumpers(); persistSoon(); toast('Undid the last jumper change'); });
+wire('jremove', () => { if (!selJumper) return; jumpers = jumpers.filter(x => x.id !== selJumper); selJumper = null; updateJumpers(); persistSoon(); toast('Removed jumper'); });
 // setting one end by hand: refused unless the lug matches the stud thread (the UI picks the matching end itself)
 function jumperSetEnd(id, side, end) {
   const j = jumpers.find(x => x.id === id); if (!j) return { ok: false, why: 'no such jumper' };
   const c = C.SC.connOf(state, side === 'a' ? j.a : j.b), r = JMP.setEnd(j, side, end, c && c.conn && c.conn.accepts && c.conn.accepts.thread);
   if (!r.ok) { toast(r.why, true); return r; }
-  pushUndo(); Object.assign(j, r.jumper); updateJumpers(); persistSoon(); readout(); return r;
+  Object.assign(j, r.jumper); updateJumpers(); persistSoon(); readout(); return r;
 }
 
 // "Cable from here": candidate first ends (outlet keys) of the highlighted / selected thing
@@ -1144,7 +1506,7 @@ function buildLinkMarks() {
   }
 }
 function startLink(keys) {
-  cancelAdd(); closeLib(); optOpen = false; moreOpen = false; selectPart(null);
+  cancelAdd(); closeLib(); ctxT.show(); selectPart(null);
   linking = { from: keys && keys.length === 1 ? keys[0] : null, target: null }; linkAim = null;
   buildLinkMarks(); linkPrompt(); readout();
 }
@@ -1162,7 +1524,7 @@ function pickLink(key) {
   if (jumpers.length >= 8) { toast('Max 8 jumpers', true); return; }
   const a = C.SC.connOf(state, linking.from), r = JMP.makeJumper(JMP.nextId(jumpers), linking.from, a.conn, key, c.conn);
   if (!r.ok) { toast(r.why, true); return; }
-  pushUndo(); jumpers = [...jumpers, r.jumper]; endLink(); updateJumpers(); persistSoon(); selectJumper(r.jumper.id);
+  jumpers = [...jumpers, r.jumper]; endLink(); updateJumpers(); persistSoon(); selectJumper(r.jumper.id);
   const L = jumperLen(r.jumper); toast('Added jumper ' + (L ? MD.fmtLen(L.cut, units) : ''));
 }
 function linkAtScreen(x, y, maxPx = 30) {
@@ -1215,7 +1577,7 @@ function updateLink() {
     if (linkTube.visible) { const r = JMP.OD_IN[JMP.DEFAULT_GAUGE] / 2 * SCN.IN; linkTube.scale.set(r, len, r); linkTube.position.copy(a).addScaledVector(d, 0.5); linkTube.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); }
   } else linkTube.visible = false;
 }
-addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (linking) cancelLink(); else if (optOpen) { optOpen = false; readout(); } });
+addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (linking) cancelLink();  });
 
 // ---- Options: terminal presets on the battery (xr/presets.js). The battery keeps its pose; only what sits on it is swapped. ----
 function updateHeights() {
@@ -1227,27 +1589,9 @@ const OPTION_TOAST = { key: 'option', ms: 2200, close: false };   // option name
 function applyOption(id) {
   const sc = PR.applyPreset(C.SC, sceneNow(), id); if (!sc) return;
   cancelAdd(); cancelLink(); closeLib(); endMove(); hideQuick();
-  pushUndo(); state = sc.insts; jumpers = sc.jumpers; selJumper = null; optLast = PR.byId(id).id; optOpen = false; stackH = { pos: null, neg: null };
+  state = sc.insts; jumpers = sc.jumpers; selJumper = null; optLast = PR.byId(id).id; stackH = { pos: null, neg: null };
   selectPart(null); rebuild(); toast('Option ' + optLast + ': ' + PR.byId(id).name, false, 0, 'info', OPTION_TOAST);
 }
-function buildOptList() {
-  const ul = $('optul'), cur = PR.presetOf(C.SC, state); ul.textContent = '';
-  for (const p of PR.PRESETS) {
-    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.dataset.opt = p.id; b.title = p.name; b.setAttribute('aria-label', 'Option ' + p.id + ': ' + p.name);
-    b.innerHTML = '<span class="t">' + p.id + ' ' + p.short + '</span>'; if (p.id === cur) b.classList.add('on'); li.appendChild(b); ul.appendChild(li);
-  }
-}
-{
-  const b = $('opt'); let timer = 0, held = false;
-  const openList = () => { held = true; cancelLink(); optOpen = true; buildOptList(); $('ctx').scrollLeft = 0; log('options list'); readout(); };
-  b.addEventListener('pointerdown', e => { if (e.button) return; held = false; clearTimeout(timer); timer = setTimeout(openList, 500); });
-  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => clearTimeout(timer));
-  b.addEventListener('contextmenu', e => { e.preventDefault(); clearTimeout(timer); if (!held) openList(); });
-  b.addEventListener('click', () => { if (held) { held = false; return; } const cur = PR.presetOf(C.SC, state); applyOption(cur ? PR.nextId(cur) : optLast ? PR.nextId(optLast) : 'A'); });
-  $('optul').addEventListener('click', e => { const o = e.target.closest('button[data-opt]'); if (o) applyOption(o.dataset.opt); });
-  $('optback').addEventListener('click', () => { optOpen = false; readout(); });
-}
-
 // ---- placement ----
 function place() {
   if (!reticle.visible) return;
@@ -1406,6 +1750,9 @@ function onFrameBody(time, frame) {
       pivot.matrix.copy(A).multiply(anchorFix); pivot.matrixWorldNeedsUpdate = true;
     }
   }
+  if (pendingEdit) resolveEditPress(frame, 'frame loop');
+  if (eg && eg.kind === 'twist' && eg.xr) xrTwistFrame(frame, rs);
+  if (eg && eg.kind === 'move' && eg.src) { const pose = frame.getPose(eg.src.targetRaySpace, rs); if (pose) { if (!eg.logged) { eg.logged = true; log('edit loop: first pose for the input source'); } editUpdate(PK.rayFromPose(pose.transform.position, pose.transform.orientation)); } else editLogThrottled('edit loop: no pose for the input source (targetRayMode ' + eg.src.targetRayMode + ')'); }
   updateHover(frame); updateLink();
   renderer.render(scene, camera);
 }
@@ -1423,7 +1770,7 @@ function resumeAR() { if (life.state !== 'paused') return; log('resume tapped');
 function teardownSession(byUser) {
   if (rec.on) stopRec();   // otherwise the 'AR paused' toast stays hidden and auto-cycle keeps running
   const wasPlaced = mode === 'placed';
-  endMove(); session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; moreOpen = false; cancelAdd(); closeLib(); removeMarkObjs(); removeMeasureObjs(); reticle.visible = false;
+  endMove(); session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; cancelAdd(); closeLib(); removeMarkObjs(); removeMeasureObjs(); reticle.visible = false;
   document.body.classList.remove('inar'); grid.visible = true; pivot.visible = true; controls.enabled = true;
   pivot.matrix.identity(); pivot.matrixWorldNeedsUpdate = true; scene.updateMatrixWorld(true); restoreMarks(); scan.reset(); setHint(null); scene.environment = roomEnv; scene.remove(xrLight); fit();
   const r = life.send(byUser ? 'exit' : 'sessionEnd');
@@ -1484,7 +1831,28 @@ async function startSession() {
   await renderer.xr.setSession(s);
   session = s;
   beginSessionUi(s);
+  s.addEventListener('selectstart', ev => {   // Move mode: a press anywhere drags the selected part on its movement plane; a second finger twists. ev.frame is valid inside the event; lastFrame is not
+    log('selectstart ' + (ev.inputSource && ev.inputSource.handedness) + '/' + (ev.inputSource && ev.inputSource.targetRayMode) + ', mode ' + mode + ', edit.on ' + edit.on + ', frame ' + !!ev.frame);
+    if (ev.inputSource && ev.inputSource.targetRayMode === 'screen') xrFingers.add(ev.inputSource);
+    if (mode !== 'placed' || !edit.on) return;
+    if (xrFingers.size >= 2 && !(eg && eg.kind === 'twist')) { if (!xrLocked || eg) xrTwistBegin(); editPress = true; return; }
+    if (domLock) { editPress = true; log('selectstart: DOM twist owns the touches'); return; }
+    if (xrLocked) { editPress = true; log('selectstart: fingers still down after a twist, no new drag'); return; }
+    if (!editActive() || eg) { log('selectstart: not starting (editActive ' + editActive() + ', gesture ' + !!eg + ', selected ' + selectedId + ')'); if (selectedId) editPress = true; return; }
+    pendingEdit = ev.inputSource; editPress = false; log('edit press pending');
+    if (ev.frame) resolveEditPress(ev.frame, 'event frame');
+  });
+  s.addEventListener('selectend', ev => {
+    xrFingers.delete(ev.inputSource);
+    log('selectend, gesture ' + (eg ? eg.kind : 'none') + ', fingers left ' + xrFingers.size + (pendingEdit === ev.inputSource ? ', still pending: dropped' : ''));
+    if (pendingEdit === ev.inputSource) pendingEdit = null;
+    if (eg && eg.kind === 'move' && eg.src === ev.inputSource) editEnd();
+    else if (eg && eg.kind === 'twist' && eg.xr) { log('xr twist: end, total ' + eg.total + ' deg'); editEnd(); }
+    if (!xrFingers.size) xrLocked = false;
+  });
   s.addEventListener('select', ev => {
+    if (editDragMoved) { editDragMoved = false; editPress = false; log('select swallowed (end of a drag)'); return; }
+    if (editPress || (edit.on && selectedId && mode === 'placed')) { editPress = false; log('select swallowed (Move mode: a tap never changes the selection)'); return; }
     if (mode === 'reticle') place();
     else if (mode === 'placed') onSceneTap(ev);
   });
@@ -1493,6 +1861,7 @@ async function startSession() {
   catch (e) { log('hit-test entityTypes rejected (' + (e && e.message || e) + '), default'); hitSource = await s.requestHitTestSource({ space: viewer }); }
 }
 function beginSessionUi(s) {
+  domTouchLogged = false; domLock = false;   // log the first touch of each session
   document.body.classList.add('inar'); grid.visible = false; pivot.visible = false; controls.enabled = false;
   cancelAdd(); closeLib(); suspendMarks(); setMode('reticle'); scanHint(scan.start(performance.now())); selectPart(null);
   const f = (s && s.enabledFeatures) || [];
@@ -1500,7 +1869,15 @@ function beginSessionUi(s) {
   depthOK = f.includes('depth-sensing') && s.depthUsage === 'cpu-optimized'; depthLogged = false;
   log(depthOK ? 'depth sensing: cpu, format ' + s.depthDataFormat : 'depth sensing not available, skipped');
 }
-enterBtn.addEventListener('click', enterAR);
+// Enter AR / Exit AR: one menu item. Disabled with a short reason when the device cannot do immersive AR.
+let arSupport = { known: false, ok: false, why: '' };
+function syncArItem() {
+  const b = $('armenu'), inAR = document.body.classList.contains('inar');
+  const v = inAR ? 'Exit AR' : !arSupport.known ? 'Enter AR' : arSupport.ok ? 'Enter AR' : 'Enter AR · ' + arSupport.why;
+  b.disabled = !inAR && !(arSupport.known && arSupport.ok); b.dataset.v = v; b.setAttribute('aria-label', v);
+  if (C) compactButtons();
+}
+$('armenu').addEventListener('click', () => { if (document.body.classList.contains('inar')) { if (session) { userExit = true; session.end(); } } else enterAR(); });
 // page lifecycle: log everything that can take the session away; if the session vanished without an end event, treat it as lost
 for (const ev of ['pagehide', 'pageshow', 'freeze', 'resume']) addEventListener(ev, () => log('page ' + ev));
 document.addEventListener('visibilitychange', () => {
@@ -1518,7 +1895,7 @@ function fit() {
   syncCtlH();
 }
 // both rows are fixed to the viewport bottom; outside XR the page leaves exactly their height free
-function syncCtlH() { document.documentElement.style.setProperty('--ctlh', (document.body.classList.contains('inar') ? 0 : ctl.offsetHeight) + 'px'); }
+function syncCtlH() { const h = ctl.offsetHeight - (ctx.hidden ? 0 : ctx.offsetHeight + 6); document.documentElement.style.setProperty('--ctlh', (document.body.classList.contains('inar') ? 0 : Math.max(0, h)) + 'px'); }   // the action panel floats over the page, only the row and the info line reserve room
 addEventListener('resize', fit);
 if (window.ResizeObserver) { new ResizeObserver(fit).observe($('stage')); new ResizeObserver(syncCtlH).observe(ctl); }
 function frameModel() {   // preview camera: whole model in view, 3/4 angle
@@ -1538,7 +1915,12 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   // dragging the selected surface part slides it on its mount plane; orbit stays off for the drag (mouse and touch)
   const dragRay = e => pointerRayAt(ndcOf(e));
   cv.addEventListener('pointerdown', e => {
-    if (session || !C || adding || tool !== 'select' || dragMove || (e.pointerType === 'mouse' && e.button)) return;
+    if (session || !C || adding || tool !== 'select' || dragMove || eg || (e.pointerType === 'mouse' && e.button)) return;
+    if (edit.on) {   // Move mode: a one-finger / mouse press anywhere on the scene drags the selected part by the finger's delta on its movement plane (two fingers still orbit, or twist)
+      if (!selectedId) return;
+      if (!editBegin(dragRay(e), null)) { log('edit drag refused: ' + editWhy); return; } eg.pointerId = e.pointerId;
+      controls.enabled = false; e.stopImmediatePropagation(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* not capturable */ } log('edit drag start ' + selectedId); return;
+    }
     const f = moveSel(); if (!f) return;
     scene.updateMatrixWorld(true); raycaster.setFromCamera(ndcOf(e), camera); raycaster.far = 10;
     const h = PK.pickFromHits(raycaster.intersectObjects(roots(), true)); if (!h || h.instanceId !== f.id) return;
@@ -1551,9 +1933,12 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
     controls.enabled = false; e.stopImmediatePropagation(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* not capturable */ }
     log('move drag start ' + f.id);
   }, true);
+  cv.addEventListener('pointermove', e => { if (eg && eg.kind === 'move' && e.pointerId === eg.pointerId) { editUpdate(dragRay(e)); e.preventDefault(); } });
   cv.addEventListener('pointermove', e => { if (dragMove && e.pointerId === dragMove.pointerId) { slideTo(instOf(dragMove.id), dragRay(e), dragMove.grab); e.preventDefault(); } });
   const endDrag = e => { if (!dragMove || e.pointerId !== dragMove.pointerId) return; dragMove = null; controls.enabled = !session; flushMove(); persist(); log('move drag end'); };
   cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+  const endEditDrag = e => { if (eg && eg.kind === 'move' && e.pointerId === eg.pointerId) editEnd(); };
+  cv.addEventListener('pointerup', endEditDrag); cv.addEventListener('pointercancel', endEditDrag);
   cv.addEventListener('pointerdown', e => {   // pick now: OrbitControls turns even a 2 px jitter into a small camera move, so the pointerup ray would miss a thin part
     let h = null; if (!session && C) { scene.updateMatrixWorld(true); raycaster.setFromCamera(ndcOf(e), camera); raycaster.far = 10; h = PK.pickFromHits(raycaster.intersectObjects(roots(), true)); }
     down = { x: e.clientX, y: e.clientY, clientX: e.clientX, clientY: e.clientY, t: performance.now(), hit: h };
@@ -1564,6 +1949,7 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   cv.addEventListener('pointerup', ev => {
     let e = ev;
     if (session || !down || !C || rec.on) return;
+    if (edit.on && selectedId) { down = null; return; }   // Move mode: a tap never changes the selection (turn Move off to pick another part)
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = performance.now() - down.t, dn = down; down = null;
     e = dn;   // pick where the press landed, not where jitter let go
     if (!PK.isClick(moved, dt, ev.pointerType)) return;   // a drag is orbiting
@@ -1601,7 +1987,7 @@ window.__ar = { rec: { start: startRec, stop: stopRec, on: () => rec.on, bar: ()
     return { x: rc.left + (c.x + 1) / 2 * rc.width, y: rc.top + (1 - c.y) / 2 * rc.height }; },
   aimAt(id) { const r = roots().find(o => o.userData.instanceId === id); const c = new THREE.Box3().setFromObject(r).getCenter(new THREE.Vector3()); controls.target.copy(c); controls.update(); } };
 
-Object.assign(window.__ar, { jumper: { start: keys => startLink(keys), pick: pickLink, list: () => JSON.parse(JSON.stringify(jumpers)), sel: () => selJumper, select: selectJumper, linking: () => !!linking, cancel: cancelLink, setEnd: jumperSetEnd, len: id => { const j = jumpers.find(x => x.id === id); return j && jumperLen(j); }, undo: () => $('undoj').click(), markScreen: key => { const m = linkPts().find(p => p.userData.key === key); if (!m) return null; const v = m.getWorldPosition(new THREE.Vector3()).project(camera), rc = renderer.domElement.getBoundingClientRect(); return { x: rc.left + (v.x + 1) / 2 * rc.width, y: rc.top + (1 - v.y) / 2 * rc.height }; } }, option: applyOption, heights: () => stackH });
+Object.assign(window.__ar, { jumper: { start: keys => startLink(keys), pick: pickLink, list: () => JSON.parse(JSON.stringify(jumpers)), sel: () => selJumper, select: selectJumper, linking: () => !!linking, cancel: cancelLink, setEnd: jumperSetEnd, len: id => { const j = jumpers.find(x => x.id === id); return j && jumperLen(j); }, undo: () => doUndo(false), markScreen: key => { const m = linkPts().find(p => p.userData.key === key); if (!m) return null; const v = m.getWorldPosition(new THREE.Vector3()).project(camera), rc = renderer.domElement.getBoundingClientRect(); return { x: rc.left + (v.x + 1) / 2 * rc.width, y: rc.top + (1 - v.y) / 2 * rc.height }; } }, option: applyOption, heights: () => stackH });
 
 // the scene a page starts (and Reset returns) to: the hash, or without one the battery's default stack / the fume extractor option A fully assembled
 function startScene() {
@@ -1616,33 +2002,24 @@ function startScene() {
     document.body.classList.add('arpreview');
   }
   fit();
-  try { C = await createComposer('parts/catalog.json', '', SCN.hostSelFrom(location.search, location.hash)); }
+  const wantScenes = CTL.needsSceneChoice(location.hash, location.search);   // read before the first persist rewrites the hash
+  try { await loadScene(SCN.hostSelFrom(location.search, location.hash), location.hash.slice(1)); }
   catch (e) { status.textContent = 'Could not load parts'; toast('Could not load parts: ' + e.message, true, 0, 'error'); return; }
-  PR.setHost(C.SC); cycle = RC.createCycle(PR.ids());
-  initialHash = location.hash.slice(1); syncSceneButton();
-  log('scene hash #' + initialHash);
-  const sc0 = startScene();
-  let sc = sc0; const oq = new URLSearchParams(initialHash).get('opt');
-  if (oq && PR.byId(oq)) { sc = PR.applyPreset(C.SC, sc0, oq); optLast = PR.byId(oq).id; }   // #opt=A..F
-  state = sc.insts; offs = sc.offs; storedMarks = sc.marks; storedMeasures = sc.measures; jumpers = sc.jumpers || [];
-  applyOffsets(); await rebuild();
-  fit(); frameModel(); updateCross(); restoreMarks();
   if (q.get('sel')) selectPart(q.get('sel'));
   status.textContent = 'Drag to orbit. Real size (inches to metres).';
   const sup = navigator.xr && navigator.xr.isSessionSupported ? await navigator.xr.isSessionSupported('immersive-ar').catch(() => false) : false;
-  if (sup) enterBtn.hidden = false;
-  else {
+  arSupport = { known: true, ok: !!sup, why: !window.isSecureContext ? 'needs HTTPS' : 'not supported here' }; syncArItem();
+  if (!sup) {
     toast(!window.isSecureContext ? 'AR needs HTTPS. Open this page over https (localhost works with port forwarding).'
       : 'AR is not available here: immersive-ar WebXR is not supported. Use Android Chrome with ARCore.', true);
   }
   readout();
+  if (wantScenes) openScenes();
   if (q.get('addpart')) { startAdd(q.get('addpart')); if (q.get('target')) setTarget(q.get('target'), true); }   // screenshots
   else if (q.get('open') === 'lib') openLib();
-  else if (q.get('open')) { if (q.get('open') === 'more') moreOpen = true; readout(); }
+  else if (q.get('open') === 'scene') openScenes();
+  else if (q.get('open')) { if (q.get('open') === 'more' || q.get('open') === 'ctx') ctxT.show(); readout(); }
   window.__ready = true;
-  // warm the GLB cache for options A-F while idle (before Enter AR), so switching in AR is instant
-  const warm = () => { const ids = !C.SC.isDefaultHost ? C.catalog.parts.filter(p => p.category === C.host.category).map(p => p.id) : PR.PRESETS.flatMap(p => C.SC.fromHash(p.hash).insts.map(i => i.part)); C.preload(ids).then(r => { const n = r.filter(x => x.status === 'rejected').length; log('preload done' + (n ? ', ' + n + ' failed' : '')); }); };
-  if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 3000 }); else setTimeout(warm, 500);
 })();
 
 // headless seam for the lifecycle (no WebXR in a test browser): pretend a session starts, gets placed, is lost, and resumes
@@ -1659,4 +2036,5 @@ Object.assign(window.__ar, { sim: {
 } });
 
 // test hooks for the XR row logic (headless sim): select a part, read the state and the visible rows
-Object.assign(window.__ar, { select: id => { selectPart(id); }, state: () => JSON.parse(JSON.stringify(state)), rows: () => ({ ctx: [...ctx.children].filter(e => !e.hidden && e.id).map(e => e.id), bottom: [...bottom.children].filter(e => !e.hidden).map(e => e.id) }) });
+Object.assign(window.__ar, { select: id => { selectPart(id); }, state: () => JSON.parse(JSON.stringify(state)), rows: () => ({ ctx: [...ctx.children].filter(e => !e.hidden && e.id).map(e => e.id), menu: [...$('menu').querySelectorAll('button.mi')].filter(e => !e.hidden).map(e => e.id) }) });
+Object.assign(window.__ar, { edit: { on: () => edit.on, info: id => { const i = instOf(id || selectedId); if (!i) return null; const e = editInfo(i); return { mount: e.mount, st: e.st, canYaw: e.canYaw }; }, begin: (ray, pid) => { const ok = editBegin(ray, null); if (ok) eg.pointerId = pid; return ok; }, update: editUpdate, end: editEnd, twist: deg => { const i = selInst(); if (!i || ED.rotAxisOf(editInfo(i).st) !== 'yaw') return false; histCommit(); i.yaw = ED.applyYaw(i.yaw || 0, deg); fastMove(); flushMove(); persist(); histCommit(); return true; } }, hist: () => ({ undo: hist.undoS.length, redo: hist.redoS.length }), undo: doUndo, ctxOpen: () => ctxT.open, modeOpen: () => modeDial.open, commit: histCommit });

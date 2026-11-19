@@ -251,6 +251,16 @@ export function createScene(catalog, hostSel) {
   }
   // options that follow the part an instance sits on (conn.pass_options {childOpt: hostOpt}): the clamp and the duct take the adapter's diameter. In place.
   function syncOpts(insts) {
+    // a choice value may carry `sets` {opt: value} (panel Model sets the size): applied once when the choice changes (inst.mset remembers the applied one, not in the hash)
+    for (const i of insts) {
+      const p = partOf(i.part); if (!(p && p.options)) continue;
+      for (const [k, o] of Object.entries(p.options)) {
+        if (o.type !== 'choice' || !Object.values(o.values).some(e => e.sets)) continue;
+        const m = i.mset || (i.mset = {});
+        if (m[k] === undefined) m[k] = i.opts[k];
+        else if (m[k] !== i.opts[k]) { m[k] = i.opts[k]; const st = (o.values[i.opts[k]] || {}).sets; if (st) for (const [a, v] of Object.entries(st)) i.opts[a] = v; }
+      }
+    }
     for (let again = true, n = 0; again && n < 6; n++) {
       again = false;
       for (const i of insts) {

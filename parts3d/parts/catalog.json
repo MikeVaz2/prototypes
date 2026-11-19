@@ -4467,7 +4467,7 @@
        ]
       }
      },
-     "note": "platform crossbars, 6 to 12 (the POFENZE has 7), spread evenly between the deflector and the rear"
+     "note": "platform crossbars, 6 to 12 (the POFENZE has 7), spaced 254 mm behind the deflector (10 or more spread evenly)"
     },
     "plat_len": {
      "type": "number",
@@ -4648,23 +4648,23 @@
        ],
        [
         "pfb_6_02",
-        -0.3
+        -0.5
        ],
        [
         "pfb_6_03",
-        -0.1
+        -0.5
        ],
        [
         "pfb_6_04",
-        0.1
+        -0.5
        ],
        [
         "pfb_6_05",
-        0.3
+        -0.5
        ],
        [
         "pfb_6_06",
-        0.5
+        -0.5
        ],
        [
         "pfb_7_01",
@@ -4672,23 +4672,27 @@
        ],
        [
         "pfb_7_02",
-        -0.333333
+        -0.5
        ],
        [
         "pfb_7_03",
-        -0.166667
+        -0.5
+       ],
+       [
+        "pfb_7_04",
+        -0.5
        ],
        [
         "pfb_7_05",
-        0.166667
+        -0.5
        ],
        [
         "pfb_7_06",
-        0.333333
+        -0.5
        ],
        [
         "pfb_7_07",
-        0.5
+        -0.5
        ],
        [
         "pfb_8_01",
@@ -4696,31 +4700,31 @@
        ],
        [
         "pfb_8_02",
-        -0.357143
+        -0.5
        ],
        [
         "pfb_8_03",
-        -0.214286
+        -0.5
        ],
        [
         "pfb_8_04",
-        -0.071429
+        -0.5
        ],
        [
         "pfb_8_05",
-        0.071429
+        -0.5
        ],
        [
         "pfb_8_06",
-        0.214286
+        -0.5
        ],
        [
         "pfb_8_07",
-        0.357143
+        -0.5
        ],
        [
         "pfb_8_08",
-        0.5
+        -0.5
        ],
        [
         "pfb_9_01",
@@ -4728,31 +4732,35 @@
        ],
        [
         "pfb_9_02",
-        -0.375
+        -0.5
        ],
        [
         "pfb_9_03",
-        -0.25
+        -0.5
        ],
        [
         "pfb_9_04",
-        -0.125
+        -0.5
+       ],
+       [
+        "pfb_9_05",
+        -0.5
        ],
        [
         "pfb_9_06",
-        0.125
+        -0.5
        ],
        [
         "pfb_9_07",
-        0.25
+        -0.5
        ],
        [
         "pfb_9_08",
-        0.375
+        -0.5
        ],
        [
         "pfb_9_09",
-        0.5
+        -0.5
        ],
        [
         "pfb_10_01",
@@ -5420,12 +5428,45 @@
     }
    ],
    "options": {
+    "model": {
+     "type": "choice",
+     "default": "yin",
+     "label": "Model",
+     "btn": "Model: ",
+     "values": {
+      "yin": {
+       "label": "Yinleader CSSF-100W-CPC",
+       "nodes": [
+        "pn_back",
+        "pn_cells",
+        "pn_bus"
+       ],
+       "sets": {
+        "width": 690,
+        "length": 855
+       }
+      },
+      "ren": {
+       "label": "Renogy 100W Black Division",
+       "nodes": [
+        "rc_back",
+        "rc_cells",
+        "rc_bus"
+       ],
+       "sets": {
+        "width": 582,
+        "length": 1092
+       }
+      }
+     },
+     "note": "choosing a model sets the size and the electrical numbers (electrical.models); the size can be changed afterwards"
+    },
     "width": {
      "type": "number",
      "default": 690,
      "min": 400,
      "max": 1200,
-     "step": 10,
+     "step": 2,
      "unit": "mm",
      "unit_m": 0.001,
      "axis": "x",
@@ -5453,6 +5494,18 @@
        [
         "pn_bus",
         0.612
+       ],
+       [
+        "rc_back",
+        0.662
+       ],
+       [
+        "rc_cells",
+        0.654
+       ],
+       [
+        "rc_bus",
+        0.654
        ]
       ],
       "moves": [
@@ -5489,7 +5542,7 @@
      "default": 855,
      "min": 400,
      "max": 1200,
-     "step": 5,
+     "step": 1,
      "unit": "mm",
      "unit_m": 0.001,
      "axis": "z",
@@ -5517,6 +5570,18 @@
        [
         "pn_bus",
         0.805
+       ],
+       [
+        "rc_back",
+        0.827
+       ],
+       [
+        "rc_cells",
+        0.819
+       ],
+       [
+        "rc_bus",
+        0.819
        ]
       ],
       "moves": [
@@ -5729,7 +5794,30 @@
     "isc": 5.79,
     "width_mm": 690,
     "length_mm": 855,
-    "note": "label values; other sizes scale W, Imp, Isc with the area (Voc and Vmp stay)"
+    "note": "label values (Yinleader, the default model); other sizes scale W, Imp, Isc with the area (Voc and Vmp stay)",
+    "models": {
+     "yin": {
+      "label": "Yinleader CSSF-100W-CPC",
+      "w": 100,
+      "vmp": 19,
+      "imp": 5.26,
+      "voc": 22.42,
+      "isc": 5.79,
+      "width_mm": 690,
+      "length_mm": 855
+     },
+     "ren": {
+      "label": "Renogy 100W Black Division",
+      "w": 100,
+      "vmp": 19.4,
+      "imp": 5.2,
+      "voc": 23.5,
+      "isc": 5.51,
+      "width_mm": 582,
+      "length_mm": 1092,
+      "note": "1092 x 582 x 2.5 mm (43 x 22.9 x 0.1 in), flexible to 240 degrees, 36 PERC cells 12 x 3, 12 AWG MC4 leads"
+     }
+    }
    },
    "holes": {
     "per_long_side": 3,

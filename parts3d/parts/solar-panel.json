@@ -19,7 +19,30 @@
   "isc": 5.79,
   "width_mm": 690,
   "length_mm": 855,
-  "note": "label values; other sizes scale W, Imp, Isc with the area (Voc and Vmp stay)"
+  "note": "label values (Yinleader, the default model); other sizes scale W, Imp, Isc with the area (Voc and Vmp stay)",
+  "models": {
+   "yin": {
+    "label": "Yinleader CSSF-100W-CPC",
+    "w": 100,
+    "vmp": 19,
+    "imp": 5.26,
+    "voc": 22.42,
+    "isc": 5.79,
+    "width_mm": 690,
+    "length_mm": 855
+   },
+   "ren": {
+    "label": "Renogy 100W Black Division",
+    "w": 100,
+    "vmp": 19.4,
+    "imp": 5.2,
+    "voc": 23.5,
+    "isc": 5.51,
+    "width_mm": 582,
+    "length_mm": 1092,
+    "note": "1092 x 582 x 2.5 mm (43 x 22.9 x 0.1 in), flexible to 240 degrees, 36 PERC cells 12 x 3, 12 AWG MC4 leads"
+   }
+  }
  },
  "holes": {
   "per_long_side": 3,
@@ -119,12 +142,45 @@
   }
  ],
  "options": {
+  "model": {
+   "type": "choice",
+   "default": "yin",
+   "label": "Model",
+   "btn": "Model: ",
+   "values": {
+    "yin": {
+     "label": "Yinleader CSSF-100W-CPC",
+     "nodes": [
+      "pn_back",
+      "pn_cells",
+      "pn_bus"
+     ],
+     "sets": {
+      "width": 690,
+      "length": 855
+     }
+    },
+    "ren": {
+     "label": "Renogy 100W Black Division",
+     "nodes": [
+      "rc_back",
+      "rc_cells",
+      "rc_bus"
+     ],
+     "sets": {
+      "width": 582,
+      "length": 1092
+     }
+    }
+   },
+   "note": "choosing a model sets the size and the electrical numbers (electrical.models); the size can be changed afterwards"
+  },
   "width": {
    "type": "number",
    "default": 690,
    "min": 400,
    "max": 1200,
-   "step": 10,
+   "step": 2,
    "unit": "mm",
    "unit_m": 0.001,
    "axis": "x",
@@ -152,6 +208,18 @@
      [
       "pn_bus",
       0.612
+     ],
+     [
+      "rc_back",
+      0.662
+     ],
+     [
+      "rc_cells",
+      0.654
+     ],
+     [
+      "rc_bus",
+      0.654
      ]
     ],
     "moves": [
@@ -188,7 +256,7 @@
    "default": 855,
    "min": 400,
    "max": 1200,
-   "step": 5,
+   "step": 1,
    "unit": "mm",
    "unit_m": 0.001,
    "axis": "z",
@@ -216,6 +284,18 @@
      [
       "pn_bus",
       0.805
+     ],
+     [
+      "rc_back",
+      0.827
+     ],
+     [
+      "rc_cells",
+      0.819
+     ],
+     [
+      "rc_bus",
+      0.819
      ]
     ],
     "moves": [

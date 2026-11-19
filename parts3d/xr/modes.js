@@ -51,7 +51,7 @@ export const normTool = (s, fallback = 'select') => TOOLS.includes(s) ? s : fall
 export const nextTool = t => TOOLS[(TOOLS.indexOf(t) + 1) % TOOLS.length];
 export const TOOL_BUTTONS = ['drop', 'undomark', 'clearmarks', 'mnew', 'mundo', 'mclear'];
 export const ALL_IDS = [...new Set(['addpart', 'remove', 'confirm', 'cancel', 'next', 'extm', 'extp', 'rotm', 'rotp', 'gauge', 'gauge2', 'gauge3', 'cover', 'hm', 'hp', 'nl', 'nr', 'nu', 'nd', 'tm', 'tp',
-  'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'opt', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'undoj', 'xray', 'rec', 'size', 'turn', ...TOOL_BUTTONS])];
+  'again', 'reset', 'select', 'deselect', 'exit', 'move', 'more', 'back', 'qselect', 'qadd', 'qmeasure', 'qmark', 'qhere', 'rmmark', 'rmmeasure', 'change', 'jfrom', 'jgauge', 'jcolor', 'jremove', 'xray', 'rec', 'size', 'turn', ...TOOL_BUTTONS])];
 // buttons of the open stack for a tool. Select keeps the part controls (minus the old mark buttons); Mark and Measure show only their own actions.
 // x = extras about the selected instance: { free (placed on a surface), num (has a length option), choice (has a choice option) }
 export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) {
@@ -79,9 +79,9 @@ export function stackForTool(tool, kind, rotStep = 0, selected = false, x = {}) 
 }
 
 // ---- two rows (bottom row sticks, context row above it; never a third row) ----
-// bottom row: fixed contents. Undo only where something can be undone, Units live in the top-right menu.
+// extra buttons of the action panel for a tool: the Undo of marks / measurements. Scene, Add part, Option, Enter / Exit AR, Units live in the top-right menu.
 export function bottomFor(tool, inXR = false, hasOpts = true) {
-  return ['addpart', ...(tool === 'mark' ? ['undomark'] : tool === 'measure' ? ['mundo'] : hasOpts ? ['opt'] : []), 'more'];   // 'mode' is always first, added by the page
+  return tool === 'mark' ? ['undomark'] : tool === 'measure' ? ['mundo'] : [];   // the page puts Scene first; modes and the part actions are floating buttons
 }
 // Control paradigm, chosen in one place. In XR the beam is the pointer, so what it is on drives the row ('highlight').
 // Outside XR (mouse or touch) the user picks first and then acts: a click / tap selects, hover changes nothing in the row ('select').
@@ -90,7 +90,7 @@ export const driveFor = inXR => inXR ? 'highlight' : 'select';
 // o = { markSel, measSel (a mark / measurement is selected or highlighted), tool, kind, rotStep, selected, x, adding: null|{stud, outlets}, more, inXR, quick: null|{kind:'part'|'outlet', isSel, point} (XR highlight),
 //        target: null|{kind:'part'|'outlet', point} (outside XR: what is selected) }
 // jumpers on top of the base row: o.linking (choosing the ends) = Cancel only; o.jumper (one is selected) = its edits; o.jfrom = "Cable from here" next to the
-// highlighted / selected thing; o.jundo = Undo of the last jumper change when nothing else owns the row.
+// highlighted / selected thing; Undo and Redo are the page's own buttons (xr/controls.js history).
 export function ctxFor(o) {
   const r = ctxCore(o);
   if (!o.xrayUi) return r;
@@ -106,7 +106,6 @@ function ctxCore(o) {
   if (o.adding || o.more || (o.size && o.selected) || o.markSel || o.measSel || (o.tool && o.tool !== 'select')) return base;
   const out = [...base];
   if (o.jfrom) { const k = out.indexOf('deselect'); if (k < 0) out.push('jfrom'); else out.splice(k, 0, 'jfrom'); }
-  if (o.jundo) out.push('undoj');
   return out;
 }
 function ctxBase(o) {
@@ -117,6 +116,8 @@ function ctxBase(o) {
   if (adding) return ['confirm', ...(adding.stud && adding.outlets > 1 ? ['next'] : []), 'cancel'];
   const lay = stackForTool(tool, kind, rotStep, selected, x), drop = new Set(['more', 'back', 'addpart', 'select', ...(inXR ? [] : ['exit'])]);
   const sel = [...new Set(lay.primary.filter(id => !drop.has(id)).concat(selected ? ['deselect'] : []))];
+  if (selected && tool === 'select' && x.change && !sel.includes('change')) sel.splice(sel.indexOf('deselect') < 0 ? sel.length : sel.indexOf('deselect'), 0, 'change');   // Change...: options and variants live in the parts dialog
+  if (selected && tool === 'select' && !sel.includes('move')) sel.splice(Math.max(0, sel.indexOf('deselect') < 0 ? sel.length : sel.indexOf('deselect')), 0, 'move');   // Edit mode (Move) for every selected part, before Deselect: a stud part shows only yaw, a surface part X / Y / yaw, a free part all
   if (more) {
     const rest = tool === 'select' ? (selected ? lay.more : ['hp', 'hm', 'tp', 'tm', ...lay.more]) : ['again', 'reset', 'exit'];
     return ['back', ...new Set(rest.filter(id => !drop.has(id) || id === 'exit' && inXR))];

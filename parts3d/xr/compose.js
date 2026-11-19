@@ -3,14 +3,16 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { kindOf } from './pick.js';
 import { createScene, IN, baseOf } from './scene.js';
+import { withVersion } from './version.js';
 import { ductMesh, BENDS, stretchOps } from './flex.js';
 
 export async function createComposer(catalogUrl = 'parts/catalog.json', base = '', hostSel = '') {
-  const catalog = await (await fetch(base + catalogUrl)).json();
+  const catalog = await (await fetch(withVersion(base + catalogUrl))).json();
+  for (const p of catalog.parts || []) if (p.thumb) p.thumb = withVersion(p.thumb);   // thumbnails too: one stale cached image per part otherwise
   const SC = createScene(catalog, hostSel), host = SC.host, partOf = SC.partOf;
   const loader = new GLTFLoader(), cache = new Map();
   const load = p => {
-    if (!cache.has(p.id)) cache.set(p.id, loader.loadAsync(base + p.glb).then(g => g.scene, e => { cache.delete(p.id); const x = new Error(e && e.message || 'load failed'); x.partName = p.short || p.name || p.id; throw x; }));
+    if (!cache.has(p.id)) cache.set(p.id, loader.loadAsync(withVersion(base + p.glb)).then(g => g.scene, e => { cache.delete(p.id); const x = new Error(e && e.message || 'load failed'); x.partName = p.short || p.name || p.id; throw x; }));
     return cache.get(p.id);
   };
   const preload = ids => Promise.allSettled([...new Set(ids)].map(id => { const p = partOf(baseOf(id)); return p ? load(p) : null; }));
@@ -115,5 +117,7 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
     root.updateMatrixWorld(true);
   }
 
-  return { catalog, host, partOf, SC, build, applyLocals, preload, matrixOf, defaultState: SC.defaultState, parseState: SC.parseState, clampNum: SC.clampNum, yawStep: SC.yawStep };
+  // bounding size of a part's model at its default options, metres [x, y, z] (parts dialog preview)
+  async function sizeOf(id) { const p = partOf(baseOf(id)); if (!p) return null; const b = new THREE.Box3().setFromObject(await load(p)), v = b.getSize(new THREE.Vector3()); return [v.x, v.y, v.z]; }
+  return { catalog, host, partOf, SC, build, sizeOf, applyLocals, preload, matrixOf, defaultState: SC.defaultState, parseState: SC.parseState, clampNum: SC.clampNum, yawStep: SC.yawStep };
 }

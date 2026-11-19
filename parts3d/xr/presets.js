@@ -4,7 +4,7 @@
 export const CASE_TOP_IN = 8.6;   // battery case top above the floor, inches (heights are quoted above it)
 const B = 'odyssey-odp-agm31', H = 's=' + B + ':-:0:';
 const side = (pol, mid) => mid;
-const BATTERY_PRESETS = [
+export const BATTERY_PRESETS = [
   { id: 'A', short: 'Adapter', name: 'Adapter on stud',
     hash: H + '~blueseas-2340-pos:stud_pos:90:cover=1~sae-adapter-pos:' + B + '.stud_pos:0:~gx470-clamp-pos:sae-adapter-pos.post:0:' +
       '~blueseas-2340-neg:stud_neg:90:cover=1~sae-adapter-neg:' + B + '.stud_neg:0:~gx470-clamp-neg:sae-adapter-neg.post:0:' },

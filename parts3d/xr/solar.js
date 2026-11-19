@@ -6,7 +6,8 @@ export const r1 = v => Math.round(v * 10) / 10;
 
 // numbers of one panel instance: { w, vmp, imp, voc, isc, ratio }
 export function panelNums(part, opts = {}) {
-  const e = part.electrical; if (!e) return null;
+  let e = part.electrical; if (!e) return null;
+  if (e.models && opts.model && e.models[opts.model]) e = { ...e, ...e.models[opts.model] };   // Model option (Yinleader / Renogy): its own label numbers and own size
   const ratio = ((opts.width || e.width_mm) * (opts.length || e.length_mm)) / (e.width_mm * e.length_mm);
   return { w: e.w * ratio, vmp: e.vmp, imp: e.imp * ratio, voc: e.voc, isc: e.isc * ratio, ratio };
 }
@@ -15,7 +16,7 @@ const f0 = v => String(Math.round(v)), f1 = v => String(r1(v)), f2 = v => String
 export function panelText(part, opts) {
   const n = panelNums(part, opts); if (!n) return '';
   const s = Math.abs(n.ratio - 1) > 0.005;
-  return (s ? '~' : '') + f0(n.w) + ' W · Vmp ' + f0(n.vmp) + ' V · Imp ' + (s ? '~' : '') + f2(n.imp) + ' A · Voc ' + f2(n.voc) + ' V · Isc ' + (s ? '~' : '') + f2(n.isc) + ' A';
+  return (s ? '~' : '') + f0(n.w) + ' W · Vmp ' + f1(n.vmp) + ' V · Imp ' + (s ? '~' : '') + f2(n.imp) + ' A · Voc ' + f2(n.voc) + ' V · Isc ' + (s ? '~' : '') + f2(n.isc) + ' A';
 }
 
 // net id per outlet key. insts = [{ id, part, on }], jumpers = [{ a, b }], partOf = id -> catalog entry
@@ -62,27 +63,31 @@ export function stationCheck(insts, jumpers, partOf) {
   if (!used.length) return { n: 0, strings: 0, voc: 0, isc: 0, vocOk: true, iscOk: true, limited: false, level: 'ok', panels: [], text: 'No panel is wired to the station yet' };
   const num = i => panelNums(partOf(i.part), i.opts);
   const strs = chains.map(c => { const ns = c.map(num); return { n: c.length, voc: ns.reduce((a, x) => a + x.voc, 0), vmp: ns.reduce((a, x) => a + x.vmp, 0), isc: Math.min(...ns.map(x => x.isc)), imp: Math.min(...ns.map(x => x.imp)) }; });
-  const voc = Math.max(...strs.map(x => x.voc)), vmp = Math.max(...strs.map(x => x.vmp)), cold = voc * COLD;
+  const voc = Math.max(...strs.map(x => x.voc)), vmp = strs.length > 1 ? Math.min(...strs.map(x => x.vmp)) : strs[0].vmp, cold = voc * COLD;   // strings in parallel sit at one voltage: the lower one pulls the higher down
   const isc = strs.reduce((a, x) => a + x.isc, 0), imp = strs.reduce((a, x) => a + x.imp, 0);
   const label = labelOf(strs.map(x => x.n));
   const vocOver = cold > lim.vmax, vocLow = voc < lim.vmin, iscOk = isc <= lim.imax;
   const wRaw = Math.min(vmp * imp, lim.imax * vmp, lim.w || Infinity), wLim = wRaw < vmp * imp - 0.5;
-  const r = { n: used.length, strings: strs.length, label, voc, cold, isc, imp, w: wRaw, vocOk: !vocOver && !vocLow, iscOk, limited: !iscOk || wLim, panels: used.map(i => i.id) };
+  // mixed panels (2026-11-19): a series string carries the weakest panel's current; parallel strings must have similar voltage
+  const warns = [], diff = (a, b) => (Math.max(a, b) - Math.min(a, b)) / Math.max(a, b);
+  for (const c of chains) { const ims = c.map(i => num(i).imp); if (c.length > 1 && diff(Math.max(...ims), Math.min(...ims)) > 0.05) { warns.push('series: limited by the weakest panel, ' + f1(Math.min(...ims)) + ' A'); break; } }
+  if (strs.length > 1 && diff(Math.max(...strs.map(x => x.vmp)), Math.min(...strs.map(x => x.vmp))) > 0.10) warns.push('parallel: voltage mismatch, the higher string is pulled down');
+  const r = { warns, n: used.length, strings: strs.length, label, voc, cold, isc, imp, w: wRaw, vocOk: !vocOver && !vocLow, iscOk, limited: !iscOk || wLim, panels: used.map(i => i.id) };
   if (vocOver) {
     r.level = 'over';
     r.text = label + ' Voc ' + f1(voc) + ' V' + (voc > lim.vmax ? '' : ' (cold ~' + f1(cold) + ' V)') + ' — over the ' + nick + ' max ' + lim.vmax + ' V: do not connect';
   } else if (vocLow) {
     r.level = 'over'; r.text = label + ' Voc ' + f1(voc) + ' V — below the ' + nick + ' min ' + lim.vmin + ' V: it will not start';
   } else {
-    r.level = r.limited ? 'limited' : 'ok';
-    r.text = label + ': Voc ' + f1(voc) + ' V (cold ~' + f1(cold) + ' V, OK, max ' + lim.vmax + ') · Isc ' + f1(isc) + ' A (' + (iscOk ? 'OK, max ' + lim.imax : 'limited to ' + lim.imax + ' A') + ') · ~' + f0(wRaw) + ' W' + (wLim ? ' (limited by ' + (lim.imax * vmp < (lim.w || Infinity) ? lim.imax + ' A' : lim.w + ' W') + ')' : ' (OK)');
+    r.level = r.limited || warns.length ? 'limited' : 'ok';
+    r.text = label + ': Voc ' + f1(voc) + ' V (cold ~' + f1(cold) + ' V, OK, max ' + lim.vmax + ') · Isc ' + f1(isc) + ' A (' + (iscOk ? 'OK, max ' + lim.imax : 'limited to ' + lim.imax + ' A') + ') · ~' + f0(wRaw) + ' W' + (wLim ? ' (limited by ' + (lim.imax * vmp < (lim.w || Infinity) ? lim.imax + ' A' : lim.w + ' W') + ')' : ' (OK)') + warns.map(w => ' · ' + w).join('');
   }
   return r;
 }
 
 // ---- grommet holes over the bars ----
 // POFENZE: first crossbar centre PLAT_FRONT_MM from the front tip (-X, the deflector end), last bar PLAT_REAR_MM from the rear end (estimates, same numbers as make_solar.py)
-export const PLAT_FRONT_MM = 205, PLAT_REAR_MM = 80;
+export const PLAT_FRONT_MM = 205, PLAT_REAR_MM = 80, PLAT_SPACING_MM = 254;   // 254 mm apart when that fits (up to 9 bars), anchored behind the deflector; more bars spread evenly
 export const HOLE_END_MM = 25, HOLE_EDGE_MM = 15, HOLE_TOL_MM = 10;
 const rackKind = rack => (rack.opts && rack.opts.rack) || 'diy';
 // platform size in mm and its crossbar count (options plat_len / plat_wid in cm, plat_bars)
@@ -93,7 +98,7 @@ export function platformDims(rack) {
 // bar centres along the car (mm, rack frame) for a rack instance
 export function barsX(rack) {
   const o = rack.opts || {};
-  if (rackKind(rack) === 'platform') { const { len, n } = platformDims(rack); return Array.from({ length: n }, (_, k) => -len / 2 + PLAT_FRONT_MM + k * (len - PLAT_FRONT_MM - PLAT_REAR_MM) / (n - 1)); }
+  if (rackKind(rack) === 'platform') { const { len, n } = platformDims(rack), sp = (n - 1) * PLAT_SPACING_MM <= 2324 - PLAT_FRONT_MM - PLAT_REAR_MM + 1 ? PLAT_SPACING_MM : (len - PLAT_FRONT_MM - PLAT_REAR_MM) / (n - 1); return Array.from({ length: n }, (_, k) => -len / 2 + PLAT_FRONT_MM + k * sp); }
   const n = +o.bars || 3, gap = +o.gap || 400;
   return Array.from({ length: n }, (_, i) => (i - (n - 1) / 2) * gap);
 }
