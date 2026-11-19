@@ -20,6 +20,8 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
   // T(pos) Ry(yaw) [T(0,lift,0) Rz(rz)]: the bracket is the tilt of a part with a pose option (fan orientation); its children hang below this node
   const matrixOf = pl => {
     const m = new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(pl.yaw));
+    if (pl.pitch) m.multiply(new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(pl.pitch)));
+    if (pl.roll) m.multiply(new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(pl.roll)));
     if (pl.tilt) m.multiply(new THREE.Matrix4().makeTranslation(pl.tilt.dx || 0, pl.tilt.lift, 0)).multiply(new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(pl.tilt.rz)));
     m.premultiply(new THREE.Matrix4().makeTranslation(pl.pos[0], pl.pos[1], pl.pos[2]));
     return m;

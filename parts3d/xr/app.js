@@ -22,10 +22,14 @@ import * as RC from './rec.js';
 import * as SOL from './solar.js';
 import * as OL from './outline.js';
 import * as CTL from './controls.js';
+import * as IN from './input.js';
 import * as ED from './edit.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
+// one input router (xr/input.js): every DOM and XR event enters here and is dispatched to the handlers registered below. Order: UI controls, active gesture, scene tap.
+const router = IN.createRouter({ log: m => log(m), state: () => ({ inXR: !!session, editOn: !!(typeof edit !== 'undefined' && edit.on), rec: !!rec.on, selected: !!selectedId, dialogOpen: dlgs.some(d => d.open), gesture: typeof eg !== 'undefined' && eg ? eg.kind : (dragMove ? 'move' : null), tool, linking: !!linking, adding: !!adding }) });
+const act = (id, fn) => router.act(id, fn, $(id));   // a click action; the button gets data-action
 const overlay = $('overlay'), ctl = $('ctl'), ctx = $('ctx'), status = $('status'), hint = $('hint');
 const PREVIEW = !!q.get('arpreview');
 const DEBUG_KEY = 'ar-xr-debug';
@@ -33,7 +37,7 @@ let DEBUG = q.get('debug') === '1';   // mutable: ?debug=1 forces it on; otherwi
 if (!DEBUG) { try { DEBUG = localStorage.getItem(DEBUG_KEY) === '1'; } catch (e) { /* storage blocked */ } }
 const BUILD = window.__BUILD || 'dev';
 $('aboutbuild').textContent = BUILD;
-$('aboutbtn').addEventListener('click', () => { const b = $('aboutbox'); b.hidden = !b.hidden; $('aboutbtn').setAttribute('aria-expanded', String(!b.hidden)); });   // About: expands inline in the menu (the menu stays open)
+act('aboutbtn', () => { const b = $('aboutbox'); b.hidden = !b.hidden; $('aboutbtn').setAttribute('aria-expanded', String(!b.hidden)); });   // About: expands inline in the menu (the menu stays open)
 
 // ---- debug log (?debug=1): last 20 lines in the overlay; errors always land here ----
 const logLines = [];
@@ -61,7 +65,7 @@ if (DEBUG && q.get('eruda') === '1') {   // lazy: only when asked for
   sc.onerror = () => log('eruda failed to load'); document.head.appendChild(sc);
 }
 log('build ' + BUILD);
-$('dbgbtn').addEventListener('click', () => setDebug(!DEBUG));
+act('dbgbtn', () => setDebug(!DEBUG));
 syncDebugButton(); renderLog();
 
 // ---- renderer / scene ----
@@ -308,7 +312,7 @@ function setUnits(u) {
   try { localStorage.setItem(MD.UNIT_KEY, units); } catch (e) { /* storage blocked */ }
   readout();
 }
-$('unitbtn').addEventListener('click', () => setUnits(units === 'mm' ? 'in' : 'mm'));
+act('unitbtn', () => setUnits(units === 'mm' ? 'in' : 'mm'));
 syncUnitButtons();
 
 // ---- app state ----
@@ -545,7 +549,7 @@ function pivotPsi() {   // frame yaw of the pivot as it is now (an anchor may ha
 }
 
 // ---- strip buttons ----
-const wire = (id, fn) => $(id).addEventListener('click', () => { fn(); readout(); });
+const wire = (id, fn) => act(id, () => { fn(); readout(); });
 const setOffs = o => { offs = o; applyOffsets(); };
 function lugExt(d) {
   const li = selInst(); if (!li) return;
@@ -553,13 +557,13 @@ function lugExt(d) {
   li.opts[k] = MD.extOpt(p.options[k], li.opts[k], d, units); rebuild();
 }
 // direction only; the step size comes from the units. Hold to repeat (long ranges: platform length, panel width), a short tap steps once.
-for (const [id, dir] of [['extm', -1], ['extp', 1]]) {
-  const b = $(id); let t0 = 0, rep = 0, held = false;
-  const stop = () => { clearTimeout(t0); clearInterval(rep); t0 = rep = 0; };
-  b.addEventListener('pointerdown', () => { held = false; stop(); t0 = setTimeout(() => { held = true; lugExt(dir); rep = setInterval(() => lugExt(dir), 110); }, 450); });
-  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { stop(); if (held) setTimeout(() => { held = false; readout(); }, 0); });
-  b.addEventListener('click', () => { if (held) return; lugExt(dir); readout(); });
-}
+const extHold = {};   // per direction: { t0, rep, held }
+const extStop = h => { clearTimeout(h.t0); clearInterval(h.rep); h.t0 = h.rep = 0; };
+router.hold('ext', {
+  down(el) { const dir = +el.dataset.arg, h = extHold[dir] || (extHold[dir] = { t0: 0, rep: 0, held: false }); h.held = false; extStop(h); h.t0 = setTimeout(() => { h.held = true; lugExt(dir); h.rep = setInterval(() => lugExt(dir), 110); }, 450); },
+  up(el) { const h = extHold[+el.dataset.arg]; if (!h) return; extStop(h); if (h.held) setTimeout(() => { h.held = false; readout(); }, 0); },
+});
+for (const [id, dir] of [['extm', -1], ['extp', 1]]) { const b = $(id); b.dataset.hold = 'ext'; b.dataset.arg = String(dir); act(id, () => { const h = extHold[dir]; if (h && h.held) return; lugExt(dir); readout(); }); }
 const rotSel = dir => { const li = selInst(); if (li) { li.yaw = PK.rotateYaw(li.yaw, dir * (C.yawStep(li.part) || 0)); log('rotate btn ' + (dir * (C.yawStep(li.part) || 0)) + ', yaw now ' + li.yaw); rebuild(); } };
 wire('rotm', () => rotSel(-1)); wire('rotp', () => rotSel(1));
 wire('gauge', () => {   // size row only: switch the dimension (W <-> L ...). Options are chosen in the parts dialog (Change...)
@@ -633,8 +637,8 @@ const turnSel = d => { const f = freeSel(); if (f) { f.yaw = PK.rotateYaw(f.yaw,
 wire('tm', () => turnSel(-XM.TURN_DEG)); wire('tp', () => turnSel(XM.TURN_DEG));
 
 // ---- Edit mode (round 5, #107): the Move toggle shows axis locks; a one-finger drag moves along the unlocked axes, a two-finger twist turns about the unlocked rotate axis. Pure logic: xr/edit.js ----
-// Mount types (ED.mountOf): stud = stacked on an outlet (lug, 2340, adapter, clamp): yaw around the stud only; surface = rests on a plane (inst.at at height 0, the host, a panel on rails): X, Y, yaw;
-// free = lifted or detached: X, Y, Z. Axes are the surface's (X, Y along it, Z up). Pitch and roll are in the logic but the scene model has no tilt yet, so those chips stay disabled.
+// Unlock on demand (round 7): the mount (ED.mountOf: stud / surface / free) only sets which axes start unlocked; every chip opens for every part, because a real surface never lines up with the real battery.
+// Axes: X, Y along the surface, Z up (the parent's frame for stacked parts). Offsets live in inst.ofs [x, h, z] inches, tilt in inst.pitch / inst.roll degrees (scene.js, hash field 5).
 const edit = { on: false };
 const editLocks = new Map();   // instance id -> { mount, locks } (resets when the mount type changes)
 let eg = null;                 // the running gesture { kind: 'move' | 'twist', id, ... }
@@ -642,35 +646,47 @@ let editDragMoved = false;     // a drag happened: the select tap that follows i
 function editInfo(inst) {
   const p = C.partOf(inst.part), panel = !!(inst.on && isPanel(p));
   const mount = ED.mountOf({ host: inst.part === C.host.id, on: inst.on, at: inst.at, panel, free: inst.free });
-  const canYaw = mount === 'stud' ? C.yawStep(inst.part) > 0 : !panel;
   let rc = editLocks.get(inst.id); if (!rc || rc.mount !== mount) { rc = { mount, locks: ED.defaultLocks(mount) }; editLocks.set(inst.id, rc); }
-  return { mount, canYaw, rec: rc, panel, st: ED.axisStates(mount, rc.locks, canYaw, false) };
+  return { mount, rec: rc, panel, st: ED.axisStates(mount, rc.locks) };
 }
 const editActive = () => !!(edit.on && C && selectedId && selInst() && tool === 'select' && !adding && !rec.on);
 let editSig = '';
 function renderEdit() {
   const bar = $('editbar'), inst = selInst(), show = !!(edit.on && inst && C && tool === 'select');
   bar.hidden = !show; if (!show) { editSig = ''; return; }
-  const ei = editInfo(inst), sig = inst.id + '|' + ei.mount + '|' + JSON.stringify(ei.st);
+  const ei = editInfo(inst), note = ED.offMountNote(ei.mount, ei.st), sig = inst.id + '|' + ei.mount + '|' + JSON.stringify(ei.st) + '|' + note;
   $('detach').hidden = ei.mount === 'free';
   if (sig === editSig) return; editSig = sig;
   const mk = a => {
     const s = ei.st[a], on = s === 'on', ic = a.startsWith('m') ? 'axis' + a[1].toUpperCase() : 'rot' + a[0].toUpperCase() + a.slice(1), kind = a.startsWith('m') ? 'Move ' : 'Rotate ';
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'edchip'; b.dataset.axis = a; b.dataset.state = s; b.disabled = s === 'off'; b.dataset.spaceModel = 'relative';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'edchip'; b.dataset.action = 'edit-chip'; b.dataset.axis = a; b.dataset.state = s; b.dataset.spaceModel = 'relative';
     b.setAttribute('aria-pressed', String(on));
-    b.setAttribute('aria-label', kind + ED.AXIS_LABEL[a] + ': ' + (s === 'on' ? 'unlocked' : s === 'locked' ? 'locked' : 'not allowed here (' + ED.hintFor(ei.mount, a) + ')')); b.title = b.getAttribute('aria-label');
-    b.innerHTML = IC.svg(ic) + '<span class="t">' + ED.AXIS_LABEL[a] + '</span>' + (s === 'locked' ? IC.svg('lock') : ''); return b;
+    b.setAttribute('aria-label', kind + ED.AXIS_LABEL[a] + ': ' + (on ? 'unlocked' : 'locked') + '. Tap to ' + (on ? 'lock' : 'unlock')); b.title = b.getAttribute('aria-label');
+    b.innerHTML = IC.svg(ic) + '<span class="t">' + ED.AXIS_LABEL[a] + '</span>' + (s === 'locked' ? IC.svg('lock') : '');
+    const out = [b];
+    if (on && (a === 'mz' || a === 'pitch' || a === 'roll')) for (const dir of [-1, 1]) {   // 1 mm / 1 degree steps for precise alignment
+      const t = document.createElement('button'); t.type = 'button'; t.className = 'edstep'; t.dataset.action = 'edit-step'; t.dataset.axis = a; t.dataset.arg = String(dir); t.dataset.spaceModel = 'relative';
+      t.textContent = dir < 0 ? '\u2212' : '+'; t.setAttribute('aria-label', ED.AXIS_LABEL[a] + (dir < 0 ? ' minus ' : ' plus ') + ED.stepOf(a) + (a === 'mz' ? ' mm' : ' degree')); t.title = t.getAttribute('aria-label'); out.push(t);
+    }
+    const g = document.createElement('span'); g.className = 'edgrp'; g.append(...out); return g;   // chip and its +/- stay together on one row
   };
   $('edmove').replaceChildren(...ED.MOVE_AXES.map(mk)); $('edrot').replaceChildren(...['pitch', 'roll', 'yaw'].map(mk));
-  $('edhint').textContent = ei.mount === 'stud' ? 'Bolted to a stud: turn only. Detach to move it.' : ei.mount === 'surface' ? 'On a surface: ' + (ei.panel ? 'slide only, ' : '') + ED.DETACH_HINT + '.' : 'Free part. Pitch and roll need tilt support in the scene.';
+  $('edhint').textContent = note || (ei.mount === 'stud' ? 'Bolted to a stud. Open an axis to adjust it.' : ei.mount === 'surface' ? 'On a surface.' : 'Free part.');
 }
-for (const id of ['edmove', 'edrot']) $(id).addEventListener('click', e => {
-  const b = e.target.closest('.edchip'), inst = selInst(); if (!b || b.disabled || !inst) return;
-  const ei = editInfo(inst); ei.rec.locks = ED.toggleLock(ei.mount, ei.rec.locks, b.dataset.axis, ei.canYaw); readout();
+function stepAxis(axis, dir) {
+  const inst = selInst(); if (!inst) return; histCommit();
+  if (axis === 'mz') { const o = (inst.ofs || [0, 0, 0]).slice(); o[1] = Math.round((o[1] + dir * ED.stepOf('mz') / 25.4) * 1000) / 1000; inst.ofs = o.some(v => v) ? o : undefined; editChip('Z ' + (dir < 0 ? '\u2212' : '+') + ED.stepOf('mz') + ' mm'); }
+  else { const v = ED.normSigned((inst[axis] || 0) + dir * ED.stepOf(axis)); inst[axis] = Math.round(v * 1000) / 1000 || undefined; editChip(ED.rotText(inst[axis] || 0, axis)); }
+  clearTimeout(editChip.t); editChip.t = setTimeout(() => editChip(''), 900); rebuild(); histCommit();
+}
+router.act('edit-step', b => stepAxis(b.dataset.axis, +b.dataset.arg));
+router.act('edit-chip', b => {
+  const inst = selInst(); if (!b || !inst) return;
+  const ei = editInfo(inst); ei.rec.locks = ED.toggleLock(ei.mount, ei.rec.locks, b.dataset.axis); readout();
 });
 wire('detach', () => {
   const i = selInst(); if (!i) return; const pl = C.SC.placements(state).get(i.id); if (!pl) return;
-  histCommit(); Object.assign(i, ED.detachFields(pl.pos, pl.yaw)); editLocks.delete(i.id); rebuild(); toast('Detached: free to move', false, 1800);
+  histCommit(); Object.assign(i, ED.detachFields(pl.pos, pl.yaw)); delete i.ofs; editLocks.delete(i.id); rebuild(); toast('Detached: free to move', false, 1800);
 });
 const toModelRay = ray => { modelHolder.updateWorldMatrix(true, false); _inv.copy(modelHolder.matrixWorld).invert(); _lo.fromArray(ray.origin).applyMatrix4(_inv); _ld.fromArray(ray.dir).transformDirection(_inv); return { origin: _lo.toArray(), dir: _ld.toArray() }; };
 function editChip(t) { const c = $('editchip'); clearTimeout(editChip.t); if (!t) { c.hidden = true; return; } c.textContent = t; c.hidden = false; }
@@ -682,15 +698,14 @@ function editBegin(ray, src) {
   editWhy = '';
   const inst = selInst(); if (!inst) return noBegin('no selection'); if (!editActive()) return noBegin('edit not active (edit.on ' + edit.on + ', tool ' + tool + ', adding ' + !!adding + ', rec ' + rec.on + ')');
   const ei = editInfo(inst), axes = ED.unlockedMoves(ei.st); if (!axes.length) return noBegin('no unlocked move axes (' + ei.mount + ')');
-  if (!(ei.mount === 'surface' || ei.mount === 'free')) return noBegin('mount ' + ei.mount + ' does not move');
-  const mr = toModelRay(ray), pos = editPos(inst);
-  if (ei.panel) {   // a panel on rails slides over the rack with the existing snapping (SOL.movePanel)
+  const mr = toModelRay(ray), plc = C.SC.placements(state), me = plc.get(inst.id), pos = me ? me.pos.slice() : editPos(inst);
+  if (ei.panel && axes.length === 2 && axes.includes('mx') && axes.includes('my')) {   // a panel on rails slides over the rack with the existing snapping (SOL.movePanel)
     const pp = panelPoint(inst, ray), c = pp && SOL.panelCentre(inst, pp.rack, C.partOf); if (!pp) return noBegin('panel point null');
-    if (!(axes.includes('mx') && axes.includes('my'))) return noBegin('panel needs X and Y unlocked');
     histCommit(); eg = { kind: 'move', panel: true, id: inst.id, grab: [c.x - pp.q[0], c.z - pp.q[1]], src, t0: performance.now(), started: false }; editDragMoved = false; return true;
   }
   const hit = ED.pressHit(mr, pos, axes, mr.dir); if (!hit) return noBegin('movement plane parallel to the ray (or behind it)');
-  histCommit(); eg = { kind: 'move', id: inst.id, axes, start: { pos, hit }, at0: atOf(inst).slice(), view: mr.dir, src, t0: performance.now(), started: false, fine: false };   // the part moves by the finger's delta on its plane from the press point
+  const lc = C.SC.locals(state).get(inst.id), par = lc && lc.parent != null ? plc.get(lc.parent) : null;
+  histCommit(); eg = { kind: 'move', id: inst.id, axes, start: { pos, hit }, at0: atOf(inst).slice(), ofs0: (inst.ofs || [0, 0, 0]).slice(), isAt: !!(inst.at || inst.part === C.host.id), Rp: par ? par.R : [1, 0, 0, 0, 1, 0, 0, 0, 1], view: mr.dir, src, t0: performance.now(), started: false, fine: false };   // the part moves by the finger's delta on its plane from the press point
   editDragMoved = false; return true;
 }
 const r2s = v => v.map(x => Math.round(x * 100) / 100).join(',');
@@ -720,10 +735,14 @@ function editUpdate(ray) {
     eg.started = true; eg.fine = ED.isLongPress(eg.t0, performance.now()); editDragMoved = true; log('edit move started (' + (eg.fine ? 'fine' : 'coarse') + ')');
   }
   const r = ED.dragMove(mr, eg.start, eg.axes, eg.fine, eg.view); if (!r) { editLogThrottled('edit update: ray parallel to the plane'); return; }
-  const at = eg.at0.map((v, i) => Math.round((v + r.delta[i] / SCN.IN) * 1000) / 1000), txt = ED.moveText(r.comps) + (eg.fine ? ' (fine)' : '');
+  const d = r.delta.map(v => v / SCN.IN), rd = v => Math.round(v * 1000) / 1000, txt = ED.moveText(r.comps) + (eg.fine ? ' (fine)' : '');
   editChip(txt); editLogThrottled('edit move ' + txt);
-  if (at.every((v, i) => v === atOf(inst)[i])) return;
-  inst.at = at; fastMove();
+  let at = null, ofs;
+  if (eg.isAt) { at = [rd(eg.at0[0] + d[0]), eg.at0[1], rd(eg.at0[2] + d[2])]; ofs = [eg.ofs0[0], rd(eg.ofs0[1] + d[1]), eg.ofs0[2]]; }   // a part on the surface: X / Y change its place, Z its height offset
+  else { const R = eg.Rp, dp = [R[0] * d[0] + R[3] * d[1] + R[6] * d[2], R[1] * d[0] + R[4] * d[1] + R[7] * d[2], R[2] * d[0] + R[5] * d[1] + R[8] * d[2]]; ofs = eg.ofs0.map((v, i) => rd(v + dp[i])); }   // stacked part: the offset in the parent's frame
+  const same = (!at || at.every((v, i) => v === atOf(inst)[i])) && ofs.every((v, i) => v === (inst.ofs || [0, 0, 0])[i]);
+  if (same) return;
+  if (at) inst.at = at; inst.ofs = ofs.some(v => v) ? ofs : undefined; fastMove();
 }
 function editEnd() {
   const g = eg; eg = null;
@@ -748,10 +767,10 @@ function xrScreenPoint(src, frame, rs) {   // -> { p: [x * aspect, y], how } or 
 }
 function xrTwistBegin() {   // the second finger landed: commit any move in progress and switch to twist
   const inst = selInst(); if (!editActive() || !inst) { log('xr twist: not starting (editActive ' + editActive() + ')'); return; }
-  const axis = ED.rotAxisOf(editInfo(inst).st); if (axis !== 'yaw') { log('xr twist: yaw is locked or not allowed here'); return; }
+  const axis = ED.rotAxisOf(editInfo(inst).st); if (!axis) { log('xr twist: every rotate axis is locked'); return; }
   if (eg) { const g = eg; eg = null; if (g.started) { flushMove(); persist(); histCommit(); } log('xr twist: move committed'); }
   histCommit(); pendingEdit = null;
-  eg = { kind: 'twist', xr: true, id: inst.id, axis, srcs: [...xrFingers].slice(0, 2), p0: null, p1: null, yaw0: inst.yaw || 0, t0: performance.now(), started: false, fine: false, total: 0 };
+  eg = { kind: 'twist', xr: true, id: inst.id, axis, srcs: [...xrFingers].slice(0, 2), p0: null, p1: null, yaw0: inst[axis] || 0, t0: performance.now(), started: false, fine: false, total: 0 };
   editDragMoved = false; editPress = true; xrLocked = true; log('xr twist: start, ' + xrFingers.size + ' sources');
 }
 function xrTwistFrame(frame, rs) {
@@ -762,7 +781,7 @@ function xrTwistFrame(frame, rs) {
   if (!g.p0) { g.p0 = a.p; g.p1 = b.p; g.t0 = performance.now(); log('xr twist: positions from ' + a.how + ' / ' + b.how); return; }
   const d = ED.twistDeg(g.p0, g.p1, a.p, b.p);
   if (!g.started) { if (Math.abs(d) < 3) return; g.started = true; g.fine = ED.isLongPress(g.t0, performance.now()); editDragMoved = true; }
-  g.total = ED.snapDeg(d, g.fine); inst.yaw = ED.applyYaw(g.yaw0, d, g.fine); fastMove(); editChip(ED.rotText(g.total) + (g.fine ? ' (fine)' : ''));
+  g.total = ED.snapDeg(d, g.fine, g.axis); inst[g.axis] = ED.applyAxis(g.axis, g.yaw0, d, g.fine); fastMove(); editChip(ED.rotText(g.total, g.axis) + (g.fine ? ' (fine)' : ''));
   editLogThrottled('xr twist angle ' + Math.round(d) + ' deg, snapped ' + g.total);
 }
 // ---- DOM touch twist inside an AR session: Chrome AR gives only one transient XR input source, so the second finger is read from DOM touch events on the overlay root (capture phase, whatever child it lands on) ----
@@ -770,41 +789,41 @@ let domLock = false, domTouchLogged = false;   // domLock: a DOM twist is runnin
 const touchUi = t => !!(t && t.closest && t.closest('button, input, select, textarea, a, label, dialog, #ctx, #menu, #modedial, #toasts, #editbar'));
 const touchPts = e => [[e.touches[0].clientX, e.touches[0].clientY], [e.touches[1].clientX, e.touches[1].clientY]];
 const tdesc = t => (t && (t.id || t.tagName)) || '?';
-document.addEventListener('touchstart', e => {
+router.on('gesture', 'touchstart', e => {
   if (!domTouchLogged) { domTouchLogged = true; log('first DOM touchstart this session (target ' + tdesc(e.target) + ', touches ' + e.touches.length + ', session ' + !!session + ')'); }
   if (!session || e.touches.length !== 2 || touchUi(e.target)) return;
   const inst = selInst();
   if (!editActive() || !inst) { log('dom twist: not starting (editActive ' + editActive() + ')'); return; }
-  if (ED.rotAxisOf(editInfo(inst).st) !== 'yaw') { log('dom twist: yaw is locked or not allowed here'); return; }
+  const taxis = ED.rotAxisOf(editInfo(inst).st); if (!taxis) { log('dom twist: every rotate axis is locked'); return; }
   if (eg) { const g = eg; eg = null; if (g.started) { flushMove(); persist(); histCommit(); } log('dom twist: move committed'); }
   histCommit(); pendingEdit = null; domLock = true; editPress = true; editDragMoved = false;
   const pts = touchPts(e);
-  eg = { kind: 'twist', dom: true, id: inst.id, axis: 'yaw', p0: pts[0], p1: pts[1], yaw0: inst.yaw || 0, t0: performance.now(), started: false, fine: false, total: 0 };
+  eg = { kind: 'twist', dom: true, id: inst.id, axis: taxis, p0: pts[0], p1: pts[1], yaw0: inst[taxis] || 0, t0: performance.now(), started: false, fine: false, total: 0 };
   log('dom twist start (target ' + tdesc(e.target) + ')'); e.preventDefault();
-}, { capture: true, passive: false });
-document.addEventListener('touchmove', e => {
+});
+router.on('gesture', 'touchmove', e => {
   if (!(eg && eg.kind === 'twist' && eg.dom)) return;
   if (e.touches.length < 2) return; e.preventDefault();
   const inst = instOf(eg.id); if (!inst) { editEnd(); return; }
   const pts = touchPts(e), d = ED.twistDeg(eg.p0, eg.p1, pts[0], pts[1]);
   if (!eg.started) { if (Math.abs(d) < 3) return; eg.started = true; eg.fine = ED.isLongPress(eg.t0, performance.now()); editDragMoved = true; }
-  eg.total = ED.snapDeg(d, eg.fine); inst.yaw = ED.applyYaw(eg.yaw0, d, eg.fine); fastMove(); editChip(ED.rotText(eg.total) + (eg.fine ? ' (fine)' : ''));
+  eg.total = ED.snapDeg(d, eg.fine, eg.axis); inst[eg.axis] = ED.applyAxis(eg.axis, eg.yaw0, d, eg.fine); fastMove(); editChip(ED.rotText(eg.total, eg.axis) + (eg.fine ? ' (fine)' : ''));
   editLogThrottled('dom twist angle ' + Math.round(d) + ' deg, snapped ' + eg.total);
-}, { capture: true, passive: false });
-for (const ev of ['touchend', 'touchcancel']) document.addEventListener(ev, e => {
+});
+for (const ev of ['touchend', 'touchcancel']) router.on('ui', ev, e => {
   if (eg && eg.kind === 'twist' && eg.dom && e.touches.length < 2) { log('dom twist end, total ' + eg.total + ' deg'); editEnd(); }
   if (!e.touches.length) domLock = false;
-}, { capture: true, passive: false });
+});
 // two-finger twist: the unlocked rotate axis (yaw) turns by the snapped twist angle
 const fingers = new Map();
 const editUiTarget = e => { const t = e.target; return t === renderer.domElement || t === overlay || t === document.body || t === document.documentElement; };
 function twistBegin() {
   const inst = selInst(); if (!editActive() || !inst) return false;
-  const ei = editInfo(inst), axis = ED.rotAxisOf(ei.st); if (axis !== 'yaw') return false;   // pitch / roll need scene support
+  const ei = editInfo(inst), axis = ED.rotAxisOf(ei.st); if (!axis) return false;
   const pts = [...fingers.values()]; if (pts.length < 2) return false;
   if (eg) { const g = eg; eg = null; if (g.started) { flushMove(); persist(); histCommit(); } }
   histCommit(); controls.enabled = false;
-  eg = { kind: 'twist', id: inst.id, axis, p0: pts[0].slice(), p1: pts[1].slice(), yaw0: inst.yaw || 0, t0: performance.now(), started: false, fine: false };
+  eg = { kind: 'twist', id: inst.id, axis, p0: pts[0].slice(), p1: pts[1].slice(), yaw0: inst[axis] || 0, t0: performance.now(), started: false, fine: false };
   editDragMoved = false; return true;
 }
 function twistUpdate() {
@@ -812,15 +831,15 @@ function twistUpdate() {
   const inst = instOf(eg.id); if (!inst) { editEnd(); return; }
   const pts = [...fingers.values()].slice(0, 2), d = ED.twistDeg(eg.p0, eg.p1, pts[0], pts[1]);
   if (!eg.started) { if (Math.abs(d) < 3) return; eg.started = true; eg.fine = ED.isLongPress(eg.t0, performance.now()); editDragMoved = true; }
-  inst.yaw = ED.applyYaw(eg.yaw0, d, eg.fine); fastMove(); editChip(ED.rotText(ED.snapDeg(d, eg.fine)) + (eg.fine ? ' (fine)' : ''));
+  inst[eg.axis] = ED.applyAxis(eg.axis, eg.yaw0, d, eg.fine); fastMove(); editChip(ED.rotText(ED.snapDeg(d, eg.fine, eg.axis), eg.axis) + (eg.fine ? ' (fine)' : ''));
 }
-document.addEventListener('pointerdown', e => {
+router.on('gesture', 'pointerdown', e => {
   if (!editUiTarget(e)) return; fingers.set(e.pointerId, [e.clientX, e.clientY]);
   if (!session && fingers.size === 2 && twistBegin()) { e.stopImmediatePropagation(); e.preventDefault(); }
   else if (fingers.size >= 2 && eg && eg.kind === 'twist') e.stopImmediatePropagation();
-}, true);
-document.addEventListener('pointermove', e => { if (!fingers.has(e.pointerId)) return; fingers.set(e.pointerId, [e.clientX, e.clientY]); if (eg && eg.kind === 'twist') { twistUpdate(); e.preventDefault(); } }, true);
-for (const ev of ['pointerup', 'pointercancel']) document.addEventListener(ev, e => { if (!fingers.delete(e.pointerId)) return; if (eg && eg.kind === 'twist') editEnd(); }, true);
+});
+router.on('ui', 'pointermove', e => { if (!fingers.has(e.pointerId)) return; fingers.set(e.pointerId, [e.clientX, e.clientY]); if (eg && eg.kind === 'twist') { twistUpdate(); e.preventDefault(); } });
+for (const ev of ['pointerup', 'pointercancel']) router.on('ui', ev, e => { if (!fingers.delete(e.pointerId)) return; if (eg && eg.kind === 'twist') editEnd(); });
 wire('again', () => { if (session) { cancelAdd(); suspendMarks(); setMode('reticle'); anchor = null; scanHint(scan.start(performance.now())); }  });
 wire('drop', dropMark); wire('undomark', undoMark);
 wire('rmmark', () => { const i = selMark >= 0 ? selMark : hovMark; if (i >= 0) removeMarkAt(i); }); wire('rmmeasure', () => { if (selMeasure >= 0) removeMeasureAt(selMeasure); });
@@ -876,7 +895,7 @@ wire('rbnext', recNext); wire('rbxray', () => setXray('next')); wire('rbpause', 
 wire('rbexit', stopRec);
 wire('recback', () => { recOpen = false; });
 for (const [id, n] of [['rec0', 0], ['rec4', 4], ['rec6', 6], ['rec8', 8]]) wire(id, () => startRec(n));
-addEventListener('keydown', e => { if (e.key === 'Escape' && rec.on) stopRec(); });
+router.on('ui', 'keydown', e => { if (e.key === 'Escape' && rec.on) stopRec(); });
 // the rows follow the page theme choice (<tb-theme> sets it on the root); rows keep their own data-theme so their buttons are themed even before a choice
 {
   const sync = v => { const t = v === 'light' || v === 'dark' ? v : 'auto'; ctl.setAttribute('data-theme', t); document.querySelectorAll('dialog.dlg').forEach(d => d.setAttribute('data-theme', t)); };
@@ -886,11 +905,11 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && rec.on) stopRec(); 
 // context row on desktop: the wheel scrolls it sideways, and a mouse drag scrolls it too (a drag does not click the button under it)
 {
   let drag = null;
-  ctx.addEventListener('wheel', e => { if (ctx.scrollWidth <= ctx.clientWidth) return; ctx.scrollLeft += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; e.preventDefault(); }, { passive: false });
-  ctx.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) drag = { x: e.clientX, left: ctx.scrollLeft, moved: false }; });
-  addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 5) drag.moved = true; if (drag.moved) ctx.scrollLeft = drag.left - dx; });
-  addEventListener('pointerup', () => { if (drag && drag.moved) { const d = drag; setTimeout(() => { if (drag === d) drag = null; }, 0); } else drag = null; });
-  ctx.addEventListener('click', e => { if (drag && drag.moved) { e.stopPropagation(); e.preventDefault(); drag = null; } }, true);
+  router.on('ui', 'wheel', e => { if (!ctx.contains(e.target) || ctx.scrollWidth <= ctx.clientWidth) return; ctx.scrollLeft += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; e.preventDefault(); });
+  router.on('ui', 'pointerdown', e => { if (ctx.contains(e.target) && e.pointerType === 'mouse' && e.button === 0) drag = { x: e.clientX, left: ctx.scrollLeft, moved: false }; });
+  router.on('ui', 'pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 5) drag.moved = true; if (drag.moved) ctx.scrollLeft = drag.left - dx; });
+  router.on('ui', 'pointerup', () => { if (drag && drag.moved) { const d = drag; setTimeout(() => { if (drag === d) drag = null; }, 0); } else drag = null; });
+  router.guard(e => { if (drag && drag.moved && ctx.contains(e.target)) { drag = null; return true; } return false; });   // a drag does not click the button under it
 }
 // touches on our controls must not place the model
 overlay.addEventListener('beforexrselect', e => { if (e.target !== overlay) e.preventDefault(); });
@@ -945,11 +964,11 @@ let closeMenuFn = () => {};
   const btn = $('menubtn'), panel = $('menu');
   const setOpen = o => { panel.hidden = !o; btn.setAttribute('aria-expanded', String(o)); };
   closeMenuFn = () => setOpen(false);
-  btn.addEventListener('click', () => setOpen(panel.hidden));
-  document.addEventListener('pointerdown', e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) setOpen(false); }, true);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { setOpen(false); btn.focus(); } });
+  act('menubtn', () => setOpen(panel.hidden));
+  router.on('ui', 'pointerdown', e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) setOpen(false); });
+  router.on('ui', 'keydown', e => { if (e.key === 'Escape' && !panel.hidden) { setOpen(false); btn.focus(); } });
   new MutationObserver(() => { syncArItem(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  panel.addEventListener('click', e => { if (e.target.closest('button.mi:not(#aboutbtn)')) setOpen(false); });   // an item was chosen: the menu gets out of the way
+  router.on('ui', 'click', e => { if (panel.contains(e.target) && e.target.closest('button.mi:not(#aboutbtn)')) setOpen(false); });   // an item was chosen: the menu gets out of the way
   const th = () => { const v = document.documentElement.getAttribute('data-theme'); for (const el of [btn, panel]) el.setAttribute('data-theme', v === 'light' || v === 'dark' ? v : 'auto'); };
   th(); document.addEventListener('tb-theme-change', th);
 }
@@ -961,16 +980,16 @@ function syncScrim() { scrim.hidden = !dlgs.some(d => d.open); }
 function openDlg(d) { for (const o of dlgs) if (o !== d && o.open) o.close(); modeDial.close(); d.show(); syncScrim(); syncFabs(); }
 function closeDlg(d) { if (d.open) d.close(); syncScrim(); }
 function closeDlgs() { for (const d of dlgs) if (d.open) d.close(); syncScrim(); }
-scrim.addEventListener('click', closeDlgs);
-$('sceneclose').addEventListener('click', () => closeDlg(scenedlg)); $('partsclose').addEventListener('click', () => closeDlg(partsdlg));
-addEventListener('keydown', e => { if (e.key !== 'Escape') return; const top = partsdlg.open ? partsdlg : scenedlg.open ? scenedlg : null; if (top) { closeDlg(top); e.preventDefault(); } else if (modeDial.open) { modeDial.close(); syncFabs(); } });
+act('scrim', closeDlgs);
+act('sceneclose', () => closeDlg(scenedlg)); act('partsclose', () => closeDlg(partsdlg));
+router.on('ui', 'keydown', e => { if (e.key !== 'Escape') return; const top = partsdlg.open ? partsdlg : scenedlg.open ? scenedlg : null; if (top) { closeDlg(top); e.preventDefault(); } else if (modeDial.open) { modeDial.close(); syncFabs(); } });
 for (const d of dlgs) d.addEventListener('beforexrselect', e => e.preventDefault());
 
 // floating buttons: the context "..." (a toggle that only its own button closes) and the modes speed dial (a pick switches the mode and collapses)
 const MODE_ICON = { select: 'cursor', mark: 'pin', measure: 'ruler' };
 $('ctxfab').innerHTML = IC.svg('dots');
 for (const t of [...MD.TOOLS].reverse()) {   // the first mode sits next to the main button
-  const b = document.createElement('button'); b.type = 'button'; b.dataset.tool = t; b.setAttribute('role', 'menuitem'); b.setAttribute('data-space-model', 'relative');
+  const b = document.createElement('button'); b.type = 'button'; b.dataset.action = 'mode-pick'; b.dataset.tool = t; b.setAttribute('role', 'menuitem'); b.setAttribute('data-space-model', 'relative');
   b.innerHTML = IC.svg(MODE_ICON[t]) + '<span class="t">' + MD.TOOL_LABEL[t] + '</span>'; $('modelist').appendChild(b);
 }
 function syncFabs() {
@@ -982,10 +1001,10 @@ function syncFabs() {
   $('modelist').hidden = !modeDial.open;
   for (const b of $('modelist').children) { const on = b.dataset.tool === tool; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); }
 }
-$('ctxfab').addEventListener('click', () => { ctxT.toggle(); readout(); });
-$('modefab').addEventListener('click', () => { modeDial.toggle(); syncFabs(); });
-$('modelist').addEventListener('click', e => { const b = e.target.closest('button[data-tool]'); if (!b) return; modeDial.choose(b.dataset.tool); setTool(b.dataset.tool); readout(); });
-document.addEventListener('pointerdown', e => { if (modeDial.open && !$('modedial').contains(e.target)) { modeDial.close(); syncFabs(); } }, true);
+act('ctxfab', () => { ctxT.toggle(); readout(); });
+act('modefab', () => { modeDial.toggle(); syncFabs(); });
+router.act('mode-pick', b => { modeDial.choose(b.dataset.tool); setTool(b.dataset.tool); readout(); });
+router.on('ui', 'pointerdown', e => { if (modeDial.open && !$('modedial').contains(e.target)) { modeDial.close(); syncFabs(); } });
 
 // undo / redo: snapshots of the parts, offsets and jumpers, committed shortly after any change (a held +/- is one step). Marks and measurements keep their own Undo.
 const snapNow = () => ({ state: JSON.parse(JSON.stringify(state)), offs: { ...offs }, jumpers: JSON.parse(JSON.stringify(jumpers)) });
@@ -998,8 +1017,8 @@ function doUndo(redo) {
   if (selectedId && !instOf(selectedId)) selectPart(null);
   applyOffsets(); rebuild(); toast(redo ? 'Redone' : 'Undone', false, 1200); log((redo ? 'redo' : 'undo') + ', ' + hist.undoS.length + ' undo / ' + hist.redoS.length + ' redo left');
 }
-$('undo').addEventListener('click', () => doUndo(false)); $('redo').addEventListener('click', () => doUndo(true));
-addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && !e.altKey && e.target && e.target.tagName !== 'INPUT' && (e.key === 'z' || e.key === 'Z' || e.key === 'y')) { doUndo(e.key === 'y' || e.shiftKey); e.preventDefault(); } });
+act('undo', () => doUndo(false)); act('redo', () => doUndo(true));
+router.on('ui', 'keydown', e => { if ((e.ctrlKey || e.metaKey) && !e.altKey && e.target && e.target.tagName !== 'INPUT' && (e.key === 'z' || e.key === 'Z' || e.key === 'y')) { doUndo(e.key === 'y' || e.shiftKey); e.preventDefault(); } });
 
 // ---- Scene dialog: new empty scene first, then every start scene (battery options, fume extractor, solar roof) ----
 const thumbOf = id => { const p = C.partOf(id); return p && p.thumb || ''; };
@@ -1013,7 +1032,7 @@ function openScenes() {
   const ul = $('scenelist'), cur = curSceneId(); ul.textContent = ''; let grp = null;
   for (const sc of CTL.sceneList(sceneHosts(), id => C.partOf(id))) {
     if (sc.group && sc.group !== grp) { grp = sc.group; const h = document.createElement('li'); h.className = 'gh'; h.textContent = grp; ul.appendChild(h); }
-    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.className = 'tile'; b.dataset.scene = sc.id; b.setAttribute('data-space-model', 'relative');
+    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.className = 'tile'; b.dataset.action = 'scene-pick'; b.dataset.scene = sc.id; b.setAttribute('data-space-model', 'relative');
     const th = sc.empty ? '' : thumbOf(sc.thumbPart);
     b.innerHTML = (th ? '<img alt="" src="' + th + '">' : '<span class="ph">' + (sc.empty ? '+' : '') + '</span>') + '<span class="tt"><b></b><small></small></span>';
     b.querySelector('b').textContent = sc.title; b.querySelector('small').textContent = sc.line; b.setAttribute('aria-label', sc.title + ': ' + sc.line);
@@ -1022,7 +1041,7 @@ function openScenes() {
   }
   openDlg(scenedlg); const body = $('scenelist').closest('.dbody'), curTile = ul.querySelector('.tile.on'); body.scrollTop = 0; if (curTile) body.scrollTop = Math.max(0, curTile.offsetTop - body.clientHeight / 2 + curTile.offsetHeight / 2); log('scene dialog open');   // the current scene is marked and in view
 }
-$('scenelist').addEventListener('click', e => { const b = e.target.closest('button.tile'); if (b && b._sc) chooseScene(b._sc); });
+router.act('scene-pick', b => { if (b._sc) chooseScene(b._sc); });
 wire('scenebtn', () => openScenes());
 async function chooseScene(sc) {
   closeDlg(scenedlg);
@@ -1119,7 +1138,7 @@ function renderParts() {
   const list = CTL.searchParts(pdAll, $('partsq').value), ul = $('partslist'); ul.textContent = '';
   if (!list.length) { const li = document.createElement('li'); li.id = 'partsnone'; li.style.gridColumn = '1 / -1'; li.textContent = 'No part matches'; ul.appendChild(li); }
   for (const p of list) {
-    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt'; b.dataset.part = p.id; b.setAttribute('data-space-model', 'relative');
+    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt'; b.dataset.action = 'part-pick'; b.dataset.part = p.id; b.setAttribute('data-space-model', 'relative');
     if (pdFocus && p.id === pdFocus.id) { b.classList.add('sel'); b.setAttribute('aria-current', 'true'); }
     b.innerHTML = (p.thumb ? '<img alt="" loading="lazy" src="' + p.thumb + '">' : '') + '<span class="nm"></span>';
     b.querySelector('.nm').textContent = (pdKeys[p.id] ? '✓ ' : '') + (p.short || p.name); b.title = p.name;
@@ -1144,7 +1163,7 @@ async function renderPreview() {
   if (p.thumb) { const im = el('img'); im.alt = ''; im.src = p.thumb; top.appendChild(im); }
   const size = el('span', null, ''); size.id = 'pvsize';
   meta.append(el('b', null, p.short || p.name), el('span', null, CT.catOf(p)), size); meta.title = p.name;
-  const add = el('button', null, pdChange ? 'Apply' : 'Add'); add.id = 'partsadd'; add.type = 'button'; add.setAttribute('data-space-model', 'relative'); add.setAttribute('aria-label', (pdChange ? 'Apply to the selected part: ' : 'Add ') + p.name);
+  const add = el('button', null, pdChange ? 'Apply' : 'Add'); add.id = 'partsadd'; add.dataset.action = 'pv-add'; add.type = 'button'; add.setAttribute('data-space-model', 'relative'); add.setAttribute('aria-label', (pdChange ? 'Apply to the selected part: ' : 'Add ') + p.name);
   top.append(meta, add); box.appendChild(top);
   const k = pdKeys[p.id];
   if (pdMsg) { const m = el('div', 'pv-sec pv-msg', pdMsg); m.setAttribute('role', 'status'); box.appendChild(m); }
@@ -1155,8 +1174,8 @@ async function renderPreview() {
     for (const key of ks) {
       const o = p.options[key], g = el('div', 'pv-opt'); g.dataset.opt = key; g.setAttribute('role', 'group'); g.setAttribute('aria-label', (o.label || key).trim());
       g.appendChild(el('span', 'pv-lab', (o.label || key).trim()));
-      if (o.type === 'bool') { const b = el('button', null, pdOpts[key] ? 'On' : 'Off'); b.type = 'button'; b.dataset.opt = key; b.dataset.val = pdOpts[key] ? '' : '1'; b.setAttribute('aria-pressed', String(!!pdOpts[key])); b.setAttribute('data-space-model', 'relative'); g.appendChild(b); }
-      else { const row = el('div', 'pv-seg'); for (const [v, e] of Object.entries(o.values)) { const b = el('button', null, e.label || v); b.type = 'button'; b.dataset.opt = key; b.dataset.val = v; b.setAttribute('aria-pressed', String(String(pdOpts[key]) === v)); b.setAttribute('data-space-model', 'relative'); row.appendChild(b); } g.appendChild(row); }
+      if (o.type === 'bool') { const b = el('button', null, pdOpts[key] ? 'On' : 'Off'); b.type = 'button'; b.dataset.action = 'pv-opt'; b.dataset.opt = key; b.dataset.val = pdOpts[key] ? '' : '1'; b.setAttribute('aria-pressed', String(!!pdOpts[key])); b.setAttribute('data-space-model', 'relative'); g.appendChild(b); }
+      else { const row = el('div', 'pv-seg'); for (const [v, e] of Object.entries(o.values)) { const b = el('button', null, e.label || v); b.type = 'button'; b.dataset.action = 'pv-opt'; b.dataset.opt = key; b.dataset.val = v; b.setAttribute('aria-pressed', String(String(pdOpts[key]) === v)); b.setAttribute('data-space-model', 'relative'); row.appendChild(b); } g.appendChild(row); }
       s.appendChild(g);
     }
     for (const t of lines) s.appendChild(el('div', 'pv-line', t));
@@ -1165,14 +1184,14 @@ async function renderPreview() {
   const vs = CTL.variantsOf(pdChange ? C.catalog.parts : C.catalog.parts.filter(x => x !== C.host), p);
   if (vs.length) {
     const s = el('div', 'pv-sec'), row = el('div', 'pv-var'); s.appendChild(el('h3', null, 'Variants'));
-    for (const v of vs) { const b = el('button'); b.type = 'button'; b.dataset.variant = v.id; b.setAttribute('data-space-model', 'relative'); b.title = v.name; if (v.thumb) { const im = el('img'); im.alt = ''; im.src = v.thumb; b.appendChild(im); } b.appendChild(el('span', null, v.short || v.name)); row.appendChild(b); }
+    for (const v of vs) { const b = el('button'); b.type = 'button'; b.dataset.action = 'pv-variant'; b.dataset.variant = v.id; b.setAttribute('data-space-model', 'relative'); b.title = v.name; if (v.thumb) { const im = el('img'); im.alt = ''; im.src = v.thumb; b.appendChild(im); } b.appendChild(el('span', null, v.short || v.name)); row.appendChild(b); }
     s.appendChild(row); box.appendChild(s);
   }
   try { const d = await C.sizeOf(p.id); if (d && pdFocus === p && size.isConnected) size.textContent = 'W ' + fmtDim(d[0]) + ' × H ' + fmtDim(d[1]) + ' × D ' + fmtDim(d[2]); } catch (e) { /* no model */ }
 }
-$('partsq').addEventListener('input', () => { const l = CTL.searchParts(pdAll, $('partsq').value); if (l.length && !l.includes(pdFocus)) focusPart(l[0]); renderParts(); });
-$('partslist').addEventListener('click', e => { const b = e.target.closest('button[data-part]'); if (!b) return; pickPart(C.partOf(b.dataset.part)); });
-$('partsprev').addEventListener('click', e => {
+router.on('ui', 'input', e => { if (e.target.id !== 'partsq') return; const l = CTL.searchParts(pdAll, $('partsq').value); if (l.length && !l.includes(pdFocus)) focusPart(l[0]); renderParts(); });
+router.act('part-pick', b => pickPart(C.partOf(b.dataset.part)));
+const pvClick = e => {
   const v = e.target.closest('button[data-variant]');
   const ob = e.target.closest('button[data-opt]');
   if (ob) { const key = ob.dataset.opt, o = pdFocus.options[key]; pdOpts = { ...pdOpts, [key]: o.type === 'bool' ? !!ob.dataset.val : ob.dataset.val }; pdMsg = ''; renderPreview(); return; }
@@ -1182,7 +1201,8 @@ $('partsprev').addEventListener('click', e => {
   const id = pdFocus.id, keys = pdKeys[id], dfl = defOptsOf(pdFocus), addOpts = Object.fromEntries(Object.entries(pdOpts).filter(([k, v]) => v !== dfl[k]));   // only what the user changed: the rest follows the outlet (polarity ...)
   closeDlg(partsdlg); startAdd(id, addOpts);   // same rules as before: a stud part on a highlighted outlet it fits, else the rings / the surface
   if (keys && adding && adding.kind === 'stud') { const k = keys.find(x => adding.outlets.some(o => o.key === x)); if (k) setTarget(k, true); }
-});
+};
+for (const n of ['pv-variant', 'pv-opt', 'pv-add']) router.act(n, (el, e) => pvClick(e));
 
 function outletName(key) {
   const c = C.SC.connOf(state, key);
@@ -1391,15 +1411,15 @@ function outletAtScreen(e, maxPx = 22) {   // the stud outlet whose seat is near
   return best;
 }
 const quickDo = fn => () => { const t = session ? quick : selTarget(); if (!t) return; hideQuick(); fn(t); readout(); };
-$('qselect').addEventListener('click', quickDo(t => { if (t.kind === 'part') selectPart(t.id); }));
-$('qadd').addEventListener('click', quickDo(t => {
+act('qselect', quickDo(t => { if (t.kind === 'part') selectPart(t.id); }));
+act('qadd', quickDo(t => {
   if (t.kind !== 'part') return;
   if (!t.fit.length) { const f = t.free || [], th = [...new Set(f.map(o => o.thread).filter(Boolean))].join(', '); toast(f.length ? 'No library part fits the ' + f.length + ' free outlet' + (f.length > 1 ? 's' : '') + (th ? ' (' + th + ')' : '') + ' of ' + nameOfId(t.id) + ' yet' : 'Nothing fits ' + nameOfId(t.id), true); return; }
   openLib(t.fit, 'Fits ' + nameOfId(t.id));
 }));
-$('qhere').addEventListener('click', quickDo(t => { if (t.kind === 'outlet') openLib(t.fit, 'Fits ' + outletName(t.key)); }));
-$('qmark').addEventListener('click', quickDo(t => { if (t.point) dropMarkAt(t.point, t.src); }));
-$('qmeasure').addEventListener('click', quickDo(t => { if (!t.point) return; setTool('measure'); measureAt(t.point); }));
+act('qhere', quickDo(t => { if (t.kind === 'outlet') openLib(t.fit, 'Fits ' + outletName(t.key)); }));
+act('qmark', quickDo(t => { if (t.point) dropMarkAt(t.point, t.src); }));
+act('qmeasure', quickDo(t => { if (!t.point) return; setTool('measure'); measureAt(t.point); }));
 
 // ---- jumpers (#93, #109): straight cables between two stud outlets; Options (terminal presets) ----
 const jumperGroup = new THREE.Group(), linkGroup = new THREE.Group(); inner.add(jumperGroup, linkGroup);   // model frame, like the outlet rings
@@ -1491,7 +1511,7 @@ function jfromKeys(inXR, qk, tg) {
   if (cur.kind === 'outlet') return [cur.key];
   return outletPoints().filter(o => o.key.startsWith(cur.id + '.')).map(o => o.key);
 }
-$('jfrom').addEventListener('click', () => {
+act('jfrom', () => {
   const inXR = document.body.classList.contains('inar'), keys = jfromKeys(inXR, inXR ? quick : null, inXR ? null : selTarget());
   if (keys && keys.length) startLink(keys);
 });
@@ -1577,7 +1597,7 @@ function updateLink() {
     if (linkTube.visible) { const r = JMP.OD_IN[JMP.DEFAULT_GAUGE] / 2 * SCN.IN; linkTube.scale.set(r, len, r); linkTube.position.copy(a).addScaledVector(d, 0.5); linkTube.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); }
   } else linkTube.visible = false;
 }
-addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (linking) cancelLink();  });
+router.on('ui', 'keydown', e => { if (e.key !== 'Escape') return; if (linking) cancelLink();  });
 
 // ---- Options: terminal presets on the battery (xr/presets.js). The battery keeps its pose; only what sits on it is swapped. ----
 function updateHeights() {
@@ -1767,7 +1787,12 @@ function showPaused() { toastStack.add({ text: LC.PAUSED_TEXT, level: 'info', ke
 function clearPaused() { if (toastStack.dismissKey('paused')) renderToasts(); }
 function resumeAR() { if (life.state !== 'paused') return; log('resume tapped'); resumed = true; enterAR(); }
 // the session is gone: leave AR visuals, keep every bit of scene state
+let xrEnd = null;
+const xrH = {};   // the per-session select handlers; the router routes to them (registered once, not per session)
+for (const t of ['selectstart', 'selectend', 'select']) router.on('xr', t, ev => xrH[t] && xrH[t](ev));
+router.on('xr', 'end', () => { if (xrEnd) xrEnd(); });
 function teardownSession(byUser) {
+  router.detachXR();
   if (rec.on) stopRec();   // otherwise the 'AR paused' toast stays hidden and auto-cycle keeps running
   const wasPlaced = mode === 'placed';
   endMove(); session = null; hitSource = null; anchor = null; lastHit = null; setMode('preview'); selectPart(null); beam.visible = dot.visible = false; beamHit = null; depthOK = false; cancelAdd(); closeLib(); removeMarkObjs(); removeMeasureObjs(); reticle.visible = false;
@@ -1808,7 +1833,8 @@ async function startSession() {
   // listen from the first moment: the session can end while we still await below
   const request = async o => {
     const x = await navigator.xr.requestSession('immersive-ar', o);
-    x.addEventListener('end', () => { log('xr session end event'); if (x === s && life.state !== 'preview' && life.state !== 'paused') teardownSession(userExit); });
+    xrEnd = () => { log('xr session end event'); if (x === s && life.state !== 'preview' && life.state !== 'paused') teardownSession(userExit); };
+    router.attachXR(x);   // selectstart / select / selectend / end go to the same router object
     return x;
   };
   try { s = await request(opts); }
@@ -1831,7 +1857,7 @@ async function startSession() {
   await renderer.xr.setSession(s);
   session = s;
   beginSessionUi(s);
-  s.addEventListener('selectstart', ev => {   // Move mode: a press anywhere drags the selected part on its movement plane; a second finger twists. ev.frame is valid inside the event; lastFrame is not
+  xrH.selectstart = ev => {   // Move mode: a press anywhere drags the selected part on its movement plane; a second finger twists. ev.frame is valid inside the event; lastFrame is not
     log('selectstart ' + (ev.inputSource && ev.inputSource.handedness) + '/' + (ev.inputSource && ev.inputSource.targetRayMode) + ', mode ' + mode + ', edit.on ' + edit.on + ', frame ' + !!ev.frame);
     if (ev.inputSource && ev.inputSource.targetRayMode === 'screen') xrFingers.add(ev.inputSource);
     if (mode !== 'placed' || !edit.on) return;
@@ -1841,21 +1867,21 @@ async function startSession() {
     if (!editActive() || eg) { log('selectstart: not starting (editActive ' + editActive() + ', gesture ' + !!eg + ', selected ' + selectedId + ')'); if (selectedId) editPress = true; return; }
     pendingEdit = ev.inputSource; editPress = false; log('edit press pending');
     if (ev.frame) resolveEditPress(ev.frame, 'event frame');
-  });
-  s.addEventListener('selectend', ev => {
+  };
+  xrH.selectend = ev => {
     xrFingers.delete(ev.inputSource);
     log('selectend, gesture ' + (eg ? eg.kind : 'none') + ', fingers left ' + xrFingers.size + (pendingEdit === ev.inputSource ? ', still pending: dropped' : ''));
     if (pendingEdit === ev.inputSource) pendingEdit = null;
     if (eg && eg.kind === 'move' && eg.src === ev.inputSource) editEnd();
     else if (eg && eg.kind === 'twist' && eg.xr) { log('xr twist: end, total ' + eg.total + ' deg'); editEnd(); }
     if (!xrFingers.size) xrLocked = false;
-  });
-  s.addEventListener('select', ev => {
+  };
+  xrH.select = ev => {
     if (editDragMoved) { editDragMoved = false; editPress = false; log('select swallowed (end of a drag)'); return; }
     if (editPress || (edit.on && selectedId && mode === 'placed')) { editPress = false; log('select swallowed (Move mode: a tap never changes the selection)'); return; }
     if (mode === 'reticle') place();
     else if (mode === 'placed') onSceneTap(ev);
-  });
+  };
   const viewer = await s.requestReferenceSpace('viewer');
   try { hitSource = await s.requestHitTestSource({ space: viewer, entityTypes: ['point', 'plane'] }); log('hit-test source: point+plane'); }
   catch (e) { log('hit-test entityTypes rejected (' + (e && e.message || e) + '), default'); hitSource = await s.requestHitTestSource({ space: viewer }); }
@@ -1877,7 +1903,7 @@ function syncArItem() {
   b.disabled = !inAR && !(arSupport.known && arSupport.ok); b.dataset.v = v; b.setAttribute('aria-label', v);
   if (C) compactButtons();
 }
-$('armenu').addEventListener('click', () => { if (document.body.classList.contains('inar')) { if (session) { userExit = true; session.end(); } } else enterAR(); });
+act('armenu', () => { if (document.body.classList.contains('inar')) { if (session) { userExit = true; session.end(); } } else enterAR(); });
 // page lifecycle: log everything that can take the session away; if the session vanished without an end event, treat it as lost
 for (const ev of ['pagehide', 'pageshow', 'freeze', 'resume']) addEventListener(ev, () => log('page ' + ev));
 document.addEventListener('visibilitychange', () => {
@@ -1909,12 +1935,13 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
 {
   let down = null;
   const cv = renderer.domElement;
+  const onCv = (stage, type, fn) => router.on(stage, type, fn, cv);   // canvas-only handlers go through the router too
   const ndcOf = e => { const r = cv.getBoundingClientRect(); return new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); };
-  cv.addEventListener('pointermove', e => { if (e.pointerType === 'touch') return; ptr.in = true; ptr.cx = e.clientX; ptr.cy = e.clientY; ptr.ndc.copy(ndcOf(e)); });
-  cv.addEventListener('pointerleave', () => { ptr.in = false; if (hoveredId) { hoveredId = null; applyTints(); readout(); } });
+  onCv('scene', 'pointermove', e => { if (e.pointerType === 'touch') return; ptr.in = true; ptr.cx = e.clientX; ptr.cy = e.clientY; ptr.ndc.copy(ndcOf(e)); });
+  onCv('ui', 'pointerleave', () => { ptr.in = false; if (hoveredId) { hoveredId = null; applyTints(); readout(); } });
   // dragging the selected surface part slides it on its mount plane; orbit stays off for the drag (mouse and touch)
   const dragRay = e => pointerRayAt(ndcOf(e));
-  cv.addEventListener('pointerdown', e => {
+  onCv('gesture', 'pointerdown', e => {
     if (session || !C || adding || tool !== 'select' || dragMove || eg || (e.pointerType === 'mouse' && e.button)) return;
     if (edit.on) {   // Move mode: a one-finger / mouse press anywhere on the scene drags the selected part by the finger's delta on its movement plane (two fingers still orbit, or twist)
       if (!selectedId) return;
@@ -1932,21 +1959,21 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
     dragMove = { id: f.id, grab, pointerId: e.pointerId };
     controls.enabled = false; e.stopImmediatePropagation(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* not capturable */ }
     log('move drag start ' + f.id);
-  }, true);
-  cv.addEventListener('pointermove', e => { if (eg && eg.kind === 'move' && e.pointerId === eg.pointerId) { editUpdate(dragRay(e)); e.preventDefault(); } });
-  cv.addEventListener('pointermove', e => { if (dragMove && e.pointerId === dragMove.pointerId) { slideTo(instOf(dragMove.id), dragRay(e), dragMove.grab); e.preventDefault(); } });
+  });
+  onCv('scene', 'pointermove', e => { if (eg && eg.kind === 'move' && e.pointerId === eg.pointerId) { editUpdate(dragRay(e)); e.preventDefault(); } });
+  onCv('scene', 'pointermove', e => { if (dragMove && e.pointerId === dragMove.pointerId) { slideTo(instOf(dragMove.id), dragRay(e), dragMove.grab); e.preventDefault(); } });
   const endDrag = e => { if (!dragMove || e.pointerId !== dragMove.pointerId) return; dragMove = null; controls.enabled = !session; flushMove(); persist(); log('move drag end'); };
-  cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+  router.on('ui', 'pointerup', endDrag); router.on('ui', 'pointercancel', endDrag);
   const endEditDrag = e => { if (eg && eg.kind === 'move' && e.pointerId === eg.pointerId) editEnd(); };
-  cv.addEventListener('pointerup', endEditDrag); cv.addEventListener('pointercancel', endEditDrag);
-  cv.addEventListener('pointerdown', e => {   // pick now: OrbitControls turns even a 2 px jitter into a small camera move, so the pointerup ray would miss a thin part
+  router.on('ui', 'pointerup', endEditDrag); router.on('ui', 'pointercancel', endEditDrag);
+  onCv('scene', 'pointerdown', e => {   // pick now: OrbitControls turns even a 2 px jitter into a small camera move, so the pointerup ray would miss a thin part
     let h = null; if (!session && C) { scene.updateMatrixWorld(true); raycaster.setFromCamera(ndcOf(e), camera); raycaster.far = 10; h = PK.pickFromHits(raycaster.intersectObjects(roots(), true)); }
     down = { x: e.clientX, y: e.clientY, clientX: e.clientX, clientY: e.clientY, t: performance.now(), hit: h };
   });
-  cv.addEventListener('pointercancel', () => { down = null; });
-  cv.addEventListener('pointermove', e => { if (linking && e.pointerType !== 'mouse') linkAim = { x: e.clientX, y: e.clientY, touch: true }; });
-  cv.addEventListener('pointerdown', e => { if (linking && e.pointerType !== 'mouse') linkAim = { x: e.clientX, y: e.clientY, touch: true }; });
-  cv.addEventListener('pointerup', ev => {
+  router.on('ui', 'pointercancel', () => { down = null; });
+  onCv('scene', 'pointermove', e => { if (linking && e.pointerType !== 'mouse') linkAim = { x: e.clientX, y: e.clientY, touch: true }; });
+  onCv('scene', 'pointerdown', e => { if (linking && e.pointerType !== 'mouse') linkAim = { x: e.clientX, y: e.clientY, touch: true }; });
+  onCv('scene', 'pointerup', ev => {
     let e = ev;
     if (session || !down || !C || rec.on) return;
     if (edit.on && selectedId) { down = null; return; }   // Move mode: a tap never changes the selection (turn Move off to pick another part)
@@ -1981,6 +2008,7 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
     if (!PREVIEW) status.textContent = hit ? 'Selected: ' + nameOfId(hit.instanceId) + '. Click empty space to clear.' : 'Drag to orbit. Click a part to select it.';
   });
 }
+router.attach(document);   // the one place DOM listeners for input are attached (capture phase)
 // test / debug hooks
 window.__ar = { rec: { start: startRec, stop: stopRec, on: () => rec.on, bar: () => rec.bar, cycle: () => ({ on: cycle.on, paused: cycle.paused, secs: cycle.secs }), tick: now => { const id = cycle.tick(now); if (id) applyOption(id); return id; }, option: curOption, caption: () => $('reccap').hidden ? '' : $('reccap').textContent }, xray: { mode: () => xray.mode, set: setXray }, markText: i => marks[i] && marks[i].text, worldPose(id) { const b = roots().find(o => o.userData.instanceId === id); if (!b) return null; scene.updateMatrixWorld(true); const m = new THREE.Matrix4().copy(modelHolder.matrixWorld).invert().multiply(b.matrixWorld), pos = new THREE.Vector3(), q = new THREE.Quaternion(); m.decompose(pos, q, new THREE.Vector3()); const e = new THREE.Euler().setFromQuaternion(q, 'YXZ'); return { pos: pos.toArray(), yaw: ((e.y * 180 / Math.PI) % 360 + 360) % 360 }; }, slideTo: (id, ray) => { const r = slideTo(instOf(id), ray); flushMove(); return r; }, startMove: id => startMove(instOf(id)), endMove, moving: () => !!moving, pickAt(cx, cy) { const r = renderer.domElement.getBoundingClientRect(); scene.updateMatrixWorld(true); raycaster.setFromCamera(new THREE.Vector2((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera); raycaster.far = 10; const h = PK.pickFromHits(raycaster.intersectObjects(roots(), true)); return h && h.instanceId; }, partIds: () => roots().map(o => o.userData.instanceId), canvasRect: () => { const r = renderer.domElement.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; }, outletScreen(key) { const o = outletPoints().find(x => x.key === key); if (!o) return null; const v = modelHolder.localToWorld(new THREE.Vector3(...o.pos)).project(camera), rc = renderer.domElement.getBoundingClientRect(); return { x: rc.left + (v.x + 1) / 2 * rc.width, y: rc.top + (1 - v.y) / 2 * rc.height }; }, quick: () => quick && { kind: quick.kind, id: quick.id, key: quick.key, fit: quick.fit.map(x => x.part.id), shown: true }, look(dx, dy, dz) { const t = controls.target; camera.position.set(t.x + dx, t.y + dy, t.z + dz); controls.update(); }, target(x, y, z) { controls.target.set(x, y, z); controls.update(); }, hash: persist, startAdd, confirmAdd, cancelAdd, removeSelected, openLib, setTarget, adding: () => adding && { partId: adding.partId, kind: adding.kind, target: adding.target, outlets: adding.outlets.map(o => o.key) }, toast: () => [...toastEl.querySelectorAll('.tx')].map(e => e.textContent).join(' | '), persist, setTool, tool: () => tool, units: () => units, marks: () => marks.length, measures: () => measures.length, dropAt: dropMarkAt, measureAt, selectMark, select: selectPart, selected: () => selectedId, hovered: () => hoveredId, state: () => JSON.parse(JSON.stringify(state)),
   screenOf(id) { const r = roots().find(o => o.userData.instanceId === id); if (!r) return null; const b = new THREE.Box3().setFromObject(r), c = b.getCenter(new THREE.Vector3()).project(camera), rc = renderer.domElement.getBoundingClientRect();
@@ -2037,4 +2065,4 @@ Object.assign(window.__ar, { sim: {
 
 // test hooks for the XR row logic (headless sim): select a part, read the state and the visible rows
 Object.assign(window.__ar, { select: id => { selectPart(id); }, state: () => JSON.parse(JSON.stringify(state)), rows: () => ({ ctx: [...ctx.children].filter(e => !e.hidden && e.id).map(e => e.id), menu: [...$('menu').querySelectorAll('button.mi')].filter(e => !e.hidden).map(e => e.id) }) });
-Object.assign(window.__ar, { edit: { on: () => edit.on, info: id => { const i = instOf(id || selectedId); if (!i) return null; const e = editInfo(i); return { mount: e.mount, st: e.st, canYaw: e.canYaw }; }, begin: (ray, pid) => { const ok = editBegin(ray, null); if (ok) eg.pointerId = pid; return ok; }, update: editUpdate, end: editEnd, twist: deg => { const i = selInst(); if (!i || ED.rotAxisOf(editInfo(i).st) !== 'yaw') return false; histCommit(); i.yaw = ED.applyYaw(i.yaw || 0, deg); fastMove(); flushMove(); persist(); histCommit(); return true; } }, hist: () => ({ undo: hist.undoS.length, redo: hist.redoS.length }), undo: doUndo, ctxOpen: () => ctxT.open, modeOpen: () => modeDial.open, commit: histCommit });
+Object.assign(window.__ar, { edit: { on: () => edit.on, info: id => { const i = instOf(id || selectedId); if (!i) return null; const e = editInfo(i); return { mount: e.mount, st: e.st, note: ED.offMountNote(e.mount, e.st) }; }, begin: (ray, pid) => { const ok = editBegin(ray, null); if (ok) eg.pointerId = pid; return ok; }, update: editUpdate, end: editEnd, twist: deg => { const i = selInst(); if (!i || !ED.rotAxisOf(editInfo(i).st)) return false; histCommit(); { const ax = ED.rotAxisOf(editInfo(i).st); i[ax] = ED.applyAxis(ax, i[ax] || 0, deg); } fastMove(); flushMove(); persist(); histCommit(); return true; } }, hist: () => ({ undo: hist.undoS.length, redo: hist.redoS.length }), undo: doUndo, ctxOpen: () => ctxT.open, modeOpen: () => modeDial.open, commit: histCommit });

@@ -14,13 +14,13 @@
 <script type="module" src="tb/space/space.js"></script>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-19 13:16 twist3';
+const BUILD = '2026-11-19 13:54 unlock';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
   var map = { imports: { 'three': cdn + 'build/three.module.js', 'three/addons/': cdn + 'examples/jsm/',
     './xr/app.js': './xr/app.js' + v, './xr/compose.js': './xr/compose.js' + v, './xr/xrmath.js': './xr/xrmath.js' + v,
-    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './xr/lifecycle.js': './xr/lifecycle.js' + v, './xr/toasts.js': './xr/toasts.js' + v, './xr/scan.js': './xr/scan.js' + v, './xr/icons.js': './xr/icons.js' + v, './xr/jumper.js': './xr/jumper.js' + v, './xr/presets.js': './xr/presets.js' + v, './xr/cats.js': './xr/cats.js' + v, './xr/controls.js': './xr/controls.js' + v, './xr/edit.js': './xr/edit.js' + v, './xr/version.js': './xr/version.js' + v, './xr/rec.js': './xr/rec.js' + v, './offsets.js': './offsets.js' + v } };
+    './xr/pick.js': './xr/pick.js' + v, './xr/beam.js': './xr/beam.js' + v, './xr/modes.js': './xr/modes.js' + v, './xr/match.js': './xr/match.js' + v, './xr/scene.js': './xr/scene.js' + v, './xr/lifecycle.js': './xr/lifecycle.js' + v, './xr/toasts.js': './xr/toasts.js' + v, './xr/scan.js': './xr/scan.js' + v, './xr/icons.js': './xr/icons.js' + v, './xr/jumper.js': './xr/jumper.js' + v, './xr/presets.js': './xr/presets.js' + v, './xr/cats.js': './xr/cats.js' + v, './xr/controls.js': './xr/controls.js' + v, './xr/edit.js': './xr/edit.js' + v, './xr/version.js': './xr/version.js' + v, './xr/input.js': './xr/input.js' + v, './xr/rec.js': './xr/rec.js' + v, './offsets.js': './offsets.js' + v } };
   var im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify(map); document.head.appendChild(im);
   var m = document.createElement('script'); m.type = 'module'; m.src = 'xr/app.js' + v; document.head.appendChild(m);
 })();
@@ -118,6 +118,8 @@ window.__BUILD = BUILD;
   #editbar .edchip { min-height:40px; padding:0.2em 0.6em; border-radius:999px; gap:0.3em; font-size:0.8rem; flex-direction:row; opacity:0.75; }
   #editbar .edchip[aria-pressed="true"] { opacity:1; color:var(--deck-accent); border-color:var(--deck-accent); font-weight:700; }
   #editbar .edchip:disabled { opacity:0.35; } #editbar .edchip svg:last-child { font-size:0.9em; }
+  #editbar .edgrp { display:inline-flex; align-items:center; gap:0.15rem; }
+  #editbar .edstep { min-height:36px; min-width:36px; width:36px; padding:0; border-radius:50%; font-size:1.1rem; font-weight:700; margin:0; }
   #edhint { font-size:0.72rem; color:var(--deck-muted); flex:1 1 8rem; min-width:0; }
   #editchip { position:absolute; left:50%; top:30%; transform:translateX(-50%); z-index:30; padding:0.35em 0.9em; border-radius:999px; font-size:1rem; font-weight:700; pointer-events:none; background:color-mix(in srgb, var(--tb-background-color) 88%, transparent); color:var(--deck-accent); border:1px solid var(--deck-accent); box-shadow:0 0.3em 1em rgb(0 0 0 / 0.2); white-space:nowrap; } #editchip[hidden] { display:none; }
   .tile.on { border-color:var(--deck-accent); box-shadow:inset 0 0 0 1px var(--deck-accent); } .tile.on .tt b::after { content:'Current'; margin-left:0.6em; padding:0.1em 0.6em; border-radius:999px; font-size:0.65rem; font-weight:700; background:var(--deck-accent); color:var(--tb-background-color, #fff); vertical-align:middle; }

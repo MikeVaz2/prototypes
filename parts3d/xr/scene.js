@@ -17,6 +17,7 @@ import * as JMP from './jumper.js';
 export const IN = 0.0254;
 const norm = d => ((d % 360) + 360) % 360;
 const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
+const r3 = v => Math.round(v * 1000) / 1000;
 export const baseOf = id => String(id).replace(/_\d+$/, '');
 
 // Start scene: which surface part is the host (the model's root). Default = catalog.host (the battery).
@@ -54,6 +55,7 @@ export function poseOf(p, opts = {}) {
 }
 // 3x3 rotations, row-major, same convention as three.js (makeRotationY / makeRotationZ)
 const RY = d => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
+const RX = d => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, c, -s, 0, s, c]; };
 const RZ = d => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [c, -s, 0, s, c, 0, 0, 0, 1]; };
 const mul3 = (a, b) => { const o = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) o.push(a[3 * i] * b[j] + a[3 * i + 1] * b[3 + j] + a[3 * i + 2] * b[6 + j]); return o; };
 const mv3 = (m, v) => [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]];
@@ -104,7 +106,9 @@ export function createScene(catalog, hostSel) {
       let mount = '-';
       if (inst.at) mount = '@' + inst.at.map(r2).join(',');
       else if (inst.on) { const [hid, cid] = inst.on.split('.'); mount = hid === host.id && snapMount(p) ? cid : inst.on; }
-      return [inst.id, mount, r1(inst.yaw), optStr(p, inst)].join(':');
+      const row = [inst.id, mount, r1(inst.yaw), optStr(p, inst)], ex = [inst.pitch || 0, inst.roll || 0, ...(inst.ofs || [0, 0, 0])].map(r3);
+      if (ex.some(v => v)) row.push(ex.join(','));   // 5th field, only when something is off the mount: pitch,roll,ofsX,ofsH,ofsZ (old links have four fields and still load)
+      return row.join(':');
     }).filter(Boolean).join('~');
   }
   function parseOpts(p, d, o) {
@@ -119,7 +123,7 @@ export function createScene(catalog, hostSel) {
   function parseState(str) {
     let out = [];
     for (const t of (str || '').split('~')) {
-      const [id, mount, yaw, o] = t.split(':'), al = id && PART_ALIAS[baseOf(id)], p = id && partOf(al ? al.part : baseOf(id));
+      const [id, mount, yaw, o, ex] = t.split(':'), al = id && PART_ALIAS[baseOf(id)], p = id && partOf(al ? al.part : baseOf(id));
       if (!p || out.some(x => x.id === id)) continue;
       const d = defInst(p, id), sm = snapMount(p);
       d.on = null; d.at = null;
@@ -136,6 +140,7 @@ export function createScene(catalog, hostSel) {
       if (yaw !== '' && yaw !== undefined && Number.isFinite(y)) { const step = yawStep(p.id) || 0.1; d.yaw = r1(norm(Math.round(y / step) * step)); }
       if (al) d.opts = { ...d.opts, ...al.opts };
       parseOpts(p, d, o);
+      if (ex) { const v = ex.split(',').map(Number); if (v.length === 5 && v.every(Number.isFinite)) { if (v[0]) d.pitch = v[0]; if (v[1]) d.roll = v[1]; if (v[2] || v[3] || v[4]) d.ofs = [v[2], v[3], v[4]]; } }
       out.push(d);
     }
     // drop instances whose outlet is missing (and what sits on them)
@@ -200,6 +205,8 @@ export function createScene(catalog, hostSel) {
   };
   // Parent of a stacked instance: the previous item on the same outlet (stack order), else the part owning the outlet.
   // -> { parent: inst, pos: [m] in the parent's frame } or null (outlet missing)
+  // unlock-on-demand pose (round 7): ofs = [x, h, z] inches in the parent's frame, pitch and roll in degrees, all zero by default
+  const ofsM = inst => (inst.ofs || [0, 0, 0]).map(v => v * IN);
   const stackOf = (insts, key) => insts.map((i, n) => ({ i, n })).filter(x => x.i.on === key)
     .sort((a, b) => rank(partOf(a.i.part)) - rank(partOf(b.i.part)) || a.n - b.n).map(x => x.i);
   function parentOf(insts, inst) {
@@ -218,10 +225,10 @@ export function createScene(catalog, hostSel) {
       let r = null;
       const p = partOf(inst.part);
       if (!p) r = null;
-      else if (p === host || inst.at) r = { parent: null, pos: (inst.at || [0, 0, 0]).map(v => v * IN), yaw: inst.yaw || 0, tilt: poseOf(p, inst.opts) };
+      else if (p === host || inst.at) r = { parent: null, pos: add3(((inst.at || [0, 0, 0])).map(v => v * IN), ofsM(inst)), yaw: inst.yaw || 0, pitch: inst.pitch || 0, roll: inst.roll || 0, tilt: poseOf(p, inst.opts) };
       else if (inst.on) {
         const pr = parentOf(insts, inst);
-        if (pr && go(pr.parent)) { const t = poseOf(p, inst.opts); r = { parent: pr.parent.id, pos: t && (t.px || t.pz) ? add3(pr.pos, [t.px || 0, 0, t.pz || 0]) : pr.pos, yaw: inst.yaw || 0, tilt: t }; }
+        if (pr && go(pr.parent)) { const t = poseOf(p, inst.opts), b0 = t && (t.px || t.pz) ? add3(pr.pos, [t.px || 0, 0, t.pz || 0]) : pr.pos; r = { parent: pr.parent.id, pos: add3(b0, ofsM(inst)), yaw: inst.yaw || 0, pitch: inst.pitch || 0, roll: inst.roll || 0, tilt: t }; }
       }
       busy.delete(inst.id);
       out.set(inst.id, r);
@@ -240,7 +247,7 @@ export function createScene(catalog, hostSel) {
       if (l) {
         const pp = l.parent == null ? { pos: [0, 0, 0], yaw: 0, R: I3 } : go(l.parent);
         if (pp) {
-          const t = l.tilt, Rl = t ? mul3(RY(l.yaw), RZ(t.rz)) : RY(l.yaw), tl = t ? add3(l.pos, mv3(RY(l.yaw), [t.dx || 0, t.lift, 0])) : l.pos;
+          const t = l.tilt, Rb = mul3(mul3(RY(l.yaw), RX(l.pitch || 0)), RZ(l.roll || 0)), Rl = t ? mul3(Rb, RZ(t.rz)) : Rb, tl = t ? add3(l.pos, mv3(Rb, [t.dx || 0, t.lift, 0])) : l.pos;
           r = { pos: add3(pp.pos, mv3(pp.R, tl)), yaw: pp.yaw + l.yaw, R: mul3(pp.R, Rl) };
         }
       }
