@@ -1037,6 +1037,164 @@
    "thumb": "parts/thumbs/nut-38-neg.png"
   },
   {
+   "id": "holddown-bar",
+   "name": "Battery hold-down: flat steel bar with two J-hooks [E]",
+   "glb": "holddown-bar.glb",
+   "default": false,
+   "thumb_color": "#2b2b30",
+   "kind": "holddown",
+   "mounts": [
+    {
+     "id": "surface",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "fixed"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "origin = the battery centre on the floor (the bar is built at the battery top); slide along the battery with Move X"
+    }
+   ],
+   "options": {
+    "length": {
+     "type": "number",
+     "default": 8.3,
+     "min": 6,
+     "max": 10,
+     "step": 0.05,
+     "unit": "in",
+     "axis": "z",
+     "label": "Bar length",
+     "short": "Length",
+     "stretch": {
+      "axis": "z",
+      "scale": [
+       [
+        "hd_bar",
+        0.21082
+       ]
+      ],
+      "moves": [
+       [
+        "hd_p_",
+        0.5
+       ],
+       [
+        "hd_n_",
+        -0.5
+       ]
+      ]
+     },
+     "note": "across the battery; the hooks stay 0.5 in in from each end [E]"
+    },
+    "width": {
+     "type": "number",
+     "default": 1.0,
+     "min": 0.75,
+     "max": 1.5,
+     "step": 0.05,
+     "unit": "in",
+     "axis": "x",
+     "label": "Bar width",
+     "short": "Width",
+     "stretch": {
+      "axis": "x",
+      "scale": [
+       [
+        "hd_bar",
+        0.0254
+       ]
+      ],
+      "moves": []
+     },
+     "note": "flat bar width [E]"
+    },
+    "pos": {
+     "type": "number",
+     "default": 0,
+     "min": -5,
+     "max": 5,
+     "step": 0.05,
+     "unit": "in",
+     "axis": "x",
+     "label": "Position along battery",
+     "short": "Position",
+     "stretch": {
+      "axis": "x",
+      "scale": [],
+      "moves": [
+       [
+        "hd_",
+        1.0,
+        0
+       ]
+      ]
+     },
+     "note": "0 = middle of the battery's long side (Move X does the same)"
+    },
+    "hook": {
+     "type": "number",
+     "default": 11.1,
+     "min": 8,
+     "max": 12,
+     "step": 0.05,
+     "unit": "in",
+     "axis": "y",
+     "label": "Hook length",
+     "short": "Hook",
+     "stretch": {
+      "axis": "y",
+      "scale": [
+       [
+        "hd_p_rod",
+        0.28193999999999997
+       ],
+       [
+        "hd_n_rod",
+        0.28193999999999997
+       ]
+      ],
+      "moves": [
+       [
+        "hd_p_foot",
+        -1.0
+       ],
+       [
+        "hd_n_foot",
+        -1.0
+       ]
+      ]
+     },
+     "note": "bar underside to the bottom of the J, default battery height + 1.5 in [E]"
+    }
+   },
+   "category": "Battery",
+   "mountKind": "surface",
+   "icon": "powerbar",
+   "connections": [],
+   "compatible": {
+    "surface": []
+   },
+   "edit_unlocked": [
+    "mx"
+   ],
+   "clash": {
+    "bar_y": 9.6,
+    "bar_t": 0.125
+   },
+   "short": "Hold-down",
+   "thumb": "parts/thumbs/holddown-bar.png"
+  },
+  {
    "id": "powerbar-2104",
    "name": "Blue Sea 2104 PowerBar 600 A, 4 x 3/8-16 studs",
    "glb": "powerbar-2104.glb",

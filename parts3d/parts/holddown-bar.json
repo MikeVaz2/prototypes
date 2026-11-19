@@ -1,0 +1,172 @@
+{
+ "kind": "holddown",
+ "id": "holddown-bar",
+ "name": "Battery hold-down: flat steel bar with two J-hooks [E]",
+ "short": "Hold-down",
+ "units": "in",
+ "catalog": {
+  "category": "Battery",
+  "mountKind": "surface",
+  "icon": "powerbar",
+  "short": "Hold-down",
+  "swatch": "#2b2b30"
+ },
+ "edit_unlocked": [
+  "mx"
+ ],
+ "dims": {
+  "battery_length": 13.0,
+  "battery_width": 6.8,
+  "battery_overall_height": 9.6,
+  "bar_y": 9.6,
+  "bar_t": 0.125,
+  "bar_length": 8.3,
+  "bar_width": 1.0,
+  "hook_length": 11.1,
+  "rod_d": 0.3125,
+  "foot": 0.9,
+  "thread_above": 0.75,
+  "nut_af": 0.5,
+  "rod_inset": 0.5
+ },
+ "notes": "Estimates [E], the founder will measure: the bar is 1 x 1/8 in black-coated steel across the battery's short side (resting on the lid, underside at the overall height 9.6 in from the battery JSON), a 5/16 in J-hook at each end hangs down the long sides to below the base and turns in 0.9 in, threaded top with a washer and nut on the bar. Origin = battery centre on the floor.",
+ "mounts": [
+  {
+   "id": "surface",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "fixed"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = the battery centre on the floor (the bar is built at the battery top); slide along the battery with Move X"
+  }
+ ],
+ "connections": [],
+ "options": {
+  "length": {
+   "type": "number",
+   "default": 8.3,
+   "min": 6,
+   "max": 10,
+   "step": 0.05,
+   "unit": "in",
+   "axis": "z",
+   "label": "Bar length",
+   "short": "Length",
+   "stretch": {
+    "axis": "z",
+    "scale": [
+     [
+      "hd_bar",
+      0.21082
+     ]
+    ],
+    "moves": [
+     [
+      "hd_p_",
+      0.5
+     ],
+     [
+      "hd_n_",
+      -0.5
+     ]
+    ]
+   },
+   "note": "across the battery; the hooks stay 0.5 in in from each end [E]"
+  },
+  "width": {
+   "type": "number",
+   "default": 1.0,
+   "min": 0.75,
+   "max": 1.5,
+   "step": 0.05,
+   "unit": "in",
+   "axis": "x",
+   "label": "Bar width",
+   "short": "Width",
+   "stretch": {
+    "axis": "x",
+    "scale": [
+     [
+      "hd_bar",
+      0.0254
+     ]
+    ],
+    "moves": []
+   },
+   "note": "flat bar width [E]"
+  },
+  "pos": {
+   "type": "number",
+   "default": 0,
+   "min": -5,
+   "max": 5,
+   "step": 0.05,
+   "unit": "in",
+   "axis": "x",
+   "label": "Position along battery",
+   "short": "Position",
+   "stretch": {
+    "axis": "x",
+    "scale": [],
+    "moves": [
+     [
+      "hd_",
+      1.0,
+      0
+     ]
+    ]
+   },
+   "note": "0 = middle of the battery's long side (Move X does the same)"
+  },
+  "hook": {
+   "type": "number",
+   "default": 11.1,
+   "min": 8,
+   "max": 12,
+   "step": 0.05,
+   "unit": "in",
+   "axis": "y",
+   "label": "Hook length",
+   "short": "Hook",
+   "stretch": {
+    "axis": "y",
+    "scale": [
+     [
+      "hd_p_rod",
+      0.28193999999999997
+     ],
+     [
+      "hd_n_rod",
+      0.28193999999999997
+     ]
+    ],
+    "moves": [
+     [
+      "hd_p_foot",
+      -1.0
+     ],
+     [
+      "hd_n_foot",
+      -1.0
+     ]
+    ]
+   },
+   "note": "bar underside to the bottom of the J, default battery height + 1.5 in [E]"
+  }
+ },
+ "clash": {
+  "bar_y": 9.6,
+  "bar_t": 0.125
+ }
+}

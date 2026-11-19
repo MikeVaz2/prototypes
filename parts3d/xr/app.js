@@ -24,6 +24,7 @@ import * as OL from './outline.js';
 import * as CTL from './controls.js';
 import * as IN from './input.js';
 import * as ED from './edit.js';
+import * as CL from './clash.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -462,6 +463,20 @@ function solarNote(inst, p) {
   return '';
 }
 let chkLevel = '';   // 'ok' | 'limited' | 'over' while the solar check line is shown in #sel (colours it)
+// hold-down check: a terminal part (anything stacked on a battery stud) whose box touches the bar warns "touches the hold-down bar" (xr/clash.js)
+function clashNote(inst) {
+  if (!state.some(i => CL.holdDownId(i.part))) return '';
+  const inch = b => ({ min: [b.min.x, b.min.y, b.min.z].map(v => v / SCN.IN), max: [b.max.x, b.max.y, b.max.z].map(v => v / SCN.IN) });
+  const rootOf = id => roots().find(o => o.userData.instanceId === id), bars = state.filter(i => CL.holdDownId(i.part)).map(h => CL.barBox(h, C.partOf(h.part)));
+  const terminals = state.filter(i => !CL.holdDownId(i.part) && PR.sideOf(C.SC, state, i.id) != null);
+  if (CL.holdDownId(inst.part)) {
+    const bar = CL.barBox(inst, C.partOf(inst.part)), hit = CL.clashing(bar, terminals.filter(t => rootOf(t.id)).map(t => ({ id: t.id, box: inch(localBox(rootOf(t.id))) })));
+    return hit.length ? CL.CLASH_TEXT + ': ' + hit.map(nameOfId).join(', ') : '';
+  }
+  if (!terminals.some(t => t.id === inst.id) || !rootOf(inst.id)) return '';
+  const box = inch(localBox(rootOf(inst.id)));
+  return bars.some(b => CL.boxesTouch(b, box)) ? CL.CLASH_TEXT : '';
+}
 function readout() {
   if (!C) return;
   const keepTop = ctx.scrollTop; try { readoutBody(); } finally { if (ctx.scrollTop !== keepTop) ctx.scrollTop = keepTop; }
@@ -476,6 +491,7 @@ function readoutBody() {
   if (inst) {
     t = 'Selected: ' + nameOfId(inst.id) + (numKeys(p, inst).length ? ' ' + numText(p, inst) : '') + optKeys(p, kind, inst).map(k => ' ' + PK.optLabel(p.options[k], inst.opts[k])).join('') + (kind !== 'battery' && kind !== 'nut' ? ' ' + inst.yaw + '°' : '');
     const sx = solarNote(inst, p); if (sx) t += ' · ' + sx;
+    const cn = clashNote(inst); if (cn) t += ' · ' + cn;
   } else if (hoveredId) t = 'Aim: ' + nameOfId(hoveredId);
   if (!inst && !hoveredId && selMark < 0 && selMeasure < 0 && !selJumper) { t = PR.tooltip(PR.presetOf(C.SC, state), stackH, v => MD.fmtLen(v, units)); const ck = SOL.stationCheck(state, jumpers, C.partOf); if (ck && !C.SC.isDefaultHost) { t += ' · ' + ck.text; chkLevel = ck.level; } }
   if (selJumper) { const j = jumpers.find(x => x.id === selJumper), L = j && jumperLen(j); if (L) t = JMP.jumperText(j, JMP.isMc4(j) ? L.metres.toFixed(1) + ' m' : MD.fmtLen(L.cut, units)); }
@@ -646,7 +662,7 @@ let editDragMoved = false;     // a drag happened: the select tap that follows i
 function editInfo(inst) {
   const p = C.partOf(inst.part), panel = !!(inst.on && isPanel(p));
   const mount = ED.mountOf({ host: inst.part === C.host.id, on: inst.on, at: inst.at, panel, free: inst.free });
-  let rc = editLocks.get(inst.id); if (!rc || rc.mount !== mount) { rc = { mount, locks: ED.defaultLocks(mount) }; editLocks.set(inst.id, rc); }
+  let rc = editLocks.get(inst.id); if (!rc || rc.mount !== mount) { rc = { mount, locks: ED.defaultLocks(mount, p.edit_unlocked) }; editLocks.set(inst.id, rc); }
   return { mount, rec: rc, panel, st: ED.axisStates(mount, rc.locks) };
 }
 const editActive = () => !!(edit.on && C && selectedId && selInst() && tool === 'select' && !adding && !rec.on);
@@ -2065,4 +2081,4 @@ Object.assign(window.__ar, { sim: {
 
 // test hooks for the XR row logic (headless sim): select a part, read the state and the visible rows
 Object.assign(window.__ar, { select: id => { selectPart(id); }, state: () => JSON.parse(JSON.stringify(state)), rows: () => ({ ctx: [...ctx.children].filter(e => !e.hidden && e.id).map(e => e.id), menu: [...$('menu').querySelectorAll('button.mi')].filter(e => !e.hidden).map(e => e.id) }) });
-Object.assign(window.__ar, { edit: { on: () => edit.on, info: id => { const i = instOf(id || selectedId); if (!i) return null; const e = editInfo(i); return { mount: e.mount, st: e.st, note: ED.offMountNote(e.mount, e.st) }; }, begin: (ray, pid) => { const ok = editBegin(ray, null); if (ok) eg.pointerId = pid; return ok; }, update: editUpdate, end: editEnd, twist: deg => { const i = selInst(); if (!i || !ED.rotAxisOf(editInfo(i).st)) return false; histCommit(); { const ax = ED.rotAxisOf(editInfo(i).st); i[ax] = ED.applyAxis(ax, i[ax] || 0, deg); } fastMove(); flushMove(); persist(); histCommit(); return true; } }, hist: () => ({ undo: hist.undoS.length, redo: hist.redoS.length }), undo: doUndo, ctxOpen: () => ctxT.open, modeOpen: () => modeDial.open, commit: histCommit });
+Object.assign(window.__ar, { edit: { opt: (id, k, v) => { const i = instOf(id); if (i) { i.opts[k] = v; rebuild(); } }, on: () => edit.on, info: id => { const i = instOf(id || selectedId); if (!i) return null; const e = editInfo(i); return { mount: e.mount, st: e.st, note: ED.offMountNote(e.mount, e.st) }; }, begin: (ray, pid) => { const ok = editBegin(ray, null); if (ok) eg.pointerId = pid; return ok; }, update: editUpdate, end: editEnd, twist: deg => { const i = selInst(); if (!i || !ED.rotAxisOf(editInfo(i).st)) return false; histCommit(); { const ax = ED.rotAxisOf(editInfo(i).st); i[ax] = ED.applyAxis(ax, i[ax] || 0, deg); } fastMove(); flushMove(); persist(); histCommit(); return true; } }, hist: () => ({ undo: hist.undoS.length, redo: hist.redoS.length }), undo: doUndo, ctxOpen: () => ctxT.open, modeOpen: () => modeDial.open, commit: histCommit });

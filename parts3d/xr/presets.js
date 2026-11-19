@@ -4,7 +4,7 @@
 export const CASE_TOP_IN = 8.6;   // battery case top above the floor, inches (heights are quoted above it)
 const B = 'odyssey-odp-agm31', H = 's=' + B + ':-:0:';
 const side = (pol, mid) => mid;
-export const BATTERY_PRESETS = [
+const BATTERY_RAW = [
   { id: 'A', short: 'Adapter', name: 'Adapter on stud',
     hash: H + '~blueseas-2340-pos:stud_pos:90:cover=1~sae-adapter-pos:' + B + '.stud_pos:0:~gx470-clamp-pos:sae-adapter-pos.post:0:' +
       '~blueseas-2340-neg:stud_neg:90:cover=1~sae-adapter-neg:' + B + '.stud_neg:0:~gx470-clamp-neg:sae-adapter-neg.post:0:' },
@@ -20,6 +20,11 @@ export const BATTERY_PRESETS = [
   { id: 'F', short: 'PowerBar', name: 'MRBF and PowerBar',
     hash: H + '~mrbf-5191:' + B + '.stud_pos:0:~powerbar-2104:@14,0,0:0:&j=mrbf-5191.fuse_out:powerbar-2104.s1:1/0:red:5/16:3/8' },
 ];
+// the hold-down bar (flat bar with two J-hooks) is in every battery option, at the battery centre on the floor (@x,y,z inches in the battery frame)
+export const HOLDDOWN = 'holddown-bar';
+const HD = '~' + HOLDDOWN + ':@0,0,0:0:';
+const withHold = h => { const k = h.indexOf('&j='); return k < 0 ? h + HD : h.slice(0, k) + HD + h.slice(k); };
+export const BATTERY_PRESETS = BATTERY_RAW.map(p => ({ ...p, hash: withHold(p.hash) }));
 // Fume extractor options: the fan with everything connected (adapter, clamp, flex duct). Hash fragments like the battery ones; opts as in the catalog.
 const F = 'fan-80mm', AD = 'fan-duct-adapter', fan = o => 's=' + F + ':-:0:' + o;
 // yaw: the duct's bend turns toward the fan frame's +X; on a vertical fan that is down, so the vertical options turn it 180 degrees (bend up)

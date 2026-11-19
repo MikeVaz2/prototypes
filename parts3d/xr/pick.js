@@ -7,7 +7,7 @@ export function kindOf(partId, hostId, hasCoverOption = false) {
   if (/^lug/.test(partId)) return 'lug';
   if (/^nut/.test(partId)) return 'nut';
   if (/^mrbf/.test(partId)) return 'fuse';
-  if (/^(powerbar|copper|fan|flex|hose|roof|solar|mc4|bluetti)/.test(partId)) return 'bar';
+  if (/^(powerbar|copper|fan|flex|hose|roof|solar|mc4|bluetti|holddown)/.test(partId)) return 'bar';
   if (/^(butt|factory)/.test(partId)) return 'cable';
   if (/^(blueseas|busbar|bus)/.test(partId) || hasCoverOption) return 'busbar';
   return 'busbar';

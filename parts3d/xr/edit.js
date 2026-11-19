@@ -26,7 +26,9 @@ export function mountOf(p) {
 // what the user may unlock: everything, for every mount (kept as a function so callers and tests state the rule in one place)
 export function capsFor() { return { mx: true, my: true, mz: true, pitch: true, roll: true, yaw: true }; }
 // lock defaults (true = locked). Surface and free: move X, Y and yaw open. Stud (bolted): fully locked until the user opens yaw.
-export function defaultLocks(mount) {
+// `only`: a part may list the axes that start open (catalog `edit_unlocked`, the hold-down bar: ['mx']); everything else starts locked
+export function defaultLocks(mount, only) {
+  if (Array.isArray(only)) return Object.fromEntries(AXES.map(a => [a, !only.includes(a)]));
   if (mount === 'stud') return { mx: true, my: true, mz: true, pitch: true, roll: true, yaw: true };
   return { mx: false, my: false, mz: true, pitch: true, roll: true, yaw: false };
 }
