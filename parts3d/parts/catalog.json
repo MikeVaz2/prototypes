@@ -3503,6 +3503,113 @@
    "thumb": "parts/thumbs/flex-duct.png"
   },
   {
+   "id": "pool",
+   "name": "Backyard pool: rectangular in-ground pool shown as a hole in the real ground (inward-facing shell only), 30 cm stone coping, waterline tile band, water 10 cm under the coping",
+   "glb": "pool.glb",
+   "default": false,
+   "thumb_color": "#2a78c2",
+   "kind": "pool",
+   "mounts": [
+    {
+     "id": "surface",
+     "type": "surface",
+     "needs": {
+      "kind": "surface",
+      "placement": "fixed"
+     },
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "axis": [
+      0,
+      -1,
+      0
+     ],
+     "note": "origin = centre of the pool at ground level; everything of the pool is below it except the 2.5 cm coping. Built at runtime from xr/pool.js (the GLB is only the default 8 x 4 x 1.5 m pool for thumbnails)."
+    }
+   ],
+   "options": {
+    "length": {
+     "type": "number",
+     "default": 8,
+     "min": 3,
+     "max": 12,
+     "step": 0.1,
+     "unit": "m",
+     "unit_m": 1,
+     "label": "Pool length",
+     "short": "L"
+    },
+    "width": {
+     "type": "number",
+     "default": 4,
+     "min": 2,
+     "max": 6,
+     "step": 0.1,
+     "unit": "m",
+     "unit_m": 1,
+     "label": "Pool width",
+     "short": "W"
+    },
+    "depth": {
+     "type": "number",
+     "default": 1.5,
+     "min": 1.0,
+     "max": 2.4,
+     "step": 0.1,
+     "unit": "m",
+     "unit_m": 1,
+     "label": "Pool depth",
+     "short": "D"
+    },
+    "tile": {
+     "type": "choice",
+     "default": "mosaic",
+     "label": "Tile",
+     "btn": "Tile: ",
+     "values": {
+      "mosaic": {
+       "label": "Blue mosaic",
+       "nodes": []
+      },
+      "plaster": {
+       "label": "White plaster",
+       "nodes": []
+      },
+      "glass": {
+       "label": "Turquoise glass",
+       "nodes": []
+      },
+      "graphite": {
+       "label": "Dark graphite",
+       "nodes": []
+      }
+     },
+     "note": "tile look of the floor and walls; the waterline band and the water tint follow it. Tile size is fixed (texture repeats per metre), it does not stretch with the pool."
+    },
+    "filled": {
+     "type": "bool",
+     "default": true,
+     "label": "Water",
+     "nodes": [
+      "pool_water"
+     ]
+    }
+   },
+   "category": "Pool",
+   "mountKind": "surface",
+   "icon": "pool",
+   "connections": [],
+   "compatible": {
+    "surface": []
+   },
+   "approximate": true,
+   "short": "Pool",
+   "thumb": "parts/thumbs/pool.png"
+  },
+  {
    "id": "roof-rack",
    "name": "Roof rack on the GX470 roof: DIY bars on the factory rails (default), Rago plate cross members, or a platform rack",
    "glb": "roof-rack.glb",
@@ -4625,7 +4732,7 @@
        ]
       }
      },
-     "note": "platform crossbars, 6 to 12 (the POFENZE has 7), spaced 254 mm behind the deflector (10 or more spread evenly)"
+     "note": "platform crossbars, 6 to 12 (the POFENZE has 7), spread evenly from behind the deflector to the rear end (about 340 mm for 7 bars)"
     },
     "plat_len": {
      "type": "number",
@@ -4806,23 +4913,23 @@
        ],
        [
         "pfb_6_02",
-        -0.5
+        -0.3
        ],
        [
         "pfb_6_03",
-        -0.5
+        -0.1
        ],
        [
         "pfb_6_04",
-        -0.5
+        0.1
        ],
        [
         "pfb_6_05",
-        -0.5
+        0.3
        ],
        [
         "pfb_6_06",
-        -0.5
+        0.5
        ],
        [
         "pfb_7_01",
@@ -4830,27 +4937,23 @@
        ],
        [
         "pfb_7_02",
-        -0.5
+        -0.333333
        ],
        [
         "pfb_7_03",
-        -0.5
-       ],
-       [
-        "pfb_7_04",
-        -0.5
+        -0.166667
        ],
        [
         "pfb_7_05",
-        -0.5
+        0.166667
        ],
        [
         "pfb_7_06",
-        -0.5
+        0.333333
        ],
        [
         "pfb_7_07",
-        -0.5
+        0.5
        ],
        [
         "pfb_8_01",
@@ -4858,31 +4961,31 @@
        ],
        [
         "pfb_8_02",
-        -0.5
+        -0.357143
        ],
        [
         "pfb_8_03",
-        -0.5
+        -0.214286
        ],
        [
         "pfb_8_04",
-        -0.5
+        -0.071429
        ],
        [
         "pfb_8_05",
-        -0.5
+        0.071429
        ],
        [
         "pfb_8_06",
-        -0.5
+        0.214286
        ],
        [
         "pfb_8_07",
-        -0.5
+        0.357143
        ],
        [
         "pfb_8_08",
-        -0.5
+        0.5
        ],
        [
         "pfb_9_01",
@@ -4890,35 +4993,31 @@
        ],
        [
         "pfb_9_02",
-        -0.5
+        -0.375
        ],
        [
         "pfb_9_03",
-        -0.5
+        -0.25
        ],
        [
         "pfb_9_04",
-        -0.5
-       ],
-       [
-        "pfb_9_05",
-        -0.5
+        -0.125
        ],
        [
         "pfb_9_06",
-        -0.5
+        0.125
        ],
        [
         "pfb_9_07",
-        -0.5
+        0.25
        ],
        [
         "pfb_9_08",
-        -0.5
+        0.375
        ],
        [
         "pfb_9_09",
-        -0.5
+        0.5
        ],
        [
         "pfb_10_01",
@@ -5210,7 +5309,7 @@
      "default": 135,
      "min": 100,
      "max": 200,
-     "step": 10,
+     "step": 5,
      "unit": "cm",
      "unit_m": 0.01,
      "axis": "x",

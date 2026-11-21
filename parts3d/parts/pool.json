@@ -1,0 +1,106 @@
+{
+ "kind": "pool",
+ "id": "pool",
+ "name": "Backyard pool: rectangular in-ground pool shown as a hole in the real ground (inward-facing shell only), 30 cm stone coping, waterline tile band, water 10 cm under the coping",
+ "short": "Pool",
+ "units": "in",
+ "catalog": {
+  "category": "Pool",
+  "mountKind": "surface",
+  "icon": "pool",
+  "short": "Pool",
+  "swatch": "#2a78c2"
+ },
+ "approximate": true,
+ "mounts": [
+  {
+   "id": "surface",
+   "type": "surface",
+   "needs": {
+    "kind": "surface",
+    "placement": "fixed"
+   },
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "note": "origin = centre of the pool at ground level; everything of the pool is below it except the 2.5 cm coping. Built at runtime from xr/pool.js (the GLB is only the default 8 x 4 x 1.5 m pool for thumbnails)."
+  }
+ ],
+ "connections": [],
+ "options": {
+  "length": {
+   "type": "number",
+   "default": 8,
+   "min": 3,
+   "max": 12,
+   "step": 0.1,
+   "unit": "m",
+   "unit_m": 1,
+   "label": "Pool length",
+   "short": "L"
+  },
+  "width": {
+   "type": "number",
+   "default": 4,
+   "min": 2,
+   "max": 6,
+   "step": 0.1,
+   "unit": "m",
+   "unit_m": 1,
+   "label": "Pool width",
+   "short": "W"
+  },
+  "depth": {
+   "type": "number",
+   "default": 1.5,
+   "min": 1.0,
+   "max": 2.4,
+   "step": 0.1,
+   "unit": "m",
+   "unit_m": 1,
+   "label": "Pool depth",
+   "short": "D"
+  },
+  "tile": {
+   "type": "choice",
+   "default": "mosaic",
+   "label": "Tile",
+   "btn": "Tile: ",
+   "values": {
+    "mosaic": {
+     "label": "Blue mosaic",
+     "nodes": []
+    },
+    "plaster": {
+     "label": "White plaster",
+     "nodes": []
+    },
+    "glass": {
+     "label": "Turquoise glass",
+     "nodes": []
+    },
+    "graphite": {
+     "label": "Dark graphite",
+     "nodes": []
+    }
+   },
+   "note": "tile look of the floor and walls; the waterline band and the water tint follow it. Tile size is fixed (texture repeats per metre), it does not stretch with the pool."
+  },
+  "filled": {
+   "type": "bool",
+   "default": true,
+   "label": "Water",
+   "nodes": [
+    "pool_water"
+   ]
+  }
+ },
+ "notes": "ESTIMATES: a generic rectangular pool, flat floor, vertical walls, coping 30 cm wide and 2.5 cm above the ground (fixed size), waterline band 15 cm tall just under the coping, water surface 10 cm under the coping. Meant for comparing sizes and tile looks in AR, not a construction drawing."
+}

@@ -14,7 +14,7 @@
 <script type="module" src="tb/space/space.js"></script>
 <script>
 // One BUILD constant. It stamps the page corner and busts caches: the import map and the module URL both carry ?v=BUILD.
-const BUILD = '2026-11-19 14:14 holddown';
+const BUILD = '2026-11-21 pool';
 window.__BUILD = BUILD;
 (function () {
   var v = '?v=' + encodeURIComponent(BUILD), cdn = 'https://cdn.jsdelivr.net/npm/three@0.170.0/';
@@ -91,6 +91,7 @@ window.__BUILD = BUILD;
   #sel[data-level="over"] { color:#ff5a5a; font-weight:600; } #sel[data-level="limited"] { color:#ffc24a; }
   #selthumb { flex:none; width:1.8em; height:1.8em; object-fit:contain; } #selthumb[hidden] { display:none; }
   #info[data-sel="1"] #ofs { display:none; }
+  #info #lightst { flex:0 1 auto; font-size:0.7rem; opacity:0.8; } #info #lightst[hidden] { display:none; }
   #info #sel { flex:0 1 auto; min-width:0; } #info #marks { flex:0 1 auto; }
   #row { display:flex; align-items:flex-end; justify-content:space-between; gap:0.5rem; pointer-events:none; }
   #ctl button { flex:0 0 auto; flex-direction:row; gap:0.35em; padding:0.35em 0.8em; min-height:32px; font-size:0.85em; line-height:1; white-space:nowrap; touch-action:manipulation; }
@@ -219,7 +220,7 @@ window.__BUILD = BUILD;
     <input id="partsq" type="search" placeholder="Search name or category" aria-label="Search parts" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
     <div id="partsbody"><ul id="partslist"></ul><div id="partsprev" aria-live="polite"></div></div>
   </dialog>
-  <div id="info" data-surface="glass"><img id="selthumb" alt="" hidden><div id="sel"></div><div id="ofs"></div><div id="marks"></div></div>
+  <div id="info" data-surface="glass"><img id="selthumb" alt="" hidden><div id="sel"></div><div id="lightst" data-on="0" hidden>Light: default room</div><div id="ofs"></div><div id="marks"></div></div>
   <button id="menubtn" type="button" data-theme="auto" data-surface="glass" aria-label="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="menu">&#9776;</button>
   <div id="menu" data-theme="auto" data-surface="glass" data-space="large" data-space-model="relative" hidden>
     <button class="mi" data-space-model="relative" id="scenebtn" type="button" aria-label="Scene: choose or start a scene">Scene</button>

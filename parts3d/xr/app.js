@@ -25,6 +25,7 @@ import * as CTL from './controls.js';
 import * as IN from './input.js';
 import * as ED from './edit.js';
 import * as CL from './clash.js';
+import * as POOL from './pool.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -78,13 +79,14 @@ renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.VSMShadowMap;
 renderer.xr.enabled = true;
 // light estimation (real-world light on a device); falls back to roomEnv when the session has none
 const xrLight = new XREstimatedLight(renderer, true);
+const setLightChip = on => { const el = $('lightst'); if (el) { el.textContent = on ? 'Light: estimated from camera' : 'Light: default room'; el.dataset.on = on ? '1' : '0'; } };
 xrLight.addEventListener('estimationstart', () => {
-  log('light estimation on');
+  log('light estimation on'); setLightChip(true);
   scene.add(xrLight); if (xrLight.environment) scene.environment = xrLight.environment;
   sun.intensity = 0.5;
 });
 xrLight.addEventListener('estimationend', () => {
-  log('light estimation off'); scene.remove(xrLight); scene.environment = roomEnv; sun.intensity = 0.9; });
+  log('light estimation off'); setLightChip(false); scene.remove(xrLight); scene.environment = roomEnv; sun.intensity = 0.9; });
 $('stage').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 50);
@@ -108,10 +110,30 @@ sun.shadow.bias = -0.0005; sun.shadow.radius = 16; sun.shadow.blurSamples = 20;
 const pivot = new THREE.Group(); pivot.matrixAutoUpdate = false;
 const inner = new THREE.Group();
 const floorShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.ShadowMaterial({ opacity: 0.5 }));
-floorShadow.rotation.x = -Math.PI / 2; floorShadow.receiveShadow = true;
+floorShadow.rotation.x = -Math.PI / 2; floorShadow.receiveShadow = true; floorShadow.material.depthWrite = false;   // it must not hide transparent things below it (the pool water)
 const grid = new THREE.GridHelper(1.2, 24, 0x8a94a3, 0xc9ced6);   // preview only
 const modelHolder = new THREE.Group(); inner.add(modelHolder);
 pivot.add(inner, floorShadow, grid, sun, sun.target);
+// pool scene: the shadow camera, the floor shadow plane and the preview ground follow the pool size (battery scenes keep 1 m x 1 m; the preview ground is a lawn with a hole where the pool is)
+const SUN_AT = new THREE.Vector3(0.2, 1.5, 0.35), poolGround = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x8f9a86, roughness: 1 }));
+poolGround.rotation.x = -Math.PI / 2; poolGround.position.y = -0.001; poolGround.receiveShadow = false; poolGround.visible = false; grid.add(poolGround);
+// portal occluder (pool scene, preview and AR): invisible depth-only ground with the pool opening cut out, drawn first, so the real ground hides the below-ground walls and floor and the pool reads as a hole.
+// 3 mm below the coping base line, never cast / received / picked (not in roots(), raycast disabled)
+const poolOccluder = new THREE.Mesh(poolGround.geometry, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, depthTest: true, side: THREE.DoubleSide }));
+poolOccluder.rotation.x = -Math.PI / 2; poolOccluder.position.y = -0.003; poolOccluder.renderOrder = -10; poolOccluder.visible = false; poolOccluder.raycast = () => {}; poolOccluder.frustumCulled = false; pivot.add(poolOccluder);   // child of the grid: shown in the preview only
+function fitStage(poolInst) {
+  const half = poolInst ? POOL.fitRadius(poolInst.opts) : 0.5, k = poolInst ? half / 0.5 : 1, sh = sun.shadow;
+  Object.assign(sh.camera, { left: -half, right: half, top: half, bottom: -half, far: 4 * k }); sh.camera.updateProjectionMatrix();
+  const sz = poolInst ? 2048 : 1024; if (sh.mapSize.x !== sz) { sh.mapSize.set(sz, sz); if (sh.map) { sh.map.dispose(); sh.map = null; } if (sh.mapPass) { sh.mapPass.dispose(); sh.mapPass = null; } }
+  sun.position.copy(SUN_AT).multiplyScalar(k);
+  floorShadow.scale.set(poolInst ? 2 * half / 1.2 : 1, poolInst ? 2 * half / 1.2 : 1, 1);
+  grid.material.visible = !poolInst; poolGround.visible = poolOccluder.visible = !!poolInst;
+  if (poolInst) {
+    const { L, W } = POOL.sizeOf(poolInst.opts), s = new THREE.Shape([new THREE.Vector2(-20, -20), new THREE.Vector2(20, -20), new THREE.Vector2(20, 20), new THREE.Vector2(-20, 20)]);
+    s.holes.push(new THREE.Path([new THREE.Vector2(-L / 2, -W / 2), new THREE.Vector2(-L / 2, W / 2), new THREE.Vector2(L / 2, W / 2), new THREE.Vector2(L / 2, -W / 2)]));
+    poolGround.geometry.dispose(); poolGround.geometry = poolOccluder.geometry = new THREE.ShapeGeometry(s);   // shape x,y -> world x,-z after the -90 degree turn; the hole is symmetric
+  }
+}
 scene.add(pivot);
 
 const reticle = new THREE.Mesh(new THREE.RingGeometry(0.07, 0.09, 40).rotateX(-Math.PI / 2),
@@ -352,13 +374,27 @@ const numLabel = (p, inst) => { const k = numKey(p, inst.id), o = p.options[k]; 
 const optText = (p, inst, k) => PK.optLabel(p.options[k], inst.opts[k]);
 const numText = (p, inst) => numKeys(p, inst).map(k => (numKeys(p, inst).length > 1 ? (p.options[k].short || p.options[k].label) + ' ' : '') + MD.fmtOpt(p.options[k], inst.opts[k], units)).join(' ');
 
+// GX470 roof outline for scale (solar scene only): thin translucent rounded rectangle at roof level (y = 0) and the windshield arc; never picked (not in roots())
+const roofGroup = new THREE.Group(); inner.add(roofGroup);
+function roofRef() {
+  roofGroup.clear();
+  if (C.SC.isDefaultHost || C.host.id !== 'roof-rack') return;
+  const mm = 0.001, pts = SOL.roofPoly().map(p => new THREE.Vector2(p[0] * mm, p[1] * mm));
+  const fill = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(pts)).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8aa0b8, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
+  fill.position.y = -0.002; fill.renderOrder = -1; fill.raycast = () => {};
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x8aa0b8, transparent: true, opacity: 0.55, depthWrite: false });
+  const edge = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, -0.002, p.y))), lineMat);
+  const glass = new THREE.Line(new THREE.BufferGeometry().setFromPoints(SOL.windshieldLine().map(p => new THREE.Vector3(p[0] * mm, -0.002, p[1] * mm))), lineMat);
+  edge.raycast = glass.raycast = () => {};
+  roofGroup.add(fill, edge, glass);
+}
 async function rebuild() {
   if (busy) { again = true; return; }
   busy = true;
   try {
     SOL.syncBolts(state, C.partOf);   // bolt heads only where the hole rows sit over bars
     const root = await C.build(state);
-    modelHolder.clear(); modelHolder.add(root);
+    modelHolder.clear(); modelHolder.add(root); roofRef(); fitStage(C.host.id === 'pool' ? state.find(i => i.part === 'pool') : null);
     hoveredId = null; outletPts = null; fitCache.clear(); hideQuick(); edgeFor = null; edgeLines = []; applyXray(); applyTints(); refreshOutline(); updateJumpers(); updateHeights(); readout(); persistSoon();
   } catch (e) {
     const bad = e && e.partName ? e.partName : 'a part';
@@ -428,7 +464,8 @@ function applyXray() {
     r.visible = look.visible;
     r.traverse(c => {
       if (!c.isMesh || c.userData.isEdge) return;
-      c.castShadow = look.shadow;
+      c.castShadow = look.shadow && !c.userData.noCast;   // pool shell and water never cast (xr/compose.js)
+      if (c.userData.keepLook) return;   // the pool water keeps its own transparency
       for (const m of Array.isArray(c.material) ? c.material : [c.material]) {
         m.transparent = look.transparent; m.opacity = look.opacity; m.depthWrite = look.depthWrite; m.wireframe = look.wireframe; m.needsUpdate = true;
       }
@@ -1039,7 +1076,7 @@ router.on('ui', 'keydown', e => { if ((e.ctrlKey || e.metaKey) && !e.altKey && e
 // ---- Scene dialog: new empty scene first, then every start scene (battery options, fume extractor, solar roof) ----
 const thumbOf = id => { const p = C.partOf(id); return p && p.thumb || ''; };
 function sceneHosts() {
-  return [{ host: '', hostId: C.catalog.host, title: 'Battery', presets: PR.BATTERY_PRESETS }, { host: 'fan-80mm', hostId: 'fan-80mm', title: 'Fume extractor', presets: PR.FAN_PRESETS }, { host: 'roof-rack', hostId: 'roof-rack', title: 'Solar roof', presets: PR.SOLAR_PRESETS }];
+  return [{ host: '', hostId: C.catalog.host, title: 'Battery', presets: PR.BATTERY_PRESETS }, { host: 'fan-80mm', hostId: 'fan-80mm', title: 'Fume extractor', presets: PR.FAN_PRESETS }, { host: 'roof-rack', hostId: 'roof-rack', title: 'Solar roof', presets: PR.SOLAR_PRESETS }, { host: 'pool', hostId: 'pool', title: 'Backyard pool', presets: PR.POOL_PRESETS }];
 }
 function curSceneId() { const o = PR.presetOf(C.SC, state); return o ? (C.SC.isDefaultHost ? 'battery' : C.SC.host.id) + ':' + o : ''; }
 function openScenes() {
@@ -1069,7 +1106,7 @@ async function chooseScene(sc) {
 async function loadScene(hostSel, hash) {
   cancelAdd(); cancelLink(); endMove(); hideQuick(); selectPart(null); editLocks.clear(); eg = null; selMark = selMeasure = -1; recOpen = false; sizeOpen = false;
   const nc = await createComposer('parts/catalog.json', '', hostSel);
-  C = nc; PR.setHost(C.SC); cycle = RC.createCycle(PR.ids());
+  C = nc; PR.setHost(C.SC); $('lightst').hidden = C.host.id !== 'pool'; cycle = RC.createCycle(PR.ids());
   initialHash = hash; optLast = null; stackH = { pos: null, neg: null }; fitCache.clear(); outletPts = null; numSel.clear(); lastRemoved = null;
   log('scene hash #' + initialHash);
   const hp = new URLSearchParams(hash);
@@ -1944,7 +1981,7 @@ function frameModel() {   // preview camera: whole model in view, 3/4 angle
   const b = new THREE.Box3().setFromObject(modelHolder), c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() / 2;
   const fov = Math.min(camera.fov, 2 * Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect) * 180 / Math.PI);
   const d = (r / Math.sin(fov * Math.PI / 360)) * 1.05;
-  controls.target.copy(c); camera.position.copy(c).add(new THREE.Vector3(0.3, 0.3, 1).normalize().multiplyScalar(d)); controls.update();
+  controls.target.copy(c); camera.position.copy(c).add((C && C.host.id === 'pool' ? new THREE.Vector3(0.25, 0.8, 0.9) : new THREE.Vector3(0.3, 0.3, 1)).normalize().multiplyScalar(d)); controls.update();
 }
 
 // ---- non-AR editor: click / tap select (normal raycast from the preview camera), mouse hover ----

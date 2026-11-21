@@ -5,6 +5,7 @@ import { kindOf } from './pick.js';
 import { createScene, IN, baseOf } from './scene.js';
 import { withVersion } from './version.js';
 import { ductMesh, BENDS, stretchOps } from './flex.js';
+import * as POOL from './pool.js';
 
 export async function createComposer(catalogUrl = 'parts/catalog.json', base = '', hostSel = '') {
   const catalog = await (await fetch(withVersion(base + catalogUrl))).json();
@@ -36,6 +37,40 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
     return [out, inn];
   }
 
+  // backyard pool: built at runtime from xr/pool.js (coping and tile size must not stretch with the size). Inward-facing shell only (FrontSide, back faces culled), so in AR it reads as a hole in the ground.
+  // Tile textures are canvas-made (grid of tiles, 40 cm per repeat, uv in metres), made once per look. Skipped without a DOM (tests): flat colours then.
+  const poolTex = new Map();
+  function tileTex(key, color, jitter, tile, grout, noise = 0.04) {
+    if (poolTex.has(key)) return poolTex.get(key);
+    let t = null;
+    try {
+      const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N; const g = cv.getContext('2d');
+      const rnd = (x, y) => { const v = Math.sin((x * 127.1 + y * 311.7) * 12.9898) * 43758.5453; return v - Math.floor(v); };
+      const base = new THREE.Color(color), n = tile ? Math.round(POOL.TEX_M / tile) : 0, px = n ? N / n : 0;
+      const shade = (k, j) => { const c = base.clone(); c.offsetHSL(0, 0, (k - 0.5) * 2 * j); return '#' + c.getHexString(); };
+      g.fillStyle = grout || color; g.fillRect(0, 0, N, N);
+      if (n) for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { g.fillStyle = shade(rnd(i * 7.3 + key.length, j * 3.1), jitter); const gap = Math.max(1, px * 0.1); g.fillRect(i * px + gap / 2, j * px + gap / 2, px - gap, px - gap); }
+      else for (let k = 0; k < 900; k++) { g.fillStyle = shade(rnd(k, k * 0.7), jitter + noise); g.fillRect(rnd(k, 1.3) * N, rnd(k, 2.9) * N, 2 + rnd(k, 5) * 3, 2 + rnd(k, 7) * 3); }
+      t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    } catch (e) { t = null; }
+    poolTex.set(key, t); return t;
+  }
+  function poolMeshes(inst) {
+    const tl = POOL.TILES[inst.opts.tile] || POOL.TILES.mosaic, key = POOL.TILES[inst.opts.tile] ? inst.opts.tile : 'mosaic', m = POOL.poolMeshes(inst.opts, inst.opts.filled !== false);
+    const geo = d => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(d.pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(d.uv, 2)); g.setIndex(new THREE.BufferAttribute(d.idx, 1)); g.computeVertexNormals(); return g; };
+    const std = (name, d, tex, color, rough, metal) => { const x = new THREE.Mesh(geo(d), new THREE.MeshStandardMaterial({ color: tex ? 0xffffff : color, map: tex, roughness: rough, metalness: metal, side: THREE.FrontSide })); x.name = name; return x; };
+    const out = [
+      std('pool_tile', m.tile, tileTex('t_' + key, tl.color, tl.jitter, tl.tile, tl.grout), tl.color, tl.rough, tl.metal),
+      std('pool_band', m.band, tileTex('b_' + key, tl.band, 0.08, tl.bandTile, '#e8eef2'), tl.band, 0.3, 0),
+      std('pool_fascia', m.fascia, tileTex('f', POOL.STONE.fascia, 0.04, 0, null), POOL.STONE.fascia, 0.8, 0),
+      std('pool_coping', m.coping, tileTex('c', POOL.STONE.color, 0.07, 0, null, 0.06), POOL.STONE.color, 0.85, 0),
+    ];
+    if (m.water) {   // clear tinted water: low roughness so it reflects scene.environment (the estimated light in AR), partly transparent so the tiles show through
+      const w = new THREE.Mesh(geo(m.water), new THREE.MeshPhysicalMaterial({ color: tl.water, roughness: 0.03, metalness: 0, transparent: true, opacity: 0.42, depthWrite: false, ior: 1.33, specularIntensity: 0.7, side: THREE.FrontSide }));
+      w.name = 'pool_water'; w.renderOrder = 2; out.push(w);
+    }
+    return out;
+  }
   // stretch spec (rack bars, panel size): { axis, scale: [[nodePrefix, baseMetres]], moves: [[nodePrefix, coef, refValue?]] }. Nodes are scaled about their own origin
   // (the geometry is centred there) by (base + d) / base, or moved by d * coef, with d = (value - default) * unit_m (moves may use their own reference value).
   // Pure arithmetic in stretchOps (xr/flex.js), so tests can check it.
@@ -97,12 +132,14 @@ export async function createComposer(catalogUrl = 'parts/catalog.json', base = '
       }
       for (const n of hide) { const x = obj.getObjectByName(n); if (x) x.removeFromParent(); }
       if (p.kind === 'flexduct') { obj.clear(); obj.add(...flexMeshes(inst, p)); }
+      if (p.kind === 'pool') { obj.clear(); obj.add(...poolMeshes(inst)); }
       for (const [k, o] of Object.entries(p.options || {})) if (o.type === 'number') applyLength(obj, inst.opts[k], o);
       obj.traverse(c => { if (c.isMesh) {
         c.castShadow = true; c.receiveShadow = true;
         c.material = Array.isArray(c.material) ? c.material.map(m => m.clone()) : c.material.clone();   // per instance, so tints stay on this part
       } });
       if (p.kind === 'solarpanel') etfeSurface(obj);
+      if (p.kind === 'pool') obj.traverse(c => { if (c.isMesh) { c.castShadow = c.name === 'pool_coping'; c.userData.noCast = !c.castShadow; c.userData.keepLook = c.name === 'pool_water'; c.receiveShadow = c.name !== 'pool_water'; } });   // the shell never shadows itself; the coping does
       obj.userData = { instanceId: inst.id, partId: p.id, kind: kindOf(p.id, host.id, 'cover' in (p.options || {})), tint: null };
       const node = new THREE.Group(); node.name = 'node:' + inst.id; node.userData.nodeId = inst.id;
       node.matrixAutoUpdate = false; node.add(obj); nodes.set(inst.id, node); bodies.push(obj);

@@ -87,7 +87,7 @@ export function stationCheck(insts, jumpers, partOf) {
 
 // ---- grommet holes over the bars ----
 // POFENZE: first crossbar centre PLAT_FRONT_MM from the front tip (-X, the deflector end), last bar PLAT_REAR_MM from the rear end (estimates, same numbers as make_solar.py)
-export const PLAT_FRONT_MM = 205, PLAT_REAR_MM = 80, PLAT_SPACING_MM = 254;   // 254 mm apart when that fits (up to 9 bars), anchored behind the deflector; more bars spread evenly
+export const PLAT_FRONT_MM = 205, PLAT_REAR_MM = 80, PLAT_SPACING_MM = 0;   // 0 = bars spread evenly from the first (behind the deflector) to the last (PLAT_REAR_MM from the rear end); set 254 for the maker-diagram spacing (anchored behind the deflector, up to 9 bars)
 export const HOLE_END_MM = 25, HOLE_EDGE_MM = 15, HOLE_TOL_MM = 10;
 const rackKind = rack => (rack.opts && rack.opts.rack) || 'diy';
 // platform size in mm and its crossbar count (options plat_len / plat_wid in cm, plat_bars)
@@ -98,7 +98,7 @@ export function platformDims(rack) {
 // bar centres along the car (mm, rack frame) for a rack instance
 export function barsX(rack) {
   const o = rack.opts || {};
-  if (rackKind(rack) === 'platform') { const { len, n } = platformDims(rack), sp = (n - 1) * PLAT_SPACING_MM <= 2324 - PLAT_FRONT_MM - PLAT_REAR_MM + 1 ? PLAT_SPACING_MM : (len - PLAT_FRONT_MM - PLAT_REAR_MM) / (n - 1); return Array.from({ length: n }, (_, k) => -len / 2 + PLAT_FRONT_MM + k * sp); }
+  if (rackKind(rack) === 'platform') { const { len, n } = platformDims(rack), sp = PLAT_SPACING_MM && (n - 1) * PLAT_SPACING_MM <= 2324 - PLAT_FRONT_MM - PLAT_REAR_MM + 1 ? PLAT_SPACING_MM : (len - PLAT_FRONT_MM - PLAT_REAR_MM) / (n - 1); return Array.from({ length: n }, (_, k) => -len / 2 + PLAT_FRONT_MM + k * sp); }
   const n = +o.bars || 3, gap = +o.gap || 400;
   return Array.from({ length: n }, (_, i) => (i - (n - 1) / 2) * gap);
 }
@@ -137,6 +137,45 @@ export function holesCheck(inst, rack, partOf) {
   if (snapCandidates(inst, rack, c.x).length) return { ok, pitch: g.pitch, text: 'Holes are between the bars: tap Move to snap the panel onto them' };
   const need = g.alongL ? Math.round(g.pitch) : Math.round(2 * g.side);
   return { ok, pitch: g.pitch, text: "Holes don't line up with the bars: set bar spacing to " + need + ' mm' + (g.alongL ? (Math.abs(c.x) < 1 && bars.length % 2 === 0 ? ' (and use an odd bar count)' : '') : ' (two bars)') };
+}
+// ---- fit check (2026-11-20): how far a panel sticks out past the rack's outer edge ----
+export const FIT_MM = 150;   // more than this past a rail (or the platform edge) = "doesn't fit the rack"
+// size of the rack footprint in mm: rails (factory rails: length x rail-to-rail) or the platform
+export function rackDims(rack) {
+  if (rackKind(rack) === 'platform') { const d = platformDims(rack); return { len: d.len, wid: d.wid, edge: 'the platform' }; }
+  const o = rack.opts || {}; return { len: (+o.rail_len || 135) * 10, wid: (+o.rail_sp || 110) * 10, edge: 'the rails' };
+}
+// -> { ok, over: { x, z } (mm past the edge, 0 when inside), text } ; text is "doesn't fit the rack: reason; reason" or ''
+export function fitCheck(inst, rack, partOf, insts) {
+  if (!onRack(inst, rack)) return { ok: true, over: { x: 0, z: 0 }, text: '' };
+  const g = panelGeom(inst), c = panelCentre(inst, rack, partOf), d = rackDims(rack);
+  const ox = Math.max(0, Math.round(Math.abs(c.x) + g.along / 2 - d.len / 2)), oz = Math.max(0, Math.round(Math.abs(c.z) + g.across / 2 - d.wid / 2));
+  const why = [];
+  if (oz > FIT_MM) why.push(oz + ' mm past the side of ' + d.edge + ' (max ' + FIT_MM + ')');
+  if (ox > FIT_MM) why.push(ox + ' mm past the end of ' + d.edge + ' (max ' + FIT_MM + ')');
+  if (rackKind(rack) !== 'platform' && insts) {
+    const mine = insts.filter(i => i.part === inst.part && onRack(i, rack));
+    if (mine.length >= 4) {
+      const ex = mine.map(i => { const gi = panelGeom(i), ci = panelCentre(i, rack, partOf); return [ci.x - gi.along / 2, ci.x + gi.along / 2]; }), need = Math.round(Math.max(...ex.map(e => e[1])) - Math.min(...ex.map(e => e[0])));
+      if (need > d.len + 2 * FIT_MM) why.push(mine.length + ' panels need ' + need + ' mm along the car, the factory rails are ' + Math.round(d.len) + ' mm: use the platform');
+    }
+  }
+  return { ok: !why.length, over: { x: ox, z: oz }, text: why.length ? "doesn't fit the rack: " + why.join('; ') : '' };
+}
+
+// ---- GX470 roof outline for scale (2026-11-20), rack frame, x along the car (front = -X), centred on the rack. Roof area [E] estimate; the windshield base arc is drawn ahead of the roof ----
+export const ROOF = { len: 1900, wid: 1450, r: 220, glassGap: 90, glassBow: 70 };
+// closed outline of the roof, [[x, z]] in mm (rounded rectangle)
+export function roofPoly(n = 10) {
+  const { len, wid, r } = ROOF, hx = len / 2 - r, hz = wid / 2 - r, pts = [];
+  for (const [cx, cz, a0] of [[hx, hz, 0], [-hx, hz, 90], [-hx, -hz, 180], [hx, -hz, 270]])
+    for (let k = 0; k <= n; k++) { const a = rad(a0 + 90 * k / n); pts.push([cx + r * Math.cos(a), cz + r * Math.sin(a)]); }
+  return pts;
+}
+// windshield edge: an arc across the car just ahead of the roof front, [[x, z]] in mm
+export function windshieldLine(n = 24) {
+  const hw = ROOF.wid / 2 - ROOF.r, x0 = -ROOF.len / 2 - ROOF.glassGap;
+  return Array.from({ length: n + 1 }, (_, k) => { const t = k / n * 2 - 1; return [x0 - ROOF.glassBow * (1 - t * t), t * hw]; });
 }
 // half sizes the panel centre may move over (mm): platform = the whole panel stays on it; bars = the centre stays over the rails / bars
 export function moveLimits(inst, rack) {

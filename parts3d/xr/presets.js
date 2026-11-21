@@ -49,8 +49,13 @@ const P = n => SP + sfx(n);
 const YP = 'mc4-y', YN = 'mc4-y_2', yTok = (id, parent, split, pol) => '~' + id + ':' + parent + ':0:split=' + split + ',pol=' + pol;
 const lead = (n, pol) => P(n) + '.lead_' + pol;
 const J = list => '&j=' + list.join('~');
-const R2 = rack('bars=3,gap=400,rail_sp=140,rail_len=135'), R4 = rack('bars=6,gap=400,rail_sp=140,rail_len=200');
-const panels2 = panel(1, 'a1') + panel(2, 'a2'), panels4 = panel(1, 'b1') + panel(2, 'b2') + panel(3, 'b3') + panel(4, 'b4');
+// Round 5 (2026-11-20), GX470 numbers. 2 panels (A, B): DIY bars on the factory rails, rails 1100 mm apart and 1350 mm long. The panels lie side by side across the car, length along the car,
+// on 3 bars 400 mm apart (the 402 mm hole pitch; smaller than the 600-937 mm factory crossbar range, kept because 3 bars is what one panel needs). Two panels are 1380 mm wide: 140 mm past each rail (limit 150).
+// 4 panels (C, D, E): POFENZE platform (2324 x 1207), 7 bars spread evenly (339.8 mm), the panel middle rows on bars 2 and 5 (platform bars at x = -957 + k * 339.8 mm, solar.barsX).
+const R2 = rack('bars=3,gap=400,rail_sp=110,rail_len=135'), R4 = 's=' + R + ':-:0:rack=platform,plat_bars=7';
+const PLAT_BAR_X = [-957 + 339.833 * 1, -957 + 339.833 * 4];   // bar 2 and bar 5 (mm, rack frame); slots b1 b2 sit at x = -600, b3 b4 at +600
+const panel4 = (n, slot, k) => panel(n, slot).replace('slide=0', 'slide=0,px=' + Math.round(PLAT_BAR_X[k] - (k ? 600 : -600)));
+const panels2 = panel(1, 'a1') + panel(2, 'a2'), panels4 = panel4(1, 'b1', 0) + panel4(2, 'b2', 0) + panel4(3, 'b3', 1) + panel4(4, 'b4', 1);
 // Five ways to connect the panels (2026-11-18). The AC70 solar input takes 12-58 V and 10 A; a panel is Voc 22.42 V, Isc 5.79 A, Vmp 19 V, Imp 5.26 A.
 // A series link is a cable from one panel's + lead to the next panel's - lead (or the plugs mated directly).
 export const SOLAR_PRESETS = [
@@ -72,7 +77,15 @@ export const SOLAR_PRESETS = [
     hash: R4 + panels4 + station(...STATION_AT) +
       J([wire(lead(1, 'neg'), ST + '.pv_neg', 'black'), wire(lead(1, 'pos'), lead(2, 'neg'), 'red'), wire(lead(2, 'pos'), lead(3, 'neg'), 'red'), wire(lead(3, 'pos'), lead(4, 'neg'), 'red'), wire(lead(4, 'pos'), ST + '.pv_pos', 'red')]) },
 ];
-const HOST_LISTS = { 'fan-80mm': FAN_PRESETS, 'roof-rack': SOLAR_PRESETS };
+// Backyard pool options (2026-11-21): the pool alone, sizes in metres. Option line: size, depth, tile, water.
+const pool = (len, wid, dep, tile, filled) => 's=pool:-:0:length=' + len + ',width=' + wid + ',depth=' + dep + ',tile=' + tile + ',filled=' + (filled ? 1 : 0);
+export const POOL_PRESETS = [
+  { id: 'A', short: 'Plunge', name: 'Plunge pool 2.4 x 4 m, 1.4 m deep, blue mosaic, filled', hash: pool(4, 2.4, 1.4, 'mosaic', true) },
+  { id: 'B', short: 'Standard', name: 'Standard pool 4 x 8 m, 1.5 m deep, white plaster, filled', hash: pool(8, 4, 1.5, 'plaster', true) },
+  { id: 'C', short: 'Lap', name: 'Lap pool 2.5 x 12 m, 1.3 m deep, dark graphite, filled', hash: pool(12, 2.5, 1.3, 'graphite', true) },
+  { id: 'D', short: 'Family', name: 'Family pool 5 x 10 m, 1.8 m deep, turquoise glass, empty', hash: pool(10, 5, 1.8, 'glass', false) },
+];
+const HOST_LISTS = { 'fan-80mm': FAN_PRESETS, 'roof-rack': SOLAR_PRESETS, 'pool': POOL_PRESETS };
 const listFor = S => !S || S.isDefaultHost ? BATTERY_PRESETS : HOST_LISTS[S.host.id] || FAN_PRESETS;
 // the active list follows the start scene: battery options by default, the host's own options otherwise (setHost is called once, when the scene is created)
 export let PRESETS = BATTERY_PRESETS;
@@ -158,6 +171,7 @@ export function stackHeights(S, insts, topIn) {
 }
 export function tooltip(id, heights, fmt) {
   const p = byId(id);
+  if (PRESETS === POOL_PRESETS) return p ? 'Option ' + p.id + ': ' + p.name : 'Custom pool';
   if (PRESETS !== BATTERY_PRESETS) return p ? 'Option ' + p.id + ': ' + (PRESETS === SOLAR_PRESETS ? p.short : p.name) : PRESETS === SOLAR_PRESETS ? 'Custom solar setup' : 'Custom fume extractor setup';
   const f = v => v == null ? '–' : fmt(v);
   return (p ? 'Option ' + p.id + ': ' + p.name : 'Custom') + ' · + ' + f(heights.pos) + ' · − ' + f(heights.neg);

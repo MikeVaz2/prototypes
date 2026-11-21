@@ -22,7 +22,7 @@ export const baseOf = id => String(id).replace(/_\d+$/, '');
 
 // Start scene: which surface part is the host (the model's root). Default = catalog.host (the battery).
 // sel = part id or alias (#host=fan-80mm, ?scene=fume). Unknown / not a surface part -> the default host.
-export const HOST_ALIASES = { battery: null, fume: 'fan-80mm', fan: 'fan-80mm', solar: 'roof-rack', roof: 'roof-rack' };
+export const HOST_ALIASES = { battery: null, fume: 'fan-80mm', fan: 'fan-80mm', solar: 'roof-rack', roof: 'roof-rack', pool: 'pool', backyard: 'pool' };
 export function resolveHostId(catalog, sel) {
   const s = String(sel == null ? '' : sel).trim().toLowerCase();
   if (!s) return catalog.host;

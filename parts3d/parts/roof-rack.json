@@ -1431,7 +1431,7 @@
      ]
     }
    },
-   "note": "platform crossbars, 6 to 12 (the POFENZE has 7), spaced 254 mm behind the deflector (10 or more spread evenly)"
+   "note": "platform crossbars, 6 to 12 (the POFENZE has 7), spread evenly from behind the deflector to the rear end (about 340 mm for 7 bars)"
   },
   "plat_len": {
    "type": "number",
@@ -1612,23 +1612,23 @@
      ],
      [
       "pfb_6_02",
-      -0.5
+      -0.3
      ],
      [
       "pfb_6_03",
-      -0.5
+      -0.1
      ],
      [
       "pfb_6_04",
-      -0.5
+      0.1
      ],
      [
       "pfb_6_05",
-      -0.5
+      0.3
      ],
      [
       "pfb_6_06",
-      -0.5
+      0.5
      ],
      [
       "pfb_7_01",
@@ -1636,27 +1636,23 @@
      ],
      [
       "pfb_7_02",
-      -0.5
+      -0.333333
      ],
      [
       "pfb_7_03",
-      -0.5
-     ],
-     [
-      "pfb_7_04",
-      -0.5
+      -0.166667
      ],
      [
       "pfb_7_05",
-      -0.5
+      0.166667
      ],
      [
       "pfb_7_06",
-      -0.5
+      0.333333
      ],
      [
       "pfb_7_07",
-      -0.5
+      0.5
      ],
      [
       "pfb_8_01",
@@ -1664,31 +1660,31 @@
      ],
      [
       "pfb_8_02",
-      -0.5
+      -0.357143
      ],
      [
       "pfb_8_03",
-      -0.5
+      -0.214286
      ],
      [
       "pfb_8_04",
-      -0.5
+      -0.071429
      ],
      [
       "pfb_8_05",
-      -0.5
+      0.071429
      ],
      [
       "pfb_8_06",
-      -0.5
+      0.214286
      ],
      [
       "pfb_8_07",
-      -0.5
+      0.357143
      ],
      [
       "pfb_8_08",
-      -0.5
+      0.5
      ],
      [
       "pfb_9_01",
@@ -1696,35 +1692,31 @@
      ],
      [
       "pfb_9_02",
-      -0.5
+      -0.375
      ],
      [
       "pfb_9_03",
-      -0.5
+      -0.25
      ],
      [
       "pfb_9_04",
-      -0.5
-     ],
-     [
-      "pfb_9_05",
-      -0.5
+      -0.125
      ],
      [
       "pfb_9_06",
-      -0.5
+      0.125
      ],
      [
       "pfb_9_07",
-      -0.5
+      0.25
      ],
      [
       "pfb_9_08",
-      -0.5
+      0.375
      ],
      [
       "pfb_9_09",
-      -0.5
+      0.5
      ],
      [
       "pfb_10_01",
@@ -2016,7 +2008,7 @@
    "default": 135,
    "min": 100,
    "max": 200,
-   "step": 10,
+   "step": 5,
    "unit": "cm",
    "unit_m": 0.01,
    "axis": "x",
@@ -2044,5 +2036,5 @@
    "note": "factory rail length (ESTIMATE, about 130 to 140 cm)"
   }
  },
- "notes": "SIZES: platform overall 2324 x 1207 x 114 mm and 7 slats, 6 feet are [P] (maker); everything else is an ESTIMATE [E]. Platform: black textured powder coat (rough, slightly glossy material, no texture map), side rails = 3 mm C plates 18 to 114 mm with outward flanges, a pentagon cut-out about 60 x 30 mm every ~300 mm, front piece angled down along the deflector, splice plates with 4 button-head bolts at mid-length; crossbars 50 x 25 mm tubes with 45 x 14 mm slots every 125 mm; crossbar spacing 254 mm (maker diagram, up to 9 bars; 10 to 12 spread evenly), the first bar 205 mm behind the front tip so the rear 595 mm of the rack (7 bars) is open rail, which the photos do not show (they show the rear bar at the end; the 254 figure and the 91.5 in length do not both hold); bars stay anchored behind the deflector when the length changes; crossbar slots are 45 x 14 mm stadium slots, a pair of button-head bolts at each bar end on the rail web; deflector: flat face 21 degrees from horizontal, 190 mm along the car, with a rolled leading edge (38 mm radius turning down to 68 degrees), gusset brackets; the concave front edge in plan and the end notches are not modelled; feet plates 100 x 40 mm at x = -832, 60, 862 mm. Front of the car = -X. Factory rails: low rounded section 35 x 32 mm (14 to 46 mm above the roof) on end feet, length 1350 mm, rail-to-rail 1100 mm, satin dark grey (the real rail is silver or body colour). DIY bars sit on the rails (tops: T-slot 86, tube 84, strut 87 mm), held by saddle clamps: a 3.5 mm U wrapping the rail, ears with two 8 mm bolts and nuts. Rago members as before, plate flush with the rail top (46 mm), about 100 mm wide, 5 mm plate, 25 mm flanges, slots along the centre."
+ "notes": "SIZES: platform overall 2324 x 1207 x 114 mm and 7 slats, 6 feet are [P] (maker); everything else is an ESTIMATE [E]. Platform: black textured powder coat (rough, slightly glossy material, no texture map), side rails = 3 mm C plates 18 to 114 mm with outward flanges, a pentagon cut-out about 60 x 30 mm every ~300 mm, front piece angled down along the deflector, splice plates with 4 button-head bolts at mid-length; crossbars 50 x 25 mm tubes with 45 x 14 mm slots every 125 mm; crossbars spread evenly (round 5; about 340 mm for 7 bars): first bar 205 mm behind the front tip, last 80 mm from the rear end, as the photos show (the maker-diagram 254 mm spacing left 595 mm of bare rail at the rear and does not match the photos; set P_SPACING = 254 in make_solar.py to get it back); crossbar slots are 45 x 14 mm stadium slots, a pair of button-head bolts at each bar end on the rail web; deflector: flat face 21 degrees from horizontal, 190 mm along the car, with a rolled leading edge (38 mm radius turning down to 68 degrees), gusset brackets; the concave front edge in plan and the end notches are not modelled; feet plates 100 x 40 mm at x = -832, 60, 862 mm. Front of the car = -X. Factory rails: low rounded section 35 x 32 mm (14 to 46 mm above the roof) on end feet, length 1350 mm, rail-to-rail 1100 mm, satin dark grey (the real rail is silver or body colour). DIY bars sit on the rails (tops: T-slot 86, tube 84, strut 87 mm), held by saddle clamps: a 3.5 mm U wrapping the rail, ears with two 8 mm bolts and nuts. Rago members as before, plate flush with the rail top (46 mm), about 100 mm wide, 5 mm plate, 25 mm flanges, slots along the centre."
 }

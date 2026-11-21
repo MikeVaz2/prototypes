@@ -6,21 +6,21 @@ First part: Odyssey ODP-AGM31 (`parts/odyssey-odp-agm31.json`).
 
 ## Generate
 ```
-cd /d <prototype folder>
-<python venv>\Scripts\python.exe make_part.py parts\odyssey-odp-agm31.json
+cd /d D:\LifeStyle\prototypes\parts3d
+D:\LifeStyle\.venv-3d\Scripts\python.exe make_part.py parts\odyssey-odp-agm31.json
 ```
 Output: `odyssey-odp-agm31.glb` (pass a second argument to choose the output path).
 
 ## Validate + previews
 ```
-<python venv>\Scripts\python.exe validate_and_preview.py odyssey-odp-agm31.glb out
+D:\LifeStyle\.venv-3d\Scripts\python.exe validate_and_preview.py odyssey-odp-agm31.glb out
 ```
 Reloads the GLB, prints bounds in inches, size and triangles, and renders
 `out\preview_34.png` and `out\preview_top.png` from the GLB geometry (numpy rasteriser).
 
 ## View
 ```
-cd /d <prototype folder> & python -m http.server 8000
+cd /d D:\LifeStyle\prototypes\parts3d & python -m http.server 8000
 ```
 Open http://localhost:8000/viewer.html. It must be served over http(s), not opened as file://.
 
@@ -34,13 +34,13 @@ Quick Look on iOS prefers USDZ; model-viewer converts the GLB on the fly where s
 
 ## Scene builder (parts, mounts, snapping)
 Parts: `odyssey-odp-agm31` (battery), `blueseas-2340-pos`, `blueseas-2340-neg` (Blue Sea 2340 battery-terminal
-busbars, from `dimensioned drawing on bluesea.com`). `make_part.py` dispatches on `"kind"` in the JSON
+busbars, from `ref/bluesea-2340-drawing.pdf`). `make_part.py` dispatches on `"kind"` in the JSON
 (`battery` default, `busbar`); busbars are built from drawing dimensions in `dims` (tab with round end + hole, joggled
 bus plate, 4 screws, open-sided cover). Each GLB has its own origin; the busbar origin is the tab hole centre on the
 tab's bottom face, local -X runs toward the screw block.
 ```
-cd /d <prototype folder>
-set PY=<python venv>\Scripts\python.exe
+cd /d D:\LifeStyle\prototypes\parts3d
+set PY=D:\LifeStyle\.venv-3d\Scripts\python.exe
 %PY% make_part.py parts\odyssey-odp-agm31.json
 %PY% make_part.py parts\blueseas-2340-pos.json
 %PY% make_part.py parts\blueseas-2340-neg.json
@@ -148,7 +148,7 @@ Each has `category` (battery, distribution, fusing, cable, marker, hardware), `m
 ```
 | Part | Category / mount | Source | Estimates |
 |---|---|---|---|
-| `powerbar-2104` Blue Sea 2104, 600 A, 4 x 3/8-16 | distribution / surface (4 x #10, 6.25 x 1.32 in) | `dimensioned drawing on bluesea.com` (base 7, studs 1.25 pitch, bar top 1.3, stud top 2.0, base 0.5) | base width 2.0, bar block 5.5 x 1.0, nut flange, end screws, per-stud 300 A, per-screw 30 A. Polarity option is a label only (no red/black accents: real bar is tinned copper on black) |
+| `powerbar-2104` Blue Sea 2104, 600 A, 4 x 3/8-16 | distribution / surface (4 x #10, 6.25 x 1.32 in) | `ref/2104.pdf` (base 7, studs 1.25 pitch, bar top 1.3, stud top 2.0, base 0.5) | base width 2.0, bar block 5.5 x 1.0, nut flange, end screws, per-stud 300 A, per-screw 30 A. Polarity option is a label only (no red/black accents: real bar is tinned copper on black) |
 | `mrbf-5191` Blue Sea 5191, 30-300 A, 58 V | fusing / stud 3/8-16 | product page (300 A, 58 V, 5/16 stud, 75 in-lb). Drawing PDF not downloadable (access denied) | all dimensions and body shape. Output stud 5/16-18 (listing says M8). Option `fuse_a` is a label |
 | `copper-bar` 1 in wide, 1/8 or 1/4 thick, 2-10 in, 1-3 studs | distribution / stud 3/8-16 | design values | everything. Rating rule: 1000 A per sq in x thickness x width (1/8 = 125 A, 1/4 = 250 A), studs capped 300 A (3/8-16) / 200 A (5/16-18) |
 | `lug-joint-38` 3/8 bolt, nut, 2 lug tongues, boot | cable / surface (free) | none | all sizes; ratings by gauge |
@@ -212,3 +212,74 @@ Options (`xr/presets.js`): the Option button in the fixed row cycles A to F, lon
 | E | Vgate block | Vgate 20-way on the + stud, - bare |
 | F | PowerBar | MRBF 5191 on the + stud, PowerBar 2104 on the ground 14 in to the side, 1/0 jumper from the MRBF output stud to PowerBar stud 1 |
 All heights and shapes are estimates. Backup before this change: `..\parts3d.bak-2026-11-13-jumper`.
+
+## Start scene (host)
+`ar-xr.html#host=fan-80mm` (or `?scene=fume`, `?host=fan`) starts with the 80 mm fan as the host instead of the battery: alone on the surface, no terminal options (the Options button is hidden), Add to this lists the fan adapter. Default is the battery. The hamburger menu has a Scene row (Battery / Fume extractor) that reloads with the param; `host=` is kept in the scene hash. Logic: `resolveHostId` / `hostSelFrom` in `xr/scene.js`, tests in `xr/hostscene.test.mjs`.
+
+### Fume extractor parts and options (fan2)
+Parts (Ventilation): fan (options Orientation Horizontal / Vertical, Grill inlet / outlet / none), fan adapter (Ø diameter, length), hose clamp (own part, on the adapter's `clamp` seat 17 mm behind the spigot end), flex duct (on the adapter's `spigot` seat; length 0.3 to 5 m, bend straight / 45 / 90, built at runtime in `xr/flex.js`: black bellows outside, silver foil inside). Duct and clamp take the adapter's diameter (`auto_from: parent`, `pass_options`, `scene.syncOpts`). Connection seats move with options (`pos_by_option`, `pos_per_option`, `match.connPos`). A choice value's `pose` turns/lifts the part's node (`scene.poseOf`, `compose.matrixOf`), so everything on the outlet follows. Option buttons: `pick.optionButtons` (ids gauge, gauge2, gauge3 in the primary row). Options A to C of the fan scene: `presets.js` (FAN_PRESETS, `setHost`). Far-end duct clamp is not done (the far end moves with the bend).
+
+## Solar roof scene (2026-11-18, ticket #144)
+`ar-xr.html#host=solar` (or `?scene=solar`, `#host=roof-rack`); the menu Scene row cycles Battery, Fume extractor, Solar roof. Host = `roof-rack`, no battery.
+Generated parts (run `python gen_solar.py`, then `make_part.py parts\<id>.json <id>.glb`, then `build_catalog.py`): builders in `make_solar.py`, part JSON from `gen_solar.py`. Category Solar.
+- **Roof rack** (host). Options: Rack type (DIY bars default / Rago members / Platform), Bar profile (T-slot 40x40, square tube 1.5 in, strut channel 1-5/8 in), Bars 2 to 6 (default 3), Bar spacing (mm, default 400 = the panel hole pitch), Rail spacing (cm 80-140), Rail length (cm 100-200). Bars follow the rail spacing (+6 cm). All sizes approximate. Runtime sizing: a number option may carry `stretch` {axis, scale: [[nodePrefix, baseM]], moves: [[nodePrefix, coef, ref?]]}; maths in `flex.js stretchOps`, applied by `compose.js`. Nodes are named per type/count/index (`bt_3_2` = T-slot bar 2 of 3).
+- **Panel** (Yinleader CSSF-100W-CPC 690 x 855 x 1.5 mm, 100 W). Options Width / Length (mm), Slide (cm, `slide` in a number option, moves the node along its X: `scene.poseOf`). 6 grommet holes with bolt heads; the panel lies with its length along the car (slots turn it 90: `child_yaw_deg` on a connection) and bolts to 3 bars at the hole pitch (`solar.holesCheck`). Selection text shows the numbers (scaled with the area) and the hole check.
+- **MC4 parts**: female (+) / male (-) plugs, Y-branch 2-to-1 (+ and -), inline fuse 10 A (+ and -). Threads `mc4+` / `mc4-` decide what fits what. Parts marked `through` pass the electrical net on (`solar.nets`).
+- **Cables** are jumpers (`jumper.js`), not a new part: a cable has two fixed ends, a tree part has one. MC4 jumper = ends `mc4`, gauge 12 or 10 AWG, red for +, black for -, + only to +, length = straight distance + 10 %, up to 0.1 m (min 0.3 m); rendered with a small sag.
+- **Bluetti AC70** (station, approximate size): solar input XT60, 12-58 V, 10 A, 500 W (Bluetti US store spec; MC4-to-XT60 cable in the box), modelled as an MC4 + / - pair (`pv_pos`, `pv_neg`, "solar in XT60, 12-58 V, 10 A").
+- **Check line** (`solar.stationCheck`), shown for the station and when nothing is selected: "Parallel: Voc 22.4 V (OK, max 58), Isc 11.6 A (limited to 10 A)".
+- **Round 2 (2026-11-18 solar2)**, everything works in AR with the aim-then-act rows. Panel row: Size, Turn 90°, Move, Remove, Cable, Deselect. Size opens a size row (Back, "W 690 mm ▸" which switches W / L, minus, plus; hold minus / plus to repeat). Turn 90° turns about the panel centre and re-snaps the hole lines to the bars (length along the car: 3 hole rows; turned: the two long sides need two bars 2 x 330 mm apart); the selection text names the mismatch. Move (tap Move, aim, tap to drop; outside AR drag) slides the panel in both directions: on DIY / Rago bars the along-car position snaps so the hole lines land on bars (bolt heads `bolted` shown only then), on the platform it moves freely and stays inside; offsets are options `px`, `pz` (mm in the rack frame, `nocycle`), `solar.movePanel` / `turnPanel` / `syncBolts`. Platform rack options `plat_len` 150-240 cm (220), `plat_wid` 90-140 cm (118), `plat_bars` 6-12 (9, crossbars evenly spread, nodes `pfb_<n>_<nn>`); options carry `when` (shown only for that rack type), `derived`, `nocycle`. Selection box: part JSON `outline.nodes` (panel: `pn_`), `xr/outline.js`. Fixed on the way: make_solar's `sbox` took (x0,x1,y0,y1) but shapely's box takes (minx,miny,maxx,maxy), so bars were half profiles and the panel border a corner piece; platform side plates were translated in mm instead of m. Tests: `xr/solar2.test.mjs`. (Series wiring was added in round 3, below.)
+- Options A (1 panel, 3 bars), B (2 panels side by side in parallel, Y pair, cable to the AC70), C (4 panels 2 x 2 on 6 bars, fuse on each + lead, three Y pairs): `presets.js` SOLAR_PRESETS. Tests: `xr/solar.test.mjs`. Headless check: `node shot_solar.mjs "<hash>" out\x.png` (needs `python -m http.server 8765` here).
+- Not done: platform and Rago holes alignment checks (platform skipped), strut back slots, curved front edge of the deflector.
+
+### Round 3 (2026-11-18 solar3)
+- **Five wirings** (Option button A to E, `presets.js` SOLAR_PRESETS): A 2 panels in series (leads linked, extension cables to the AC70), B 2 in parallel with a 2-to-1 Y pair, C 4 panels 2S2P with a 2-to-1 Y pair, D 4 in parallel with a 1-to-4 Y pair, E 4 in series (over the AC70 limit). A series link is a cable between one panel's + lead and the next panel's - lead (allowed only between two panel leads, `jumper.makeJumper`); leads that mate directly are drawn as the same link cable.
+- **Check line** (`solar.stationCheck`, series aware): strings = chains of panels from the station's - net to its + net; string Voc = sum, cold Voc = Voc x 1.10 ("cold ~"), parallel strings add current, power ~ min(Vmp_string x I_total, 10 A x Vmp_string, 500 W). The result has `level` ok / limited / over (the selection line turns amber / red).
+- **MC4 Y-branch is one part** `mc4-y` with options split (2 to 1 / 4 to 1) and pol (+ / -); **MC4 fuse** is one part `mc4-fuse` with option pol. Part JSON features behind it: mount `needs_by_option`, connection `accepts_by_option`, `polarity_by_option`, `pos_by_combo`, `enabled_when` (match.js `needsOf`, `resolveConn`, `connPos`, `needVariants`, `outletsAny`). Adding the part on an outlet picks the polarity that fits. Old ids (mc4-y-pos, mc4-y-neg, mc4-y4-pos, mc4-y4-neg, mc4-fuse-pos, mc4-fuse-neg) are aliases in `scene.js PART_ALIAS`; an old hash keeps the old instance ids. Changing pol after placing is not re-checked against the outlet: choose it before placing.
+- **POFENZE platform** (rack type "Platform (POFENZE)"): 2324 x 1207 x 114 mm, 7 crossbars (6 to 12 option), six feet, front deflector at -X (31 degrees from horizontal), side rails as C plates in pieces (front piece, cutout cells, stretching spacers, splice plates with bolts). The length and width options keep cutouts, plates, feet and corner radii at their size: only spacers and the bar spacing stretch (the slots in the bars stretch a little with the width). Estimates are listed in the part JSON `notes`. Crossbar spacing: see Solar round 4.
+- **Factory rails** refined: low rounded 35 x 32 mm section on end feet, 1350 mm long, 1100 mm apart; DIY bars sit on the rails with saddle clamps (a U wrapping the rail, two bolts and nuts); Rago members flush with the rail top.
+- **Panel**: rounded corners (17 mm, fixed when resized), wide mounting border (36 mm on the long sides with the grommets, 22 mm at the ends; the cells stay clear of it and the cell area grows with Size), ETFE look (runtime pebble normal map, `compose.js etfeSurface`, low specular), black monocrystalline cells with cut corners and 9 busbars each, 4 x 5 cells (layout estimated). All marked in `solar-panel.json` `estimated`.
+- Tests: `xr/solar.test.mjs`, `xr/solar2.test.mjs`. Headless preview: set the env var PORT (server port, default 8765), then `node shot_solar.mjs "<hash>" out/x.png`.
+
+### Solar round 4 (2026-11-19 solar4)
+- **Panel Model option** (button "Model: ..."): Yinleader CSSF-100W-CPC (default, 690 x 855 mm, 100 W, Vmp 19 V, Imp 5.26 A, Voc 22.42 V, Isc 5.79 A) or Renogy 100W Black Division (1092 x 582 x 2.5 mm, flexible to 240 degrees, 36 PERC cells 12 x 3, black, frame-less 14 mm edge, same 6 grommets, 12 AWG MC4 leads; 100 W, Vmp 19.4 V, Imp 5.20 A, Voc 23.5 V, Isc 5.51 A). Numbers are in the part JSON `electrical.models`; a choice value may carry `sets` {opt: value} (here width and length), applied once when the choice changes (`scene.syncOpts`, remembered in `inst.mset`, not in the hash); size stays adjustable afterwards and the numbers scale with the area from the model's own size. Each panel has its own model. Width step is now 2 mm and length step 1 mm (582 and 1092 are not multiples of 5 or 10). Renogy geometry is the `rc_*` nodes (hidden when the model is Yinleader, and the `pn_back/cells/bus` nodes are hidden for Renogy); the thickness (2.5 vs 1.5 mm) is not modelled.
+- **Mixed panels in the check** (`solar.stationCheck`): a string's current is the lowest Imp of its panels, and warns "series: limited by the weakest panel, X A" when they differ by more than 5 %; string Voc is the sum (cold x 1.10 against the AC70 58 V); strings in parallel add current (capped at 10 A) and sit at the lowest string Vmp, with "parallel: voltage mismatch, the higher string is pulled down" when the string Vmp differ by more than 10 %. Warnings are appended to the line and make the level at least `limited`. Lines for identical panels are unchanged (the Vmp in the selection text now shows one decimal: 19.4 V). Tests: `xr/solar.test.mjs` (2S, 2P, 2S2P mixed, 2 + 1 strings).
+- **POFENZE platform**: crossbars 254 mm apart (up to 9 bars; 10 to 12 spread evenly), first bar 205 mm behind the front tip and anchored there when the length changes. 7 bars at 254 mm cover 1524 mm of the 2324 mm, so the rear 595 mm is open rail: this contradicts the photos (rear bar at the end), which means either the 254 mm or the 91.5 in is loose. Set `P_SPACING = 0` in `make_solar.py` (and `PLAT_SPACING_MM` in `solar.js`) to spread the bars evenly again (about 340 mm). Crossbars: 45 x 14 mm stadium slots and a pair of button-head bolts through the rail web at each end. Deflector: flat face 21 degrees from horizontal, 190 mm along the car, rolled leading edge (38 mm radius turning down to 68 degrees). Not done: the concave front edge in plan and the end notches.
+
+### Solar round 5 (2026-11-20 rack)
+GX470 numbers: car 188.2 x 74.0 in (4.78 x 1.88 m); factory rails about 1100 mm apart and 1350 mm long [E, the founder will measure]; factory crossbars 600-937 mm centre to centre (etrailer); POFENZE RR-T107 2324 x 1207 x 114 mm.
+- **Presets A, B** (2 panels): DIY bars on the factory rails, `rail_sp=110, rail_len=135, bars=3, gap=400`. The two panels lie side by side across the car, length along the car, on the 3 bars (hole pitch about 402 mm, so the gap stays 400, smaller than the 600-937 mm factory crossbar range: 3 bars is what a panel needs). Two panels are 1380 mm wide: 140 mm past each rail (limit 150). `rail_len` step is now 5 cm (135 was rounded to 140 before).
+- **Presets C, D, E** (4 panels): POFENZE platform (`rack=platform,plat_bars=7`), 2 x 2, length along the car; the panel middle rows sit on bars 2 and 5 (slot offsets `px=-17` and `px=-198`). 1380 mm of panels on a 1207 mm platform: 87 mm past each side (inside the 150 mm limit). Wiring and check lines unchanged (all tests that assert them pass).
+- **POFENZE crossbars spread evenly** again: `P_SPACING = 0` (make_solar.py) and `PLAT_SPACING_MM = 0` (solar.js): 7 bars 339.8 mm apart, first 205 mm behind the front tip, last 80 mm from the rear end (as in the photos). Set both back to 254 for the maker-diagram spacing. GLB, thumbnails and catalog regenerated (`.venv-3d` python: `gen_solar.py`, `make_part.py partsoof-rack.json roof-rack.glb`, `build_catalog.py`).
+- **Fit check** (`solar.fitCheck`): a panel more than 150 mm past a rail or the platform edge (across or along), or 4 or more panels needing more rail than the factory rails give (+150 mm each end), adds "doesn't fit the rack: 245 mm past the side of the rails (max 150)" to the selection line.
+- **GX470 roof outline** (`solar.roofPoly`, `windshieldLine`; `roofRef` in app.js): thin translucent rounded rectangle 1900 x 1450 mm [E, roof area estimate] at the roof level (y = 0), centred on the rack, with a faint windshield arc ahead of it (front = -X). Always on in the solar scene, not selectable (not in the pick list).
+- Tests: `xr/solar2.test.mjs` (round 5 block) and the updated platform bar test; 240 pass. Screenshots: `out/rack-A.png`, `out/rack-C.png`, `out/rack-top.png` (`shot_solar.mjs`, third script argument `__ar.target / __ar.look` sets the camera).
+
+## Controls (round 4)
+2026-11-18, builds `controls` and `controls2`. The scene is the middle of the screen; the controls sit in the corners. Pure logic in `xr/controls.js` (tests: `xr/controls.test.mjs`).
+- Top row: the status line ("Aim: ...", "Selected: ...", solar checks) on the left, one line with an ellipsis, and the menu button (hamburger) on the right. Hints (scanning) and toasts sit below that row. The menu works in AR (it lives in the dom-overlay root) and holds, in order: Scene, Enter AR / Exit AR, Add part, Option, then Theme, Units, Debug. Choosing an item closes the menu. Enter AR is disabled with a short reason when immersive AR is not available ("needs HTTPS", "not supported here"). There is no bottom bar and no standalone Enter / Exit button any more.
+- Bottom corners: the round "..." button (part actions) on the left, the round mode button on the right. The action panel opens above "..." and is capped so the modes list on the right never overlaps it; it scrolls inside when tall.
+- Scene: Scene (menu) opens a native `<dialog>`: "New empty scene" first (the battery alone), then a tile per start scene (battery A to F, fume extractor A to C, solar roof A to E) with a thumbnail, name and one line. A pick builds that scene in place (no reload, so an AR session and its placement stay) and closes the dialog. Close, Escape and a tap outside also close it. With no `#host=`, `#opt=` or `#s=` in the URL it opens by itself on first load; deep links skip it.
+- Add part: Add part (menu) opens a dialog with a search field (name, short name, id, category; words are ANDed), a grid of parts with thumbnails (`parts/thumbs`), and a preview pane for the focused part: bigger thumbnail, size from the model (W x H x D), option ranges and choices, and Variants (small thumbnails of the same family, tap to preview that one). Family = the part's `family` field if present, else category + first word of the id (blueseas-2340 pos / neg / drilled, lug 3/8 and 5/16, mc4 parts). Add starts the same placing flow as before: with a selection that a part fits, it goes on that attach point (marked with a check in the grid); else rings or the surface. "Add to it" and "Add part here" (action panel) open the same dialog with only the parts that fit.
+- Option: Option (menu) opens the preset choice for the current scene (A to F, or the fan / solar ones) in the action panel.
+- Dialogs live inside the overlay root and open with `show()` (not `showModal()`: the top layer may not draw over the AR camera). A scrim, Escape and outside-tap close them; `beforexrselect` keeps touches off the scene.
+- Mode: the round speed-dial button at the bottom right shows the current mode (icon and label). Tap: Select, Mark, Measure expand upward, the current one highlighted. A pick switches the mode and collapses; tapping the main button or outside collapses too.
+- Part actions: the "..." button toggles a panel with Undo, Redo, then everything for the selection (options, size, rotate, move, remove, Add to it ...) and what used to sit behind More (model nudges, Place again, Reset, X-ray, Record), plus the Undo of marks / measurements while those modes are on. Running an action keeps it open; selecting another part swaps the actions; only the "..." button closes it. X-ray is one toggle there (battery ghost on / off, `aria-pressed`).
+- Undo and Redo: snapshots of parts, offsets and jumpers taken shortly after any change (a held +/- is one step; 60 deep). Ctrl+Z / Ctrl+Y work on a keyboard. Marks and measurements keep their own Undo.
+- Recording mode hides all of it as before. Outside AR the page header is gone (the status line replaces it).
+- Screenshots: `PORT=8003 node shot_controls.mjs [W H tag]` writes `out/controls-*.png`.
+
+## Edit mode (round 5)
+2026-11-19, build `edit`, ticket #107. Pure logic in `xr/edit.js` (tests: `xr/edit.test.mjs`). Screenshots: `node shot_edit.mjs 390 800 portrait` writes `out/edit-*-portrait.png` (PORT=8003).
+- Mount types: stud = stacked on an outlet (lug, 2340, adapter, clamp); surface = rests on a plane (`at` at height 0, the host, a panel on the rails); free = lifted (`at` y > 1 mm) or detached. Stud parts rotate around the stud only (yaw, and only if the part has a yaw step). Surface parts slide on the plane and turn around its normal; Up / Down (lift) are hidden for them. Free parts move in 3D.
+- "Move" in the "..." panel is a toggle (aria-pressed). While on, six chips show under it: move X, Y, Z and rotate pitch, roll, yaw (aria-pressed = unlocked, lock icon = locked, greyed = the mount does not allow it, with a hint line). Axes: X, Y along the surface, Z = normal (free parts: world axes, Z up). Defaults: X, Y, yaw unlocked, Z, pitch, roll locked; a stud part starts fully locked (open Yaw to turn it); "Detach" makes a part free (it keeps its place; stored as `at`, `free: true`).
+- Gestures: one finger (or the XR select ray in AR) on the selected part drags along the unlocked axes (ray-plane / ray-line projection), a two-finger twist anywhere turns yaw. Snap 5 mm and 15 degrees; a still press of 450 ms before moving switches to fine (1 mm, 1 degree). A chip over the scene reads "+12 mm X" or "+30°". A panel on rails keeps its own snapping to the bars (X and Y both unlocked) and turns with Turn 90.
+- Each drag or twist is one step in the undo stack (history commit on release).
+- Not done: pitch and roll chips stay disabled (the scene model has no tilt); needs scene.js support. Real phone: the XR select-ray drag and the twist over the AR overlay are untested outside the simulator.
+
+## Input routing
+2026-11-19, build `router`. All input goes through one object, `router` in `xr/input.js`: `handleEvent(e)` is attached once to `document` (capture phase: pointerdown / move / up / cancel / leave, touchstart / move / end / cancel with passive false, click, keydown, input, wheel) and, per AR session, to the session (selectstart, select, selectend, end) with `attachXR` / `detachXR`. Pure decision in `route()` (tests: `xr/input.test.mjs`).
+- Order: (0) `ui` observers of that event type always run first (outside-tap closers, finger bookkeeping, Escape and Ctrl+Z, the panel's drag-scroll); (1) UI controls: a click on `[data-action]` runs the registered action, a press on `[data-hold]` starts its hold (Length +/-), anything inside a control, input, dialog or panel stops there; (2) active gesture: Move drag, two-finger twist (touch on the html target in AR, pointers in preview), cable link, mark / measure; (3) scene tap or select. Recording mode and an open dialog keep the scene out.
+- Handlers stay in `xr/app.js` and are registered with `router.on(stage, type, fn)`, `router.act(name, fn)` (also sets `data-action` on the button), `router.hold(name, spec)`. Lists use delegation: tiles, parts, preview options, mode items and lock chips carry `data-action` (`scene-pick`, `part-pick`, `pv-opt`, `pv-variant`, `pv-add`, `mode-pick`, `edit-chip`).
+- With Debug on the log has one line per routing decision ("route click -> ui action undo", "route pointerup -> scene noop (a tap in Move mode ...)"); moves, wheel, typing and keys are not logged.
+- Stay outside the router: three.js OrbitControls (its own listeners on the canvas), `beforexrselect` (dom-overlay specific), theme and media-query changes, page lifecycle (pagehide, visibilitychange, resize), WebGL context events, the XR light estimate, the toast swipe (per-toast pointer capture).

@@ -2,12 +2,12 @@
 
 // kind of a composed part: battery (the host) | lug | busbar | nut
 export function kindOf(partId, hostId, hasCoverOption = false) {
-  if (partId === hostId && !/^(powerbar|copper|fan|flex|hose|roof)/.test(partId)) return 'battery';   // a fan as the start-scene host is an ordinary library part
+  if (partId === hostId && !/^(powerbar|copper|fan|flex|hose|roof|pool)/.test(partId)) return 'battery';   // a fan as the start-scene host is an ordinary library part
   if (/^lug-joint/.test(partId)) return 'cable';
   if (/^lug/.test(partId)) return 'lug';
   if (/^nut/.test(partId)) return 'nut';
   if (/^mrbf/.test(partId)) return 'fuse';
-  if (/^(powerbar|copper|fan|flex|hose|roof|solar|mc4|bluetti|holddown)/.test(partId)) return 'bar';
+  if (/^(powerbar|copper|fan|flex|hose|roof|pool|solar|mc4|bluetti|holddown)/.test(partId)) return 'bar';
   if (/^(butt|factory)/.test(partId)) return 'cable';
   if (/^(blueseas|busbar|bus)/.test(partId) || hasCoverOption) return 'busbar';
   return 'busbar';
